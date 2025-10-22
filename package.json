@@ -4,16 +4,22 @@
   "private": true,
   "scripts": {
     "android": "react-native run-android",
-    "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^1.24.0",
+    "@react-native-community/netinfo": "^11.4.1",
+    "@react-native-firebase/app": "^23.4.0",
+    "@react-native-firebase/auth": "^23.4.0",
+    "@react-native-firebase/firestore": "^23.4.0",
+    "@react-native/new-app-screen": "0.81.1",
+    "@reduxjs/toolkit": "^2.9.0",
     "react": "19.1.0",
     "react-native": "0.81.1",
-    "@react-native/new-app-screen": "0.81.1",
-    "react-native-safe-area-context": "^5.5.2"
+    "react-native-safe-area-context": "^5.5.2",
+    "react-redux": "^9.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
