@@ -4,6 +4,19 @@ This is a new [**React Native**](https://reactnative.dev) project, bootstrapped 
 
 > **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
 
+## Environment Setup
+
+Before running the app, you need to set up your environment variables:
+
+1. Copy the Firebase configuration template:
+   ```sh
+   cp firebase.env.template .env
+   ```
+
+2. Edit the `.env` file with your actual Firebase configuration values.
+
+The `.env` file contains sensitive information and is already added to `.gitignore` to prevent it from being committed to version control.
+
 ## Step 1: Start Metro
 
 First, you will need to run **Metro**, the JavaScript build tool for React Native.
