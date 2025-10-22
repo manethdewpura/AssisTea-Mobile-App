@@ -1,0 +1,1 @@
+export type UserRole = 'admin' | 'tea_plantation_manager';
