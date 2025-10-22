@@ -4,7 +4,8 @@ export type UserProfile = {
     role: 'admin' | 'tea_plantation_manager';
     name?: string;
     displayName?: string;
-    createdAt: string;
+    createdAt: any;
+    lastLoginAt?: any;
     plantationId?: string;
     plantationName?: string;
   };

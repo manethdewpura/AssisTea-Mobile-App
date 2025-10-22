@@ -14,7 +14,6 @@
     "@react-native-firebase/app": "^23.4.0",
     "@react-native-firebase/auth": "^23.4.0",
     "@react-native-firebase/firestore": "^23.4.0",
-    "@react-native/new-app-screen": "0.81.1",
     "@reduxjs/toolkit": "^2.9.0",
     "react": "19.1.0",
     "react-native": "0.81.1",
