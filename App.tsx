@@ -8,9 +8,10 @@ import { useAppSelector } from './src/hooks/redux.hooks';
 import AuthListener from './src/store/listeners/AuthListener';
 import ThemeListener from './src/store/listeners/ThemeListener';
 import NotificationListener from './src/store/listeners/NotificationListener';
-import type { ThemeState } from './src/store/slices';
+import type { ThemeState } from './src/common/types';
 import LoginScreen from './src/screens/auth/LoginScreen';
 import SignUpScreen from './src/screens/auth/SignUpScreen';
+import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
 import AdminDashboard from './src/screens/admin/AdminDashboard';
 import TeaPlantationManagerScreen from './src/screens/teaPlantationManager/TeaPlantationManagerScreen';
 import PlantationSetupModal from './src/components/organisms/PlantationSetupModal';
@@ -39,7 +40,7 @@ function AppContent() {
   const { user, userProfile, loading } = useAppSelector(selectAuth);
   const theme = useAppSelector(selectTheme) as ThemeState;
   const { isDark, colors } = theme;
-  const [isLoginScreen, setIsLoginScreen] = useState(true);
+  const [authScreen, setAuthScreen] = useState<'login' | 'signup' | 'forgot'>('login');
   const [showPlantationSetup, setShowPlantationSetup] = useState(false);
 
   useEffect(() => {
@@ -55,9 +56,9 @@ function AppContent() {
           ]
         );
         return true; // Prevent default behavior
-      } else if (!isLoginScreen) {
-        // If on sign up screen, go back to login
-        setIsLoginScreen(true);
+      } else if (authScreen === 'signup' || authScreen === 'forgot') {
+        // If on sign up or forgot password screen, go back to login
+        setAuthScreen('login');
         return true; // Prevent default behavior
       }
       // If on login screen and not logged in, allow default behavior (exit app)
@@ -67,7 +68,7 @@ function AppContent() {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
 
     return () => backHandler.remove();
-  }, [user, userProfile, isLoginScreen]);
+  }, [user, userProfile, authScreen]);
 
   // Show plantation setup modal for admins without plantation information
   useEffect(() => {
@@ -113,10 +114,17 @@ function AppContent() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <NetworkStatus />
-      {isLoginScreen ? (
-        <LoginScreen onSwitchToSignUp={() => setIsLoginScreen(false)} />
-      ) : (
-        <SignUpScreen onSwitchToLogin={() => setIsLoginScreen(true)} />
+      {authScreen === 'login' && (
+        <LoginScreen 
+          onSwitchToSignUp={() => setAuthScreen('signup')}
+          onSwitchToForgotPassword={() => setAuthScreen('forgot')}
+        />
+      )}
+      {authScreen === 'signup' && (
+        <SignUpScreen onSwitchToLogin={() => setAuthScreen('login')} />
+      )}
+      {authScreen === 'forgot' && (
+        <ForgotPasswordScreen onSwitchToLogin={() => setAuthScreen('login')} />
       )}
     </View>
   );
