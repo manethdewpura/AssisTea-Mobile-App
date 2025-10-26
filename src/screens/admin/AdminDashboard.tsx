@@ -14,14 +14,16 @@ import {
 } from 'react-native';
 import { useAppSelector } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
-import { authService, teaPlantationService, userService } from '../../services';
+import { teaPlantationService, userService } from '../../services';
 import type { UserRole } from '../../common/types';
 import { UserProfile } from '../../models';
 import type { TeaPlantation } from '../../common/interfaces';
 import Input from '../../components/atoms/Input';
 import PasswordInput from '../../components/atoms/PasswordInput';
 import Button from '../../components/atoms/Button';
-import ThemeSelector from '../../components/organisms/ThemeSelector';
+import BottomNavbar from '../../components/organisms/BottomNavbar';
+import TopNavbar from '../../components/organisms/TopNavbar';
+import NotificationsScreen from '../NotificationsScreen';
 import {
   handleFirebaseError,
   logError,
@@ -42,6 +44,9 @@ const AdminDashboard: React.FC = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [plantations, setPlantations] = useState<TeaPlantation[]>([]);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<
+    'watering' | 'chat' | 'home' | 'schedule' | 'team'
+  >('home');
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showCreatePlantationModal, setShowCreatePlantationModal] =
     useState(false);
@@ -66,6 +71,8 @@ const AdminDashboard: React.FC = () => {
   const [alertSeverity, setAlertSeverity] = useState<
     'low' | 'medium' | 'high' | 'critical'
   >('medium');
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationCount] = useState(5); // Mock notification count
 
   const showCustomAlert = (
     title: string,
@@ -354,20 +361,6 @@ const AdminDashboard: React.FC = () => {
     );
   };
 
-  const handleSignOut = () => {
-    showCustomAlert('Sign Out', 'Are you sure you want to sign out?', {
-      severity: 'medium',
-      buttons: [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: () => authService.signOut(),
-        },
-      ],
-    });
-  };
-
   const renderUser = ({ item }: { item: UserProfile }) => (
     <View
       style={[
@@ -427,11 +420,27 @@ const AdminDashboard: React.FC = () => {
     </View>
   );
 
+  // Show notifications screen if requested
+  if (showNotifications) {
+    return (
+      <KeyboardAvoidingView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <NotificationsScreen onBackPress={() => setShowNotifications(false)} />
+      </KeyboardAvoidingView>
+    );
+  }
+
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <TopNavbar
+        onNotificationPress={() => setShowNotifications(true)}
+        unreadCount={notificationCount}
+      />
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
       >
@@ -443,20 +452,6 @@ const AdminDashboard: React.FC = () => {
             </Text>
           </View>
         )}
-
-        <View style={[styles.header, { backgroundColor: colors.primary }]}>
-          <View style={styles.headerContent}>
-            <View>
-              <Text style={[styles.title, { color: colors.text }]}>
-                Admin Dashboard
-              </Text>
-              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                Welcome, {userProfile?.email}
-              </Text>
-            </View>
-            <ThemeSelector style={styles.themeSelector} />
-          </View>
-        </View>
 
         <View style={[styles.section, { backgroundColor: colors.surface }]}>
           <View style={styles.sectionHeader}>
@@ -501,13 +496,6 @@ const AdminDashboard: React.FC = () => {
             scrollEnabled={false}
           />
         </View>
-
-        <Button
-          title="Sign Out"
-          onPress={handleSignOut}
-          variant="danger"
-          style={styles.signOutButton}
-        />
 
         {/* Create User Modal */}
         <Modal visible={showCreateUserModal} animationType="slide" transparent>
@@ -710,6 +698,7 @@ const AdminDashboard: React.FC = () => {
           onDismiss={() => setAlertVisible(false)}
         />
       </ScrollView>
+      <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} />
     </KeyboardAvoidingView>
   );
 };
@@ -742,12 +731,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#ffffff',
     marginBottom: 5,
   },
   subtitle: {
     fontSize: 16,
-    color: 'white',
+    color: '#ffffff',
     opacity: 0.9,
   },
   themeSelector: {
@@ -843,18 +832,6 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: 'white',
     fontSize: 12,
-    fontWeight: '600',
-  },
-  signOutButton: {
-    backgroundColor: '#dc3545',
-    margin: 20,
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  signOutButtonText: {
-    color: 'white',
-    fontSize: 16,
     fontWeight: '600',
   },
   modalOverlay: {

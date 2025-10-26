@@ -9,16 +9,21 @@ import {
 } from 'react-native';
 import { useAppSelector } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
-import { authService, teaPlantationService } from '../../services';
+import { teaPlantationService } from '../../services';
 import type { TeaPlantation } from '../../common/interfaces';
 import Button from '../../components/atoms/Button';
-import ThemeSelector from '../../components/organisms/ThemeSelector';
+import BottomNavbar from '../../components/organisms/BottomNavbar';
+import TopNavbar from '../../components/organisms/TopNavbar';
+import NotificationsScreen from '../NotificationsScreen';
 
 const TeaPlantationManagerScreen: React.FC = () => {
   const { userProfile } = useAppSelector(selectAuth);
   const { colors } = useAppSelector(selectTheme);
   const [plantation, setPlantation] = useState<TeaPlantation | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'watering' | 'chat' | 'home' | 'schedule' | 'team'>('home');
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationCount] = useState(5); // Mock notification count
 
   const loadPlantationData = useCallback(async () => {
     if (!userProfile?.plantationId) {
@@ -55,16 +60,6 @@ const TeaPlantationManagerScreen: React.FC = () => {
     return () => backHandler.remove();
   }, []);
 
-  const handleSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: () => authService.signOut(),
-      },
-    ]);
-  };
   if (loading) {
     return (
       <View
@@ -80,23 +75,26 @@ const TeaPlantationManagerScreen: React.FC = () => {
     );
   }
 
-  return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <View>
-            <Text style={[styles.title, { color: colors.text }]}>
-              Tea Plantation Manager
-            </Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Welcome, {userProfile?.email}
-            </Text>
-          </View>
-          <ThemeSelector style={styles.themeSelector} />
-        </View>
+  // Show notifications screen if requested
+  if (showNotifications) {
+    return (
+      <View style={styles.fullContainer}>
+        <NotificationsScreen
+          onBackPress={() => setShowNotifications(false)}
+        />
       </View>
+    );
+  }
+
+  return (
+    <View style={styles.fullContainer}>
+      <TopNavbar
+        onNotificationPress={() => setShowNotifications(true)}
+        unreadCount={notificationCount}
+      />
+      <ScrollView
+        style={[styles.container, { backgroundColor: colors.background }]}
+      >
 
       {plantation ? (
         <View style={styles.plantationContainer}>
@@ -218,18 +216,16 @@ const TeaPlantationManagerScreen: React.FC = () => {
           </Text>
         </View>
       )}
-
-      <Button
-        title="Sign Out"
-        onPress={handleSignOut}
-        variant="danger"
-        style={styles.signOutButton}
-      />
-    </ScrollView>
+      </ScrollView>
+      <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  fullContainer: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
@@ -257,12 +253,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#ffffff',
     marginBottom: 5,
   },
   subtitle: {
     fontSize: 16,
-    color: 'white',
+    color: '#ffffff',
     opacity: 0.9,
   },
   themeSelector: {
@@ -385,18 +381,6 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     lineHeight: 24,
-  },
-  signOutButton: {
-    backgroundColor: '#dc3545',
-    margin: 20,
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  signOutButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
 

@@ -8,6 +8,7 @@ export type ThemeColors = {
   textSecondary: string;
   textColored: string;
   textColoredSecondary: string;
+  textInverse: string;
   border: string;
   inputBackground: string;
   buttonBackground: string;
