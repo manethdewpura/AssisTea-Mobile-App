@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useAppSelector } from '../../hooks';
 import { selectTheme } from '../../store/selectors';
+import { Lucide } from '@react-native-vector-icons/lucide';
 
 export interface PasswordInputProps {
   placeholder?: string;
@@ -77,7 +78,11 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
           autoCorrect={false}
         />
         <TouchableOpacity style={styles.eyeButton} onPress={togglePassword}>
-          <Text style={styles.eyeButtonText}>{showPassword ? '🙈' : '👁️'}</Text>
+          {showPassword ? (
+            <Lucide name="eye-closed" size={20} color={colors.textSecondary} />
+          ) : (
+            <Lucide name="eye" size={20} color={colors.textSecondary} />
+          )}
         </TouchableOpacity>
       </View>
       {error && (
@@ -107,9 +112,6 @@ const styles = StyleSheet.create({
   eyeButton: {
     padding: 8,
     paddingLeft: 8,
-  },
-  eyeButtonText: {
-    fontSize: 18,
   },
   label: {
     fontSize: 16,

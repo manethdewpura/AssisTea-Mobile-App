@@ -6,6 +6,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { selectTheme } from '../../store/selectors';
 import { authService } from '../../services';
@@ -123,8 +124,16 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSwitchToSignUp }) => {
       </View>
 
       <View style={styles.formContainer}>
-        <Text style={[styles.title, { color: colors.text }]}>Welcome Back</Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('../../common/assets/images/LogoRound.png')}
+            style={styles.logo}
+          />
+        </View>
+        <Text style={[styles.title, { color: colors.textColoredSecondary }]}>
+          Welcome Back
+        </Text>
+        <Text style={[styles.subtitle, { color: colors.textColored }]}>
           Sign in to your account
         </Text>
 
@@ -133,7 +142,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSwitchToSignUp }) => {
           value={email}
           onChangeText={text => {
             setEmail(text);
-            if (emailError) setEmailError(''); // Clear error when user starts typing
+            if (emailError) setEmailError('');
           }}
           keyboardType="email-address"
           autoCapitalize="none"
@@ -146,7 +155,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSwitchToSignUp }) => {
           value={password}
           onChangeText={text => {
             setPassword(text);
-            if (passwordError) setPasswordError(''); // Clear error when user starts typing
+            if (passwordError) setPasswordError('');
           }}
           error={passwordError}
         />
@@ -160,12 +169,30 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSwitchToSignUp }) => {
         />
 
         <TouchableOpacity
+          style={styles.forgotPasswordButton}
+          onPress={onSwitchToSignUp}
+        >
+          <Text
+            style={[
+              styles.switchTextBold,
+              { color: colors.textColoredSecondary },
+            ]}
+          >
+            Forgot password?
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={styles.switchButton}
           onPress={onSwitchToSignUp}
         >
-          <Text style={[styles.switchText, { color: colors.textSecondary }]}>
+          <Text style={[styles.switchText, { color: colors.textColored }]}>
             Don't have an account?{' '}
-            <Text style={[styles.switchTextBold, { color: colors.primary }]}>
+            <Text
+              style={[
+                styles.switchTextBold,
+                { color: colors.textColoredSecondary },
+              ]}
+            >
               Sign Up
             </Text>
           </Text>
@@ -217,6 +244,19 @@ const styles = StyleSheet.create({
   },
   switchTextBold: {
     fontWeight: 'bold',
+    textDecorationLine: 'underline',
+  },
+  forgotPasswordButton: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  logo: {
+    width: 150,
+    height: 150,
   },
 });
 
