@@ -3,6 +3,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
+  sendPasswordResetEmail,
 } from '@react-native-firebase/auth';
 import {
   getFirestore,
@@ -103,5 +104,15 @@ export const authService = {
     }
   },
 
-
+  async resetPassword(email: string): Promise<void> {
+    try {
+      await ensureNetworkConnection();
+      const auth = getAuth();
+      await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+      const appError = handleFirebaseError(error);
+      logError(appError, 'authService - resetPassword');
+      throw appError;
+    }
+  },
 };

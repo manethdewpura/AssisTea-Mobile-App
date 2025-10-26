@@ -7,6 +7,7 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { useAppSelector, useNotifications } from '../../hooks';
 import { selectTheme } from '../../store/selectors';
@@ -156,10 +157,16 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSwitchToLogin }) => {
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.formContainer}>
-          <Text style={[styles.title, { color: colors.text }]}>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('../../common/assets/images/LogoRound.png')}
+              style={styles.logo}
+            />
+          </View>
+          <Text style={[styles.title, { color: colors.textColoredSecondary }]}>
             Create Admin Account
           </Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          <Text style={[styles.subtitle, { color: colors.textColored }]}>
             Sign up as an administrator
           </Text>
 
@@ -224,9 +231,11 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSwitchToLogin }) => {
             style={styles.switchButton}
             onPress={onSwitchToLogin}
           >
-            <Text style={[styles.switchText, { color: colors.textSecondary }]}>
+            <Text style={[styles.switchText, { color: colors.textColored }]}>
               Already have an account?{' '}
-              <Text style={[styles.switchText, { color: colors.primary }]}>
+              <Text
+                style={[styles.switchTextBold, { color: colors.textColoredSecondary }]}
+              >
                 Sign In
               </Text>
             </Text>
@@ -279,6 +288,18 @@ const styles = StyleSheet.create({
   switchText: {
     fontSize: 14,
     fontWeight: 'normal',
+  },
+  switchTextBold: {
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  logo: {
+    width: 150,
+    height: 150,
   },
 });
 

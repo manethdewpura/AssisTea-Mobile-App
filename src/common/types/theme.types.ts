@@ -3,8 +3,11 @@ export type ThemeColors = {
   surface: string;
   primary: string;
   secondary: string;
+  tertiary: string;
   text: string;
   textSecondary: string;
+  textColored: string;
+  textColoredSecondary: string;
   border: string;
   inputBackground: string;
   buttonBackground: string;
