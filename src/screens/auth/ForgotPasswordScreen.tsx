@@ -12,61 +12,42 @@ import { selectTheme } from '../../store/selectors';
 import { authService } from '../../services';
 import { useNotifications, useAppSelector } from '../../hooks';
 import Input from '../../components/atoms/Input';
-import PasswordInput from '../../components/atoms/PasswordInput';
 import Button from '../../components/atoms/Button';
 import ThemeSelector from '../../components/organisms/ThemeSelector';
 import {
   handleFirebaseError,
   logError,
   validateEmail,
-  validatePassword,
   ensureNetworkConnection,
   isNetworkError,
 } from '../../utils';
 
-interface LoginScreenProps {
-  onSwitchToSignUp: () => void;
-  onSwitchToForgotPassword: () => void;
+interface ForgotPasswordScreenProps {
+  onSwitchToLogin: () => void;
 }
 
-const LoginScreen: React.FC<LoginScreenProps> = ({ onSwitchToSignUp, onSwitchToForgotPassword }) => {
+const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ onSwitchToLogin }) => {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [retryCount, setRetryCount] = useState(0);
+  const [emailSent, setEmailSent] = useState(false);
   const { colors } = useAppSelector(selectTheme);
   const { showErrorAlert, showToast } = useNotifications();
 
   const validateForm = (): boolean => {
-    let isValid = true;
-
-    // Validate email
     const emailValidation = validateEmail(email);
     if (!emailValidation.isValid) {
       setEmailError(emailValidation.error!);
-      isValid = false;
+      return false;
     } else {
       setEmailError('');
+      return true;
     }
-
-    // Validate password
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
-      setPasswordError(passwordValidation.error!);
-      isValid = false;
-    } else {
-      setPasswordError('');
-    }
-
-    return isValid;
   };
 
-  const handleLogin = async () => {
+  const handleResetPassword = async () => {
     // Clear previous errors
     setEmailError('');
-    setPasswordError('');
 
     // Validate form
     if (!validateForm()) {
@@ -75,45 +56,83 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSwitchToSignUp, onSwitchToF
 
     setLoading(true);
     try {
-      // Check network connection before attempting login
+      // Check network connection before attempting reset
       await ensureNetworkConnection();
 
-      await authService.signIn(email, password);
-      setRetryCount(0);
+      await authService.resetPassword(email);
+      setEmailSent(true);
+      showToast('Password reset email sent! Check your inbox.', 'success');
     } catch (error: any) {
       const appError = handleFirebaseError(error);
-      logError(appError, 'LoginScreen');
+      logError(appError, 'ForgotPasswordScreen');
 
       // Handle specific error cases
       if (isNetworkError(error)) {
         showErrorAlert(appError, () => {
-          setRetryCount(prev => prev + 1);
-          handleLogin();
+          handleResetPassword();
         });
       } else if (error.code === 'auth/user-not-found') {
         setEmailError('No account found with this email address');
         showToast('No account found with this email address', 'warning');
-      } else if (error.code === 'auth/wrong-password') {
-        setPasswordError('Incorrect password');
-        showToast('Incorrect password', 'warning');
       } else if (error.code === 'auth/invalid-email') {
         setEmailError('Please enter a valid email address');
         showToast('Please enter a valid email address', 'warning');
       } else if (error.code === 'auth/too-many-requests') {
         showErrorAlert(appError);
-        setRetryCount(prev => prev + 1);
       } else {
-        showErrorAlert(appError, () => {
-          if (retryCount < 3) {
-            setRetryCount(prev => prev + 1);
-            handleLogin();
-          }
-        });
+        showErrorAlert(appError);
       }
     } finally {
       setLoading(false);
     }
   };
+
+  if (emailSent) {
+    return (
+      <KeyboardAvoidingView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={styles.header}>
+          <ThemeSelector style={styles.themeSelector} />
+        </View>
+
+        <View style={styles.formContainer}>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('../../common/assets/images/LogoRound.png')}
+              style={styles.logo}
+            />
+          </View>
+          <Text style={[styles.title, { color: colors.textColoredSecondary }]}>
+            Check Your Email
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.textColored }]}>
+            We've sent a password reset link to{'\n'}
+            <Text style={[styles.emailText, { color: colors.primary }]}>{email}</Text>
+          </Text>
+
+          <Button
+            title="Back to Login"
+            onPress={onSwitchToLogin}
+            style={styles.button}
+          />
+
+          <TouchableOpacity
+            style={styles.resendButton}
+            onPress={() => {
+              setEmailSent(false);
+              handleResetPassword();
+            }}
+          >
+            <Text style={[styles.resendText, { color: colors.textColoredSecondary }]}>
+              Didn't receive the email? Resend
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -132,10 +151,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSwitchToSignUp, onSwitchToF
           />
         </View>
         <Text style={[styles.title, { color: colors.textColoredSecondary }]}>
-          Welcome Back
+          Forgot Password?
         </Text>
         <Text style={[styles.subtitle, { color: colors.textColored }]}>
-          Sign in to your account
+          Enter your email address and we'll send you a link to reset your password
         </Text>
 
         <Input
@@ -151,50 +170,22 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSwitchToSignUp, onSwitchToF
           error={emailError}
         />
 
-        <PasswordInput
-          placeholder="Password"
-          value={password}
-          onChangeText={text => {
-            setPassword(text);
-            if (passwordError) setPasswordError('');
-          }}
-          error={passwordError}
-        />
-
         <Button
-          title={loading ? 'Signing In...' : 'Sign In'}
-          onPress={handleLogin}
+          title={loading ? 'Sending...' : 'Send Reset Link'}
+          onPress={handleResetPassword}
           loading={loading}
           disabled={loading}
           style={styles.button}
         />
 
         <TouchableOpacity
-          style={styles.forgotPasswordButton}
-          onPress={onSwitchToForgotPassword}
+          style={styles.backButton}
+          onPress={onSwitchToLogin}
         >
-          <Text
-            style={[
-              styles.switchTextBold,
-              { color: colors.textColoredSecondary },
-            ]}
-          >
-            Forgot password?
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.switchButton}
-          onPress={onSwitchToSignUp}
-        >
-          <Text style={[styles.switchText, { color: colors.textColored }]}>
-            Don't have an account?{' '}
-            <Text
-              style={[
-                styles.switchTextBold,
-                { color: colors.textColoredSecondary },
-              ]}
-            >
-              Sign Up
+          <Text style={[styles.backText, { color: colors.textColored }]}>
+            Remember your password?{' '}
+            <Text style={[styles.backTextBold, { color: colors.textColoredSecondary }]}>
+              Sign In
             </Text>
           </Text>
         </TouchableOpacity>
@@ -222,6 +213,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 20,
   },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  logo: {
+    width: 150,
+    height: 150,
+  },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
@@ -232,33 +231,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 40,
+    lineHeight: 24,
+  },
+  emailText: {
+    fontWeight: 'bold',
   },
   button: {
     marginBottom: 20,
   },
-  switchButton: {
+  backButton: {
     alignItems: 'center',
   },
-  switchText: {
+  backText: {
     fontSize: 14,
     fontWeight: 'normal',
   },
-  switchTextBold: {
+  backTextBold: {
     fontWeight: 'bold',
     textDecorationLine: 'underline',
   },
-  forgotPasswordButton: {
+  resendButton: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginTop: 20,
   },
-  logoContainer: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  logo: {
-    width: 150,
-    height: 150,
+  resendText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
   },
 });
 
-export default LoginScreen;
+export default ForgotPasswordScreen;

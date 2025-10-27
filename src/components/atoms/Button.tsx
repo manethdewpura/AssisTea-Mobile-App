@@ -83,7 +83,7 @@ const Button: React.FC<ButtonProps> = ({
       disabled={disabled || loading}
     >
       {loading ? (
-        <ActivityIndicator color={colors.buttonText} size="small" />
+        <ActivityIndicator color={colors.background} size="small" />
       ) : (
         <Text style={buttonTextStyle}>{title}</Text>
       )}
