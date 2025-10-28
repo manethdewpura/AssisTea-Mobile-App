@@ -1,0 +1,40 @@
+import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import TeaPlantationManagerScreen from '../screens/teaPlantationManager/TeaPlantationManagerScreen';
+import WorkerManagementScreen from '../screens/teaPlantationManager/WorkerManagementScreen';
+
+export type TeaPlantationStackParamList = {
+  TeaPlantationHome: undefined;
+  WorkerManagement: undefined;
+  WorkerDetails?: { workerId: string };
+  AddWorker?: undefined;
+};
+
+const Stack = createNativeStackNavigator<TeaPlantationStackParamList>();
+
+export const TeaPlantationNavigator: React.FC = () => {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: '#f5f5f5' },
+        animation: 'default',
+      }}
+    >
+      <Stack.Screen
+        name="TeaPlantationHome"
+        component={TeaPlantationManagerScreen}
+        options={{
+          animation: 'default',
+        }}
+      />
+      <Stack.Screen
+        name="WorkerManagement"
+        component={WorkerManagementScreen}
+        options={{
+          animation: 'default',
+        }}
+      />
+    </Stack.Navigator>
+  );
+};
