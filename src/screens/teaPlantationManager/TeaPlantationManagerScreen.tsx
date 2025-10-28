@@ -144,7 +144,10 @@ const TeaPlantationManagerScreen: React.FC<Props> = ({ navigation }) => {
         </TouchableOpacity>
 
         {/* View Latest Schedule Link */}
-        <TouchableOpacity style={styles.linkContainer}>
+        <TouchableOpacity 
+          style={styles.linkContainer}
+          onPress={() => navigation.navigate('ViewLatestSchedule')}
+        >
           <Text style={styles.linkText}>View Latest Schedule</Text>
         </TouchableOpacity>
 
