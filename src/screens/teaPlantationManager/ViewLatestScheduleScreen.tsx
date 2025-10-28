@@ -204,11 +204,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   scrollContent: {
-    paddingTop: -60,
+    paddingTop: 16,
     paddingBottom: 20,
   },
   headerCard: {
-    marginTop: -60,
+    marginTop: 0,
     marginBottom: 16,
     borderRadius: 12,
     padding: 16,

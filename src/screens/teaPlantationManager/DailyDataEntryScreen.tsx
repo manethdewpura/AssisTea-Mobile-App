@@ -405,14 +405,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   scrollContent: {
-    paddingTop: -60,
+    paddingTop: 16,
     paddingBottom: 40,
   },
   formCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 20,
-    marginTop: -60,
+    marginTop: 0,
     marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
