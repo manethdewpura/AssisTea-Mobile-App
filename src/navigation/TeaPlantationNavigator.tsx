@@ -2,13 +2,14 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import TeaPlantationManagerScreen from '../screens/teaPlantationManager/TeaPlantationManagerScreen';
 import WorkerManagementScreen from '../screens/teaPlantationManager/WorkerManagementScreen';
+import WorkerDetailsScreen from '../screens/teaPlantationManager/WorkerDetailsScreen';
 import AddWorkerScreen from '../screens/teaPlantationManager/AddWorkerScreen';
 
 export type TeaPlantationStackParamList = {
   TeaPlantationHome: undefined;
   WorkerManagement: undefined;
+  WorkerDetails: { workerId: string };
   AddWorker: undefined;
-  WorkerDetails?: { workerId: string };
 };
 
 const Stack = createNativeStackNavigator<TeaPlantationStackParamList>();
@@ -29,6 +30,10 @@ export const TeaPlantationNavigator: React.FC = () => {
       <Stack.Screen
         name="WorkerManagement"
         component={WorkerManagementScreen}
+      />
+      <Stack.Screen
+        name="WorkerDetails"
+        component={WorkerDetailsScreen}
       />
       <Stack.Screen
         name="AddWorker"
