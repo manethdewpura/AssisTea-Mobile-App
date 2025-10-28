@@ -6,15 +6,23 @@ import {
   Alert,
   ScrollView,
   BackHandler,
+  TouchableOpacity,
+  SafeAreaView,
+  Image,
 } from 'react-native';
 import { useAppSelector } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import { authService, teaPlantationService } from '../../services';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantation } from '../../common/interfaces';
-import Button from '../../components/atoms/Button';
-import ThemeSelector from '../../components/organisms/ThemeSelector';
+import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 
-const TeaPlantationManagerScreen: React.FC = () => {
+type Props = NativeStackScreenProps<
+  TeaPlantationStackParamList,
+  'TeaPlantationHome'
+>;
+
+const TeaPlantationManagerScreen: React.FC<Props> = ({ navigation }) => {
   const { userProfile } = useAppSelector(selectAuth);
   const { colors } = useAppSelector(selectTheme);
   const [plantation, setPlantation] = useState<TeaPlantation | null>(null);
@@ -44,7 +52,6 @@ const TeaPlantationManagerScreen: React.FC = () => {
 
   useEffect(() => {
     const backAction = () => {
-      // Let the parent handle back button (App.tsx will show exit confirmation)
       return false;
     };
 
@@ -55,16 +62,10 @@ const TeaPlantationManagerScreen: React.FC = () => {
     return () => backHandler.remove();
   }, []);
 
-  const handleSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: () => authService.signOut(),
-      },
-    ]);
+  const handleManageWorkers = () => {
+    navigation.navigate('WorkerManagement');
   };
+
   if (loading) {
     return (
       <View
@@ -73,159 +74,103 @@ const TeaPlantationManagerScreen: React.FC = () => {
           { backgroundColor: colors.background },
         ]}
       >
-        <Text style={[styles.loadingText, { color: colors.text }]}>
-          Loading plantation data...
-        </Text>
+        <Text style={[styles.loadingText, { color: colors.text }]}>Loading...</Text>
       </View>
     );
   }
 
   return (
-    <ScrollView
+    <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
     >
+      {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <View>
-            <Text style={[styles.title, { color: colors.text }]}>
-              Tea Plantation Manager
-            </Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Welcome, {userProfile?.email}
-            </Text>
-          </View>
-          <ThemeSelector style={styles.themeSelector} />
-        </View>
+        <TouchableOpacity style={styles.menuButton}>
+          <Text style={styles.menuIcon}>☰</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>AssisTea</Text>
+        <TouchableOpacity style={styles.notificationButton}>
+          <Text style={styles.notificationIcon}>🔔</Text>
+        </TouchableOpacity>
       </View>
 
-      {plantation ? (
-        <View style={styles.plantationContainer}>
-          <Text style={[styles.plantationTitle, { color: colors.text }]}>
-            Your Plantation
-          </Text>
+      {/* Content */}
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Logo Section */}
+        <View style={styles.logoSection}>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('../../common/assets/images/LogoRound.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+          </View>
+        </View>
 
-          <View
-            style={[
-              styles.plantationCard,
-              {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.border,
-              },
-            ]}
+        {/* Welcome Text */}
+        <Text style={styles.welcomeText}>
+          Welcome, {userProfile?.role || 'Supervisor'}!
+        </Text>
+
+        {/* Split Button Container */}
+        <View style={styles.splitButtonContainer}>
+          <TouchableOpacity
+            style={[styles.splitButton, styles.leftButton]}
+            onPress={() => {}}
           >
-            <Text style={[styles.plantationName, { color: colors.text }]}>
-              {plantation.name}
-            </Text>
-            <Text
-              style={[
-                styles.plantationLocation,
-                { color: colors.textSecondary },
-              ]}
-            >
-              📍 {plantation.location}
-            </Text>
-            <Text
-              style={[styles.plantationArea, { color: colors.textSecondary }]}
-            >
-              🌱 Area: {plantation.area} acres
-            </Text>
-            {plantation.description && (
-              <Text
-                style={[
-                  styles.plantationDescription,
-                  { color: colors.textSecondary },
-                ]}
-              >
-                📝 Description: {plantation.description}
-              </Text>
-            )}
-          </View>
-
-          <View style={styles.managementSection}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Management Tools
-            </Text>
-
-            <Button
-              title="📊 View Production Reports"
-              onPress={() => {}}
-              style={styles.managementButton}
-            />
-
-            <Button
-              title="🌿 Manage Tea Varieties"
-              onPress={() => {}}
-              style={styles.managementButton}
-            />
-
-            <Button
-              title="👥 Manage Workers"
-              onPress={() => {}}
-              style={styles.managementButton}
-            />
-
-            <Button
-              title="📈 Track Harvest Data"
-              onPress={() => {}}
-              style={styles.managementButton}
-            />
-
-            <Button
-              title="💰 Financial Reports"
-              onPress={() => {}}
-              style={styles.managementButton}
-            />
-
-            <Button
-              title="🌡️ Weather Monitoring"
-              onPress={() => {}}
-              style={styles.managementButton}
-            />
-          </View>
-
-          <View style={styles.quickStatsSection}>
-            <Text style={styles.sectionTitle}>Quick Stats</Text>
-
-            <View style={styles.statsGrid}>
-              <View style={styles.statCard}>
-                <Text style={styles.statNumber}>0</Text>
-                <Text style={styles.statLabel}>Active Workers</Text>
-              </View>
-
-              <View style={styles.statCard}>
-                <Text style={styles.statNumber}>0</Text>
-                <Text style={styles.statLabel}>Tea Varieties</Text>
-              </View>
-
-              <View style={styles.statCard}>
-                <Text style={styles.statNumber}>0</Text>
-                <Text style={styles.statLabel}>This Month's Harvest (kg)</Text>
-              </View>
-
-              <View style={styles.statCard}>
-                <Text style={styles.statNumber}>0</Text>
-                <Text style={styles.statLabel}>Quality Score</Text>
-              </View>
+            <View style={styles.buttonContent}>
+              <Text style={styles.buttonIcon}>+</Text>
+              <Text style={styles.buttonText}>Enter Daily Data</Text>
             </View>
-          </View>
-        </View>
-      ) : (
-        <View style={styles.noPlantationContainer}>
-          <Text style={styles.noPlantationTitle}>No Plantation Assigned</Text>
-          <Text style={styles.noPlantationText}>
-            You haven't been assigned to any tea plantation yet. Please contact
-            your administrator.
-          </Text>
-        </View>
-      )}
+          </TouchableOpacity>
 
-      <Button
-        title="Sign Out"
-        onPress={handleSignOut}
-        variant="danger"
-        style={styles.signOutButton}
-      />
-    </ScrollView>
+          <View style={styles.buttonDivider} />
+
+          <TouchableOpacity
+            style={[styles.splitButton, styles.rightButton]}
+            onPress={handleManageWorkers}
+          >
+            <Text style={styles.buttonText}>Manage Workers</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Generate Schedule Button */}
+        <TouchableOpacity style={styles.scheduleButton}>
+          <Text style={styles.scheduleIcon}>📅</Text>
+          <Text style={styles.scheduleText}>Generate Today's Schedule</Text>
+        </TouchableOpacity>
+
+        {/* View Latest Schedule Link */}
+        <TouchableOpacity style={styles.linkContainer}>
+          <Text style={styles.linkText}>View Latest Schedule</Text>
+        </TouchableOpacity>
+
+        {/* Spacer */}
+        <View style={styles.spacer} />
+      </ScrollView>
+
+      {/* Footer Navigation */}
+      <View style={styles.footer}>
+        <TouchableOpacity style={styles.footerIcon}>
+          <Text style={styles.footerIconText}>💧</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.footerIcon}>
+          <Text style={styles.footerIconText}>💬</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.footerIcon}>
+          <Text style={styles.footerIconText}>🏠</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.footerIcon}>
+          <Text style={styles.footerIconText}>📅</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.footerIcon}>
+          <Text style={styles.footerIconText}>👥</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
@@ -238,49 +183,122 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
   },
   loadingText: {
     fontSize: 16,
-    color: '#666',
   },
   header: {
-    backgroundColor: '#28a745',
-    padding: 20,
-    paddingTop: 60,
-  },
-  headerContent: {
+    backgroundColor: '#7cb342',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 5,
+  menuButton: {
+    padding: 8,
   },
-  subtitle: {
-    fontSize: 16,
-    color: 'white',
-    opacity: 0.9,
-  },
-  themeSelector: {
-    alignSelf: 'flex-end',
-  },
-  plantationContainer: {
-    padding: 20,
-  },
-  plantationTitle: {
+  menuIcon: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 20,
+    color: '#fff',
   },
-  plantationCard: {
-    backgroundColor: 'white',
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  notificationButton: {
+    padding: 8,
+  },
+  notificationIcon: {
+    fontSize: 20,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  logoSection: {
+    alignItems: 'center',
+    marginTop: 40,
+    marginBottom: 30,
+  },
+  logoContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#7cb342',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  logoImage: {
+    width: 100,
+    height: 100,
+  },
+  welcomeText: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1b5e20',
+    textAlign: 'center',
+    marginBottom: 30,
+  },
+  splitButtonContainer: {
+    backgroundColor: '#7cb342',
     borderRadius: 10,
-    padding: 20,
+    flexDirection: 'row',
+    overflow: 'hidden',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  splitButton: {
+    flex: 1,
+    paddingVertical: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  leftButton: {
+    paddingRight: 8,
+  },
+  rightButton: {
+    paddingLeft: 8,
+  },
+  buttonDivider: {
+    width: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    fontSize: 20,
+    color: '#fff',
+    marginRight: 8,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  scheduleButton: {
+    backgroundColor: '#fbc02d',
+    borderRadius: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -288,115 +306,43 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  plantationName: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
-  },
-  plantationLocation: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 8,
-  },
-  plantationArea: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 8,
-  },
-  plantationDescription: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 10,
-    fontStyle: 'italic',
-  },
-  managementSection: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
+  scheduleIcon: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
+    marginRight: 10,
   },
-  managementButton: {
-    backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  managementButtonText: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
-  },
-  quickStatsSection: {
-    marginBottom: 20,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  statCard: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 15,
-    width: '48%',
-    marginBottom: 10,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#28a745',
-    marginBottom: 5,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-  },
-  noPlantationContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  noPlantationTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  noPlantationText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  signOutButton: {
-    backgroundColor: '#dc3545',
-    margin: 20,
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  signOutButtonText: {
-    color: 'white',
-    fontSize: 16,
+  scheduleText: {
+    color: '#fff',
+    fontSize: 15,
     fontWeight: '600',
+  },
+  linkContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  linkText: {
+    color: '#1b5e20',
+    fontSize: 14,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  spacer: {
+    height: 40,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    backgroundColor: '#fff',
+  },
+  footerIcon: {
+    padding: 8,
+  },
+  footerIconText: {
+    fontSize: 24,
   },
 });
 

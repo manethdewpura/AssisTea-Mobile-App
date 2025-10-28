@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar, StyleSheet, View, ActivityIndicator, BackHandler, Alert } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { NavigationContainer } from '@react-navigation/native';
 import { Provider } from 'react-redux';
 import { store } from './src/store';
 import { selectAuth, selectTheme } from './src/store/selectors';
@@ -13,7 +14,7 @@ import LoginScreen from './src/screens/auth/LoginScreen';
 import SignUpScreen from './src/screens/auth/SignUpScreen';
 import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
 import AdminDashboard from './src/screens/admin/AdminDashboard';
-import TeaPlantationManagerScreen from './src/screens/teaPlantationManager/TeaPlantationManagerScreen';
+import { TeaPlantationNavigator } from './src/navigation/TeaPlantationNavigator';
 import PlantationSetupModal from './src/components/organisms/PlantationSetupModal';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import NetworkStatus from './src/components/molecule/NetworkStatus';
@@ -85,7 +86,6 @@ function AppContent() {
     );
   }
 
-
   if (user && userProfile) {
     // Route based on user role
     if (userProfile.role === 'admin') {
@@ -102,10 +102,12 @@ function AppContent() {
       );
     } else if (userProfile.role === 'tea_plantation_manager') {
       return (
-        <View style={styles.container}>
-          <NetworkStatus />
-          <TeaPlantationManagerScreen />
-        </View>
+        <NavigationContainer>
+          <View style={styles.container}>
+            <NetworkStatus />
+            <TeaPlantationNavigator />
+          </View>
+        </NavigationContainer>
       );
     }
   }
