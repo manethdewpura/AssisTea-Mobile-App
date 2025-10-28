@@ -119,7 +119,7 @@ const TeaPlantationManagerScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.splitButtonContainer}>
           <TouchableOpacity
             style={[styles.splitButton, styles.leftButton]}
-            onPress={() => {}}
+            onPress={() => navigation.navigate('DailyDataEntry')}
           >
             <View style={styles.buttonContent}>
               <Text style={styles.buttonIcon}>+</Text>
