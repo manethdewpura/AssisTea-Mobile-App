@@ -15,53 +15,46 @@ import { selectAuth, selectTheme } from '../../store/selectors';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
+import { workerService } from '../../services';
+import { handleFirebaseError, logError } from '../../utils';
+import type { Worker } from '../../models/Worker';
 
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
   'WorkerManagement'
 >;
 
-interface Worker {
-  id: string;
-  name: string;
-  workerId: string;
-  birthDate?: string;
-  age?: number;
-  experience?: string;
-  gender?: string;
-}
-
-// Mock data for workers
-const MOCK_WORKERS: Worker[] = [
-  { id: '1', name: 'K.Perera', workerId: 'T-001' },
-  { id: '2', name: 'K.Perera', workerId: 'T-001' },
-  { id: '3', name: 'K.Perera', workerId: 'T-001' },
-  { id: '4', name: 'K.Perera', workerId: 'T-001' },
-  { id: '5', name: 'K.Perera', workerId: 'T-001' },
-  { id: '6', name: 'K.Perera', workerId: 'T-001' },
-];
-
 const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppSelector(selectTheme);
   const { userProfile } = useAppSelector(selectAuth);
-  const [workers, setWorkers] = useState<Worker[]>(MOCK_WORKERS);
-  const [filteredWorkers, setFilteredWorkers] = useState<Worker[]>(MOCK_WORKERS);
+  const [workers, setWorkers] = useState<Worker[]>([]);
+  const [filteredWorkers, setFilteredWorkers] = useState<Worker[]>([]);
   const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       loadWorkers();
-    }, [])
+    }, [userProfile?.plantationId])
   );
 
   const loadWorkers = async () => {
+    if (!userProfile?.plantationId) {
+      Alert.alert('Error', 'Plantation information not found');
+      return;
+    }
+
     try {
       setLoading(true);
-      setWorkers(MOCK_WORKERS);
-      setFilteredWorkers(MOCK_WORKERS);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to load workers');
+      const fetchedWorkers = await workerService.getWorkersByPlantation(
+        userProfile.plantationId
+      );
+      setWorkers(fetchedWorkers);
+      setFilteredWorkers(fetchedWorkers);
+    } catch (error: any) {
+      const appError = handleFirebaseError(error);
+      logError(appError, 'WorkerManagementScreen - LoadWorkers');
+      Alert.alert('Error', appError.userMessage);
     } finally {
       setLoading(false);
     }
@@ -93,10 +86,17 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            setWorkers(workers.filter(w => w.id !== workerId));
-            setFilteredWorkers(filteredWorkers.filter(w => w.id !== workerId));
-            Alert.alert('Success', 'Worker deleted successfully');
+          onPress: async () => {
+            try {
+              await workerService.deleteWorker(workerId);
+              setWorkers(workers.filter(w => w.id !== workerId));
+              setFilteredWorkers(filteredWorkers.filter(w => w.id !== workerId));
+              Alert.alert('Success', 'Worker deleted successfully');
+            } catch (error: any) {
+              const appError = handleFirebaseError(error);
+              logError(appError, 'WorkerManagementScreen - DeleteWorker');
+              Alert.alert('Error', appError.userMessage);
+            }
           },
         },
       ]
@@ -180,7 +180,9 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
         ) : filteredWorkers.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={[styles.emptyText, { color: colors.text }]}>
-              No workers found
+              {workers.length === 0
+                ? 'No workers yet. Add your first worker!'
+                : 'No workers found'}
             </Text>
           </View>
         ) : (

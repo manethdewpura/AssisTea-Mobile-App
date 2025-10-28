@@ -39,15 +39,17 @@ class WorkerService {
 
   /**
    * Get all workers for a specific plantation
+   * Note: Removed orderBy to avoid requiring composite index
    */
   async getWorkersByPlantation(plantationId: string): Promise<Worker[]> {
     try {
       const snapshot = await this.workersCollection
         .where('plantationId', '==', plantationId)
-        .orderBy('createdAt', 'desc')
         .get();
 
-      return snapshot.docs.map(doc => doc.data() as Worker);
+      // Sort manually after fetching to avoid index requirement
+      const workers = snapshot.docs.map(doc => doc.data() as Worker);
+      return workers.sort((a, b) => b.createdAt - a.createdAt);
     } catch (error) {
       throw error;
     }
