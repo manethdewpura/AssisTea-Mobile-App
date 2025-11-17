@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import BottomNavbar from './BottomNavbar';
 import AdminDashboard from '../../screens/admin/AdminDashboard';
 import TeaPlantationManagerScreen from '../../screens/teaPlantationManager/TeaPlantationManagerScreen';
+import IrrigationScreen from '../../screens/irrigationAndFertigation/IrrigationScreen';
 
 type TabType = 'watering' | 'chat' | 'home' | 'schedule' | 'team';
 
@@ -21,8 +22,8 @@ const MainNavigator: React.FC<MainNavigatorProps> = ({ userRole }) => {
         ) : (
           <TeaPlantationManagerScreen />
         );
-    //   case 'watering':
-    //     return < />;
+      case 'watering':
+        return <IrrigationScreen />;
     //   case 'chat':
     //     return < />;
     //   case 'schedule':

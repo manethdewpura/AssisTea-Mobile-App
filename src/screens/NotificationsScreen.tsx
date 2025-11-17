@@ -4,12 +4,13 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { useAppSelector } from '../hooks';
 import { selectTheme } from '../store/selectors';
+import ScreenHeader from '../components/molecule/ScreenHeader';
+import StatusCard from '../components/molecule/StatusCard';
 
 interface Notification {
   id: string;
@@ -79,8 +80,6 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
     },
   ]);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'info':
@@ -115,17 +114,7 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
       edges={['top']}
     >
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={onBackPress}
-          activeOpacity={0.7}
-        >
-          <Lucide name="arrow-left" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Notifications</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      <ScreenHeader title="Notifications" onBackPress={onBackPress} />
 
       <ScrollView
         style={styles.notificationsContainer}
@@ -140,59 +129,16 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
           </View>
         ) : (
           notifications.map(notification => (
-            <TouchableOpacity
+            <StatusCard
               key={notification.id}
-              style={[
-                styles.notificationCard,
-                {
-                  backgroundColor: colors.surface,
-                  borderLeftColor: getNotificationColor(notification.type),
-                },
-              ]}
-              activeOpacity={0.7}
-            >
-              <View style={styles.notificationHeader}>
-                <View
-                  style={[
-                    styles.iconContainer,
-                    { backgroundColor: getNotificationColor(notification.type) + '20' },
-                  ]}
-                >
-                  <Lucide
-                    name={getNotificationIcon(notification.type) as any}
-                    size={20}
-                    color={getNotificationColor(notification.type)}
-                  />
-                </View>
-                <View style={styles.notificationContent}>
-                  <View style={styles.titleRow}>
-                    <Text
-                      style={[styles.notificationTitle, { color: colors.text }]}
-                    >
-                      {notification.title}
-                    </Text>
-                    {!notification.read && (
-                      <View
-                        style={[
-                          styles.unreadDot,
-                          { backgroundColor: colors.primary },
-                        ]}
-                      />
-                    )}
-                  </View>
-                  <Text
-                    style={[styles.notificationMessage, { color: colors.textSecondary }]}
-                  >
-                    {notification.message}
-                  </Text>
-                  <Text
-                    style={[styles.notificationTime, { color: colors.textSecondary }]}
-                  >
-                    {notification.time}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
+              icon={getNotificationIcon(notification.type)}
+              iconColor={getNotificationColor(notification.type)}
+              title={notification.title}
+              message={notification.message}
+              timestamp={notification.time}
+              unreadDot={!notification.read}
+              borderColor={getNotificationColor(notification.type)}
+            />
           ))
         )}
       </ScrollView>
@@ -203,21 +149,6 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
   },
   notificationsContainer: {
     flex: 1,
@@ -234,57 +165,6 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     marginTop: 16,
-  },
-  notificationCard: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  notificationHeader: {
-    flexDirection: 'row',
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  notificationContent: {
-    flex: 1,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  notificationTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    flex: 1,
-  },
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  notificationMessage: {
-    fontSize: 14,
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  notificationTime: {
-    fontSize: 12,
   },
 });
 
