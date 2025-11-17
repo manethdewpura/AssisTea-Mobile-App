@@ -12,8 +12,7 @@ import type { ThemeState } from './src/common/types';
 import LoginScreen from './src/screens/auth/LoginScreen';
 import SignUpScreen from './src/screens/auth/SignUpScreen';
 import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
-import AdminDashboard from './src/screens/admin/AdminDashboard';
-import TeaPlantationManagerScreen from './src/screens/teaPlantationManager/TeaPlantationManagerScreen';
+import MainNavigator from './src/components/organisms/MainNavigator';
 import PlantationSetupModal from './src/components/organisms/PlantationSetupModal';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import NetworkStatus from './src/components/molecule/NetworkStatus';
@@ -92,7 +91,7 @@ function AppContent() {
       return (
         <View style={styles.container}>
           <NetworkStatus />
-          <AdminDashboard />
+          <MainNavigator userRole="admin" />
           <PlantationSetupModal
             visible={showPlantationSetup}
             onClose={() => setShowPlantationSetup(false)}
@@ -104,7 +103,7 @@ function AppContent() {
       return (
         <View style={styles.container}>
           <NetworkStatus />
-          <TeaPlantationManagerScreen />
+          <MainNavigator userRole="tea_plantation_manager" />
         </View>
       );
     }
