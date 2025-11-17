@@ -12,7 +12,6 @@ import { selectAuth, selectTheme } from '../../store/selectors';
 import { teaPlantationService } from '../../services';
 import type { TeaPlantation } from '../../common/interfaces';
 import Button from '../../components/atoms/Button';
-import BottomNavbar from '../../components/organisms/BottomNavbar';
 import TopNavbar from '../../components/organisms/TopNavbar';
 import NotificationsScreen from '../NotificationsScreen';
 
@@ -21,7 +20,6 @@ const TeaPlantationManagerScreen: React.FC = () => {
   const { colors } = useAppSelector(selectTheme);
   const [plantation, setPlantation] = useState<TeaPlantation | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'watering' | 'chat' | 'home' | 'schedule' | 'team'>('home');
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationCount] = useState(5); // Mock notification count
 
@@ -217,7 +215,6 @@ const TeaPlantationManagerScreen: React.FC = () => {
         </View>
       )}
       </ScrollView>
-      <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} />
     </View>
   );
 };

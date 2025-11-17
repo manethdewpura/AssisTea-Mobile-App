@@ -21,7 +21,6 @@ import type { TeaPlantation } from '../../common/interfaces';
 import Input from '../../components/atoms/Input';
 import PasswordInput from '../../components/atoms/PasswordInput';
 import Button from '../../components/atoms/Button';
-import BottomNavbar from '../../components/organisms/BottomNavbar';
 import TopNavbar from '../../components/organisms/TopNavbar';
 import NotificationsScreen from '../NotificationsScreen';
 import {
@@ -44,9 +43,6 @@ const AdminDashboard: React.FC = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [plantations, setPlantations] = useState<TeaPlantation[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<
-    'watering' | 'chat' | 'home' | 'schedule' | 'team'
-  >('home');
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showCreatePlantationModal, setShowCreatePlantationModal] =
     useState(false);
@@ -698,7 +694,6 @@ const AdminDashboard: React.FC = () => {
           onDismiss={() => setAlertVisible(false)}
         />
       </ScrollView>
-      <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} />
     </KeyboardAvoidingView>
   );
 };

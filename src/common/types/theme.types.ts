@@ -2,6 +2,7 @@ export type ThemeColors = {
   background: string;
   surface: string;
   primary: string;
+  primaryLight: string;
   secondary: string;
   tertiary: string;
   text: string;

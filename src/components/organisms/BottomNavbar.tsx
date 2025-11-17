@@ -30,10 +30,14 @@ const BottomNavbar: React.FC<BottomNavbarProps> = ({ activeTab, onTabChange }) =
     >
       {tabs.map(({ key, name }) => {
         const isActive = activeTab === key;
+        const activeTabStyle = {
+          ...styles.activeTabBase,
+          backgroundColor: colors.primaryLight ?? colors.primary ?? colors.surface,
+        };
         return (
           <TouchableOpacity
             key={key}
-            style={[styles.tab, isActive && styles.activeTab]}
+            style={[styles.tab, isActive && activeTabStyle]}
             onPress={() => onTabChange(key)}
             activeOpacity={0.7}
           >
@@ -78,8 +82,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minWidth: 50,
   },
-  activeTab: {
-    backgroundColor: '#E8F5E9',
+  activeTabBase: {
     borderRadius: 12,
     paddingVertical: 8,
     paddingHorizontal: 16,
