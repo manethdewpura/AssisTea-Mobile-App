@@ -138,28 +138,6 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
           contentContainerStyle={styles.listContent}
         />
       </ScrollView>
-
-      {/* Footer Navigation */}
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.footerIcon}>
-          <Text style={styles.footerIconText}>💧</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.footerIcon}>
-          <Text style={styles.footerIconText}>💬</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.footerIcon}>
-          <Text style={styles.footerIconText}>🏠</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.footerIcon, styles.footerIconActive]}
-          onPress={() => {}}
-        >
-          <Text style={styles.footerIconText}>📅</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.footerIcon}>
-          <Text style={styles.footerIconText}>👥</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };
@@ -319,26 +297,6 @@ const styles = StyleSheet.create({
     color: '#2e7d32',
     fontSize: 12,
     fontWeight: '500',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingBottom: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    backgroundColor: '#fff',
-  },
-  footerIcon: {
-    padding: 8,
-  },
-  footerIconActive: {
-    backgroundColor: '#e8f5e9',
-    borderRadius: 8,
-  },
-  footerIconText: {
-    fontSize: 24,
   },
 });
 

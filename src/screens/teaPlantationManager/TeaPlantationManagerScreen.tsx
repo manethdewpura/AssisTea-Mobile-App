@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useAppSelector } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
@@ -62,20 +63,28 @@ const TeaPlantationManagerScreen: React.FC<Props> = ({ navigation }) => {
     return () => backHandler.remove();
   }, []);
 
-  const handleManageWorkers = () => {
-    navigation.navigate('WorkerManagement');
+  const handleSignOut = () => {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: () => authService.signOut(),
+      },
+    ]);
   };
 
   if (loading) {
     return (
-      <View
+      <SafeAreaView
         style={[
           styles.loadingContainer,
           { backgroundColor: colors.background },
         ]}
       >
+        <ActivityIndicator size="large" color="#7cb342" />
         <Text style={[styles.loadingText, { color: colors.text }]}>Loading...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -98,6 +107,7 @@ const TeaPlantationManagerScreen: React.FC<Props> = ({ navigation }) => {
       <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
       >
         {/* Logo Section */}
         <View style={styles.logoSection}>
@@ -131,7 +141,7 @@ const TeaPlantationManagerScreen: React.FC<Props> = ({ navigation }) => {
 
           <TouchableOpacity
             style={[styles.splitButton, styles.rightButton]}
-            onPress={handleManageWorkers}
+            onPress={() => navigation.navigate('WorkerManagement')}
           >
             <Text style={styles.buttonText}>Manage Workers</Text>
           </TouchableOpacity>
@@ -144,7 +154,7 @@ const TeaPlantationManagerScreen: React.FC<Props> = ({ navigation }) => {
         </TouchableOpacity>
 
         {/* View Latest Schedule Link */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.linkContainer}
           onPress={() => navigation.navigate('ViewLatestSchedule')}
         >
@@ -154,25 +164,6 @@ const TeaPlantationManagerScreen: React.FC<Props> = ({ navigation }) => {
         {/* Spacer */}
         <View style={styles.spacer} />
       </ScrollView>
-
-      {/* Footer Navigation */}
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.footerIcon}>
-          <Text style={styles.footerIconText}>💧</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.footerIcon}>
-          <Text style={styles.footerIconText}>💬</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.footerIcon}>
-          <Text style={styles.footerIconText}>🏠</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.footerIcon}>
-          <Text style={styles.footerIconText}>📅</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.footerIcon}>
-          <Text style={styles.footerIconText}>👥</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };
@@ -189,6 +180,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
+    marginTop: 16,
   },
   header: {
     backgroundColor: '#7cb342',
@@ -219,6 +211,10 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 16,
+  },
+  scrollContent: {
+    paddingTop: 16,
+    paddingBottom: 40,
   },
   logoSection: {
     alignItems: 'center',
@@ -330,22 +326,6 @@ const styles = StyleSheet.create({
   },
   spacer: {
     height: 40,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingBottom: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    backgroundColor: '#fff',
-  },
-  footerIcon: {
-    padding: 8,
-  },
-  footerIconText: {
-    fontSize: 24,
   },
 });
 

@@ -2,12 +2,14 @@ export type ThemeColors = {
   background: string;
   surface: string;
   primary: string;
+  primaryLight: string;
   secondary: string;
   tertiary: string;
   text: string;
   textSecondary: string;
   textColored: string;
   textColoredSecondary: string;
+  textInverse: string;
   border: string;
   inputBackground: string;
   buttonBackground: string;
