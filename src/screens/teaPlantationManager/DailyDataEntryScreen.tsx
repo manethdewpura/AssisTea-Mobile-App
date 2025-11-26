@@ -18,9 +18,16 @@ import { selectAuth, selectTheme } from '../../store/selectors';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
-import { workerService } from '../../services';
+import { workerService, dailyDataService } from '../../services';
 import { handleFirebaseError, logError } from '../../utils';
 import type { Worker } from '../../models/Worker';
+// Excel upload temporarily disabled - react-native-file-selector has dependency issues
+// Will be re-implemented with a compatible solution
+// import FileSelector from 'react-native-file-selector';
+// import * as XLSX from 'xlsx';
+// import type { ExcelDailyDataRow } from '../../models/DailyData';
+
+// Base64 encoding helper removed - not needed without Excel upload
 
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
@@ -103,7 +110,17 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
     return field ? field.name : 'Select Field Area';
   };
 
-  const handleSaveData = () => {
+  const handleUploadExcel = async () => {
+    // Excel upload feature temporarily disabled
+    // react-native-file-selector has incompatible Android dependencies
+    // TODO: Re-implement with a compatible file picker solution
+    Alert.alert(
+      'Feature Coming Soon',
+      'Excel upload functionality is currently being updated for better compatibility. Please use manual entry for now. The feature will be available in a future update.',
+    );
+  };
+
+  const handleSaveData = async () => {
     if (
       !formData.workerId ||
       !formData.teaPluckedKg ||
@@ -115,8 +132,46 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
       return;
     }
 
-    Alert.alert('Success', 'Daily data saved successfully');
-    // TODO: Save to Firebase
+    if (!userProfile?.plantationId) {
+      Alert.alert('Error', 'Plantation ID not found');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await dailyDataService.createDailyData(userProfile.plantationId, {
+        workerId: formData.workerId,
+        date: formData.date,
+        teaPluckedKg: parseFloat(formData.teaPluckedKg),
+        timeSpentHours: parseFloat(formData.timeSpentHours),
+        fieldArea: formData.fieldArea,
+        teaLeafQuality: formData.teaLeafQuality,
+      });
+
+      Alert.alert('Success', 'Daily data saved successfully', [
+        {
+          text: 'OK',
+          onPress: () => {
+            // Reset form
+            setFormData({
+              date: new Date().toISOString().split('T')[0],
+              workerId: '',
+              teaPluckedKg: '',
+              timeSpentHours: '',
+              fieldArea: '',
+              teaLeafQuality: '',
+            });
+            setSelectedDate(new Date());
+          },
+        },
+      ]);
+    } catch (error: any) {
+      const appError = handleFirebaseError(error);
+      logError(appError, 'DailyDataEntryScreen - SaveData');
+      Alert.alert('Error', appError.userMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -192,8 +247,12 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
             )}
 
             {/* Upload Excel Section */}
-            <TouchableOpacity style={styles.uploadButton}>
-              <Text style={styles.uploadButtonText}>Upload Excel Sheet</Text>
+            <TouchableOpacity
+              style={[styles.uploadButton, styles.uploadButtonDisabled]}
+              onPress={handleUploadExcel}
+              disabled={loading}
+            >
+              <Text style={styles.uploadButtonText}>Upload Excel Sheet (Coming Soon)</Text>
             </TouchableOpacity>
 
             <Text style={[styles.orText, { color: colors.text }]}>Or</Text>
@@ -446,6 +505,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
     marginBottom: 15,
+  },
+  uploadButtonDisabled: {
+    opacity: 0.6,
   },
   uploadButtonText: {
     color: '#fff',
