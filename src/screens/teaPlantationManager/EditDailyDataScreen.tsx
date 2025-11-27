@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -21,17 +21,10 @@ import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantation
 import { workerService, dailyDataService } from '../../services';
 import { handleFirebaseError, logError } from '../../utils';
 import type { Worker } from '../../models/Worker';
-// Excel upload temporarily disabled - react-native-file-selector has dependency issues
-// Will be re-implemented with a compatible solution
-// import FileSelector from 'react-native-file-selector';
-// import * as XLSX from 'xlsx';
-// import type { ExcelDailyDataRow } from '../../models/DailyData';
-
-// Base64 encoding helper removed - not needed without Excel upload
 
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
-  'DailyDataEntry'
+  'EditDailyData'
 >;
 
 interface FieldArea {
@@ -45,13 +38,15 @@ const MOCK_FIELD_AREAS: FieldArea[] = [
   { id: '3', name: 'Field C' },
 ];
 
-const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
+const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
   const { colors } = useAppSelector(selectTheme);
   const { userProfile } = useAppSelector(selectAuth);
+  const { dataId } = route.params;
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [workers, setWorkers] = useState<Worker[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -65,9 +60,10 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
   const [showWorkerDropdown, setShowWorkerDropdown] = useState(false);
   const [showFieldDropdown, setShowFieldDropdown] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     loadWorkers();
-  }, []);
+    loadDailyData();
+  }, [dataId]);
 
   const loadWorkers = async () => {
     if (!userProfile?.plantationId) {
@@ -75,14 +71,49 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
     }
 
     try {
-      setLoading(true);
       const fetchedWorkers = await workerService.getWorkersByPlantation(
-        userProfile.plantationId
+        userProfile.plantationId,
       );
       setWorkers(fetchedWorkers);
     } catch (error: any) {
       const appError = handleFirebaseError(error);
-      logError(appError, 'DailyDataEntryScreen - LoadWorkers');
+      logError(appError, 'EditDailyDataScreen - LoadWorkers');
+    }
+  };
+
+  const loadDailyData = async () => {
+    try {
+      setLoading(true);
+      const data = await dailyDataService.getDailyDataById(dataId);
+
+      if (!data) {
+        Alert.alert('Error', 'Daily data not found');
+        navigation.goBack();
+        return;
+      }
+
+      // Parse date string to Date object
+      const dateParts = data.date.split('-');
+      const date = new Date(
+        parseInt(dateParts[0]),
+        parseInt(dateParts[1]) - 1,
+        parseInt(dateParts[2]),
+      );
+
+      setSelectedDate(date);
+      setFormData({
+        date: data.date,
+        workerId: data.workerId,
+        teaPluckedKg: data.teaPluckedKg.toString(),
+        timeSpentHours: data.timeSpentHours.toString(),
+        fieldArea: data.fieldArea,
+        teaLeafQuality: data.teaLeafQuality,
+      });
+    } catch (error: any) {
+      const appError = handleFirebaseError(error);
+      logError(appError, 'EditDailyDataScreen - LoadDailyData');
+      Alert.alert('Error', appError.userMessage);
+      navigation.goBack();
     } finally {
       setLoading(false);
     }
@@ -110,16 +141,6 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
     return field ? field.name : 'Select Field Area';
   };
 
-  const handleUploadExcel = async () => {
-    // Excel upload feature temporarily disabled
-    // react-native-file-selector has incompatible Android dependencies
-    // TODO: Re-implement with a compatible file picker solution
-    Alert.alert(
-      'Feature Coming Soon',
-      'Excel upload functionality is currently being updated for better compatibility. Please use manual entry for now. The feature will be available in a future update.',
-    );
-  };
-
   const handleSaveData = async () => {
     if (
       !formData.workerId ||
@@ -132,14 +153,9 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
       return;
     }
 
-    if (!userProfile?.plantationId) {
-      Alert.alert('Error', 'Plantation ID not found');
-      return;
-    }
-
     try {
-      setLoading(true);
-      await dailyDataService.createDailyData(userProfile.plantationId, {
+      setSaving(true);
+      await dailyDataService.updateDailyData(dataId, {
         workerId: formData.workerId,
         date: formData.date,
         teaPluckedKg: parseFloat(formData.teaPluckedKg),
@@ -148,37 +164,38 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
         teaLeafQuality: formData.teaLeafQuality,
       });
 
-      Alert.alert('Success', 'Daily data saved successfully', [
-        {
-          text: 'View All Data',
-          onPress: () => {
-            navigation.navigate('DailyDataView');
-          },
-        },
+      Alert.alert('Success', 'Daily data updated successfully', [
         {
           text: 'OK',
           onPress: () => {
-            // Reset form
-            setFormData({
-              date: new Date().toISOString().split('T')[0],
-              workerId: '',
-              teaPluckedKg: '',
-              timeSpentHours: '',
-              fieldArea: '',
-              teaLeafQuality: '',
-            });
-            setSelectedDate(new Date());
+            navigation.goBack();
           },
         },
       ]);
     } catch (error: any) {
       const appError = handleFirebaseError(error);
-      logError(appError, 'DailyDataEntryScreen - SaveData');
+      logError(appError, 'EditDailyDataScreen - SaveData');
       Alert.alert('Error', appError.userMessage);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: colors.background },
+        ]}
+      >
+        <ActivityIndicator size="large" color="#7cb342" />
+        <Text style={[styles.loadingText, { color: colors.text }]}>
+          Loading...
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -194,7 +211,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
           >
             <Text style={styles.menuIcon}>☰</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>AssisTea</Text>
+          <Text style={styles.headerTitle}>Edit Daily Data</Text>
           <TouchableOpacity style={styles.notificationButton}>
             <Text style={styles.notificationIcon}>🔔</Text>
           </TouchableOpacity>
@@ -251,17 +268,6 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
                 </View>
               </Modal>
             )}
-
-            {/* Upload Excel Section */}
-            <TouchableOpacity
-              style={[styles.uploadButton, styles.uploadButtonDisabled]}
-              onPress={handleUploadExcel}
-              disabled={loading}
-            >
-              <Text style={styles.uploadButtonText}>Upload Excel Sheet (Coming Soon)</Text>
-            </TouchableOpacity>
-
-            <Text style={[styles.orText, { color: colors.text }]}>Or</Text>
 
             {/* Select Worker */}
             <View style={styles.inputGroup}>
@@ -412,14 +418,14 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
             <TouchableOpacity
               style={styles.saveButton}
               onPress={handleSaveData}
-              disabled={loading}
+              disabled={saving}
             >
-              {loading ? (
+              {saving ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <>
                   <Text style={styles.saveIcon}>✓</Text>
-                  <Text style={styles.saveButtonText}>Save</Text>
+                  <Text style={styles.saveButtonText}>Update</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -434,6 +440,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    marginTop: 16,
   },
   header: {
     backgroundColor: '#7cb342',
@@ -504,28 +519,6 @@ const styles = StyleSheet.create({
   },
   calendarIcon: {
     fontSize: 24,
-  },
-  uploadButton: {
-    backgroundColor: '#7cb342',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  uploadButtonDisabled: {
-    opacity: 0.6,
-  },
-  uploadButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  orText: {
-    textAlign: 'center',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 20,
-    color: '#333',
   },
   inputGroup: {
     marginBottom: 16,
@@ -630,4 +623,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default DailyDataEntryScreen;
+export default EditDailyDataScreen;
+

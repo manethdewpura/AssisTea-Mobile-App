@@ -85,21 +85,25 @@ class DailyDataService {
     endDate?: string,
   ): Promise<DailyData[]> {
     try {
-      let query = this.dailyDataCollection.where(
-        'plantationId',
-        '==',
-        plantationId,
-      );
+      // Fetch all data for the plantation first
+      const snapshot = await this.dailyDataCollection
+        .where('plantationId', '==', plantationId)
+        .get();
 
-      if (startDate) {
-        query = query.where('date', '>=', startDate);
-      }
-      if (endDate) {
-        query = query.where('date', '<=', endDate);
+      let dailyData = snapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id,
+      })) as DailyData[];
+
+      // Filter by date range in memory to avoid composite index requirements
+      if (startDate || endDate) {
+        dailyData = dailyData.filter(data => {
+          if (startDate && data.date < startDate) return false;
+          if (endDate && data.date > endDate) return false;
+          return true;
+        });
       }
 
-      const snapshot = await query.get();
-      const dailyData = snapshot.docs.map(doc => doc.data() as DailyData);
       return dailyData.sort((a, b) => b.createdAt - a.createdAt);
     } catch (error) {
       throw error;
@@ -115,17 +119,25 @@ class DailyDataService {
     endDate?: string,
   ): Promise<DailyData[]> {
     try {
-      let query = this.dailyDataCollection.where('workerId', '==', workerId);
+      // Fetch all data for the worker first
+      const snapshot = await this.dailyDataCollection
+        .where('workerId', '==', workerId)
+        .get();
 
-      if (startDate) {
-        query = query.where('date', '>=', startDate);
-      }
-      if (endDate) {
-        query = query.where('date', '<=', endDate);
+      let dailyData = snapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id,
+      })) as DailyData[];
+
+      // Filter by date range in memory to avoid composite index requirements
+      if (startDate || endDate) {
+        dailyData = dailyData.filter(data => {
+          if (startDate && data.date < startDate) return false;
+          if (endDate && data.date > endDate) return false;
+          return true;
+        });
       }
 
-      const snapshot = await query.get();
-      const dailyData = snapshot.docs.map(doc => doc.data() as DailyData);
       return dailyData.sort((a, b) => b.createdAt - a.createdAt);
     } catch (error) {
       throw error;
@@ -138,7 +150,13 @@ class DailyDataService {
   async getDailyDataById(dataId: string): Promise<DailyData | null> {
     try {
       const doc = await this.dailyDataCollection.doc(dataId).get();
-      return doc.exists() ? (doc.data() as DailyData) : null;
+      if (!doc.exists()) return null;
+      
+      // Ensure the id field is included
+      return {
+        ...doc.data(),
+        id: doc.id,
+      } as DailyData;
     } catch (error) {
       throw error;
     }
