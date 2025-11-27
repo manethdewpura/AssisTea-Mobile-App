@@ -3,6 +3,7 @@ import authReducer from './slices/auth.slice';
 import themeReducer from './slices/theme.slice';
 import networkReducer from './slices/network.slice';
 import notificationReducer from './slices/notification.slice';
+import weatherReducer from './slices/weather.slice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     theme: themeReducer,
     network: networkReducer,
     notifications: notificationReducer,
+    weather: weatherReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
