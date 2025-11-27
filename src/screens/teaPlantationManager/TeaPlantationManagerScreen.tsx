@@ -153,6 +153,14 @@ const TeaPlantationManagerScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.scheduleText}>Generate Today's Schedule</Text>
         </TouchableOpacity>
 
+        {/* View Daily Data Link */}
+        <TouchableOpacity
+          style={styles.linkContainer}
+          onPress={() => navigation.navigate('DailyDataView')}
+        >
+          <Text style={styles.linkText}>View Daily Data</Text>
+        </TouchableOpacity>
+
         {/* View Latest Schedule Link */}
         <TouchableOpacity
           style={styles.linkContainer}
