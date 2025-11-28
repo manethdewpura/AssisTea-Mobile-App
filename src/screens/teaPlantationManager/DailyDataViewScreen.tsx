@@ -28,7 +28,7 @@ type Props = NativeStackScreenProps<
   'DailyDataView'
 >;
 
-type FilterType = 'all' | 'date' | 'dateRange' | 'worker';
+type FilterType = 'all' | 'date' | 'dateRange' | 'worker' | 'field' | 'quality';
 
 const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
   const { colors } = useAppSelector(selectTheme);
@@ -41,13 +41,19 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [selectedWorkerId, setSelectedWorkerId] = useState<string>('');
+  const [selectedField, setSelectedField] = useState<string>('');
+  const [selectedQuality, setSelectedQuality] = useState<string>('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [showWorkerDropdown, setShowWorkerDropdown] = useState(false);
+  const [showFieldDropdown, setShowFieldDropdown] = useState(false);
+  const [showQualityDropdown, setShowQualityDropdown] = useState(false);
   const [dateFilter, setDateFilter] = useState<string>('');
   const [startDateFilter, setStartDateFilter] = useState<string>('');
   const [endDateFilter, setEndDateFilter] = useState<string>('');
+  const [fieldAreas, setFieldAreas] = useState<string[]>([]);
+  const [qualityLevels, setQualityLevels] = useState<string[]>([]);
 
   // Check if workerId is passed from route params (from WorkerDetailsScreen)
   useEffect(() => {
@@ -63,7 +69,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
     if (userProfile?.plantationId) {
       loadDailyData();
     }
-  }, [filterType, dateFilter, startDateFilter, endDateFilter, selectedWorkerId, userProfile?.plantationId]);
+  }, [filterType, dateFilter, startDateFilter, endDateFilter, selectedWorkerId, selectedField, selectedQuality, userProfile?.plantationId]);
 
   useEffect(() => {
     loadWorkers();
@@ -123,11 +129,25 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           endDateFilter || undefined,
         );
       } else {
+        // Fetch all data for 'all', 'field', and 'quality' filters
         data = await dailyDataService.getDailyDataByPlantation(
           userProfile.plantationId,
         );
       }
 
+      // Client-side filtering for field and quality
+      if (filterType === 'field' && selectedField) {
+        data = data.filter(d => d.fieldArea === selectedField);
+      } else if (filterType === 'quality' && selectedQuality) {
+        data = data.filter(d => d.teaLeafQuality === selectedQuality);
+      }
+
+      // Extract unique field areas and quality levels for dropdowns
+      const uniqueFields = [...new Set(data.map(d => d.fieldArea))].filter(Boolean).sort();
+      const uniqueQualities = [...new Set(data.map(d => d.teaLeafQuality))].filter(Boolean).sort();
+
+      setFieldAreas(uniqueFields);
+      setQualityLevels(uniqueQualities);
       setDailyData(data);
     } catch (error: any) {
       // Log the actual error for debugging
@@ -136,15 +156,15 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
         message: error.message,
         error: error,
       });
-      
+
       const appError = handleFirebaseError(error);
       logError(appError, 'DailyDataViewScreen - LoadDailyData');
-      
+
       // Show more specific error message
       let errorMessage = appError.userMessage;
       const errorCode = error.code || '';
       const errorMsg = error.message || '';
-      
+
       if (errorCode === 'failed-precondition' || errorMsg.includes('index') || errorMsg.includes('Index')) {
         errorMessage = 'Database index required. The query has been optimized to work without indexes. Please try again.';
       } else if (errorCode === 'permission-denied' || errorCode === 'firestore/permission-denied') {
@@ -154,7 +174,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
       } else if (errorCode === 'deadline-exceeded' || errorCode === 'firestore/deadline-exceeded') {
         errorMessage = 'Request timed out. Please try again.';
       }
-      
+
       Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
@@ -226,6 +246,8 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
     setStartDate(null);
     setEndDate(null);
     setSelectedWorkerId('');
+    setSelectedField('');
+    setSelectedQuality('');
   };
 
   const handleStartDateChange = (event: any, date: Date | undefined) => {
@@ -347,8 +369,8 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               {startDateFilter && endDateFilter
                 ? `${startDateFilter} to ${endDateFilter}`
                 : startDateFilter
-                ? `${startDateFilter} to ...`
-                : 'Date Range'}
+                  ? `${startDateFilter} to ...`
+                  : 'Date Range'}
             </Text>
           </TouchableOpacity>
 
@@ -371,6 +393,42 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                 : 'Select Worker'}
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.filterButton,
+              filterType === 'field' && styles.filterButtonActive,
+            ]}
+            onPress={() => setShowFieldDropdown(!showFieldDropdown)}
+          >
+            <Text
+              style={[
+                styles.filterButtonText,
+                filterType === 'field' && styles.filterButtonTextActive,
+              ]}
+            >
+              🏞️{' '}
+              {selectedField || 'Select Field'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.filterButton,
+              filterType === 'quality' && styles.filterButtonActive,
+            ]}
+            onPress={() => setShowQualityDropdown(!showQualityDropdown)}
+          >
+            <Text
+              style={[
+                styles.filterButtonText,
+                filterType === 'quality' && styles.filterButtonTextActive,
+              ]}
+            >
+              ⭐{' '}
+              {selectedQuality || 'Select Quality'}
+            </Text>
+          </TouchableOpacity>
         </ScrollView>
 
         {showWorkerDropdown && (
@@ -385,6 +443,46 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                   <Text style={styles.workerDropdownText}>
                     {worker.name} ({worker.workerId})
                   </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {showFieldDropdown && (
+          <View style={styles.workerDropdown}>
+            <ScrollView style={styles.workerDropdownList}>
+              {fieldAreas.map(field => (
+                <TouchableOpacity
+                  key={field}
+                  style={styles.workerDropdownItem}
+                  onPress={() => {
+                    setSelectedField(field);
+                    setFilterType('field');
+                    setShowFieldDropdown(false);
+                  }}
+                >
+                  <Text style={styles.workerDropdownText}>{field}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {showQualityDropdown && (
+          <View style={styles.workerDropdown}>
+            <ScrollView style={styles.workerDropdownList}>
+              {qualityLevels.map(quality => (
+                <TouchableOpacity
+                  key={quality}
+                  style={styles.workerDropdownItem}
+                  onPress={() => {
+                    setSelectedQuality(quality);
+                    setFilterType('quality');
+                    setShowQualityDropdown(false);
+                  }}
+                >
+                  <Text style={styles.workerDropdownText}>{quality}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
