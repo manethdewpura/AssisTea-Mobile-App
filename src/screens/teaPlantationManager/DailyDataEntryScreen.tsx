@@ -19,15 +19,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { workerService, dailyDataService } from '../../services';
-import { handleFirebaseError, logError } from '../../utils';
+import { handleFirebaseError, logError, parseCSVFile, formatValidationErrors } from '../../utils';
 import type { Worker } from '../../models/Worker';
-// Excel upload temporarily disabled - react-native-file-selector has dependency issues
-// Will be re-implemented with a compatible solution
-// import FileSelector from 'react-native-file-selector';
-// import * as XLSX from 'xlsx';
-// import type { ExcelDailyDataRow } from '../../models/DailyData';
-
-// Base64 encoding helper removed - not needed without Excel upload
+import { pick, types } from '@react-native-documents/picker';
 
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
@@ -52,6 +46,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [loading, setLoading] = useState(false);
+  const [uploadingCSV, setUploadingCSV] = useState(false);
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -110,14 +105,139 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
     return field ? field.name : 'Select Field Area';
   };
 
-  const handleUploadExcel = async () => {
-    // Excel upload feature temporarily disabled
-    // react-native-file-selector has incompatible Android dependencies
-    // TODO: Re-implement with a compatible file picker solution
-    Alert.alert(
-      'Feature Coming Soon',
-      'Excel upload functionality is currently being updated for better compatibility. Please use manual entry for now. The feature will be available in a future update.',
-    );
+  const handleUploadCSV = async () => {
+    if (!userProfile?.plantationId) {
+      Alert.alert('Error', 'Plantation ID not found');
+      return;
+    }
+
+    try {
+      // Pick CSV file
+      const result = await pick({
+        type: [types.csv, types.plainText],
+        copyTo: 'cachesDirectory',
+      });
+
+      if (!result || result.length === 0) {
+        return;
+      }
+
+      const file = result[0];
+
+      // Read file content
+      setUploadingCSV(true);
+
+      // Read the file using fetch - the uri property contains the file path
+      const response = await fetch(file.uri);
+      const fileContent = await response.text();
+
+      // Parse and validate CSV (using date from UI date picker)
+      const parseResult = await parseCSVFile(fileContent, formData.date);
+
+      if (!parseResult.success) {
+        if (parseResult.errors && parseResult.errors.length > 0) {
+          const errorMessage = formatValidationErrors(parseResult.errors);
+          Alert.alert('Validation Errors', errorMessage);
+        } else {
+          Alert.alert('Error', parseResult.message || 'Failed to parse CSV file');
+        }
+        return;
+      }
+
+      if (!parseResult.data || parseResult.data.length === 0) {
+        Alert.alert('Error', 'No valid data found in CSV file');
+        return;
+      }
+
+      // Confirm upload
+      Alert.alert(
+        'Confirm Upload',
+        `Found ${parseResult.data.length} valid record(s). Do you want to upload them?`,
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Upload',
+            onPress: async () => {
+              try {
+                // Upload to Firebase
+                if (!userProfile?.plantationId) {
+                  Alert.alert('Error', 'Plantation ID not found');
+                  return;
+                }
+
+                // Convert custom worker IDs to Firebase document IDs
+                const dataWithFirebaseIds = [];
+                const missingWorkers = [];
+
+                for (const record of parseResult.data!) {
+                  // Look up worker by custom workerId field
+                  const worker = await workerService.getWorkerByWorkerId(
+                    record.workerId,
+                    userProfile.plantationId,
+                  );
+
+                  if (!worker) {
+                    missingWorkers.push(record.workerId);
+                  } else {
+                    // Replace custom workerId with Firebase document ID
+                    dataWithFirebaseIds.push({
+                      ...record,
+                      workerId: worker.id, // Use Firebase document ID
+                    });
+                  }
+                }
+
+                // Check if any workers were not found
+                if (missingWorkers.length > 0) {
+                  Alert.alert(
+                    'Workers Not Found',
+                    `The following worker IDs were not found in the system:\n${missingWorkers.join(', ')}\n\nPlease add these workers first or correct the worker IDs in your CSV file.`,
+                  );
+                  return;
+                }
+
+                // Upload with Firebase IDs
+                await dailyDataService.createBulkDailyData(
+                  userProfile.plantationId,
+                  dataWithFirebaseIds,
+                );
+
+                Alert.alert(
+                  'Success',
+                  `Successfully uploaded ${dataWithFirebaseIds.length} record(s)`,
+                  [
+                    {
+                      text: 'View Data',
+                      onPress: () => navigation.navigate('DailyDataView'),
+                    },
+                    { text: 'OK' },
+                  ],
+                );
+              } catch (error: any) {
+                const appError = handleFirebaseError(error);
+                logError(appError, 'DailyDataEntryScreen - CSV Upload');
+                Alert.alert('Upload Error', appError.userMessage);
+              }
+            },
+          },
+        ],
+      );
+    } catch (error: any) {
+      // Check if user cancelled - the new package throws a specific error
+      if (error?.message === 'User canceled document picker') {
+        // User cancelled the picker
+        return;
+      }
+
+      const appError = handleFirebaseError(error);
+      logError(appError, 'DailyDataEntryScreen - CSV Upload');
+      Alert.alert('Error', 'Failed to read CSV file. Please try again.');
+    } finally {
+      setUploadingCSV(false);
+    }
   };
 
   const handleSaveData = async () => {
@@ -252,13 +372,17 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
               </Modal>
             )}
 
-            {/* Upload Excel Section */}
+            {/* Upload CSV Section */}
             <TouchableOpacity
-              style={[styles.uploadButton, styles.uploadButtonDisabled]}
-              onPress={handleUploadExcel}
-              disabled={loading}
+              style={styles.uploadButton}
+              onPress={handleUploadCSV}
+              disabled={loading || uploadingCSV}
             >
-              <Text style={styles.uploadButtonText}>Upload Excel Sheet (Coming Soon)</Text>
+              {uploadingCSV ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.uploadButtonText}>📄 Upload CSV File</Text>
+              )}
             </TouchableOpacity>
 
             <Text style={[styles.orText, { color: colors.text }]}>Or</Text>

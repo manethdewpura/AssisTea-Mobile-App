@@ -93,6 +93,29 @@ class WorkerService {
   }
 
   /**
+   * Get worker by their custom workerId field (not Firebase ID)
+   */
+  async getWorkerByWorkerId(
+    workerId: string,
+    plantationId: string,
+  ): Promise<Worker | null> {
+    try {
+      const snapshot = await this.workersCollection
+        .where('workerId', '==', workerId)
+        .where('plantationId', '==', plantationId)
+        .get();
+
+      if (snapshot.docs.length === 0) {
+        return null;
+      }
+
+      return snapshot.docs[0].data() as Worker;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
    * Check if worker ID already exists
    */
   async checkWorkerIdExists(workerId: string, plantationId: string): Promise<boolean> {

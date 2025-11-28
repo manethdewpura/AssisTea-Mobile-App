@@ -29,3 +29,20 @@ export interface ExcelDailyDataRow {
   teaLeafQuality: string;
 }
 
+export interface CSVDailyDataRow {
+  workerId: string;
+  teaPluckedKg: number | string;
+  timeSpentHours: number | string;
+  fieldArea: string;
+  teaLeafQuality: string;
+}
+
+export interface CSVValidationError {
+  row: number;
+  field: string;
+  value: any;
+  message: string;
+}
+
+
+
