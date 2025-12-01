@@ -148,7 +148,10 @@ const TeaPlantationManagerScreen: React.FC<Props> = ({ navigation }) => {
         </View>
 
         {/* Generate Schedule Button */}
-        <TouchableOpacity style={styles.scheduleButton}>
+        <TouchableOpacity
+          style={styles.scheduleButton}
+          onPress={() => navigation.navigate('AssignmentGeneration')}
+        >
           <Text style={styles.scheduleIcon}>📅</Text>
           <Text style={styles.scheduleText}>Generate Today's Schedule</Text>
         </TouchableOpacity>
