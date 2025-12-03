@@ -12,6 +12,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { assignmentService } from '../../services/assignment.service';
+import { fieldService } from '../../services/field.service';
 import { AssignmentSchedule, WorkerAssignment } from '../../models/MLPrediction';
 import { useAppSelector } from '../../hooks';
 import { selectAuth } from '../../store/selectors';
@@ -31,20 +32,39 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
 
         setLoading(true);
         try {
-            // Sample fields - in production, fetch from database
-            const sampleFields = [
-                { id: 'Field_A', name: 'Field A', slope: 12, maxWorkers: 5 },
-                { id: 'Field_B', name: 'Field B', slope: 15, maxWorkers: 5 },
-                { id: 'Field_C', name: 'Field C', slope: 18, maxWorkers: 5 },
-                { id: 'Field_D', name: 'Field D', slope: 9, maxWorkers: 5 },
-            ];
+            // Fetch real fields from Firebase
+            const fields = await fieldService.getFieldsByPlantation(userProfile.plantationId);
+
+            if (fields.length === 0) {
+                Alert.alert(
+                    'No Fields Configured',
+                    'Please add fields before generating assignments.',
+                    [
+                        {
+                            text: 'Add Fields Now',
+                            onPress: () => navigation.navigate('FieldManagement'),
+                        },
+                        { text: 'Cancel', style: 'cancel' },
+                    ]
+                );
+                setLoading(false);
+                return;
+            }
+
+            // Convert to format expected by assignment service
+            const fieldData = fields.map(f => ({
+                id: f.name,
+                name: f.name,
+                slope: f.slope,
+                maxWorkers: f.maxWorkers,
+            }));
 
             const today = new Date().toISOString().split('T')[0];
 
             const generatedSchedule = await assignmentService.generateAssignments(
                 userProfile.plantationId,
                 today,
-                sampleFields,
+                fieldData,
                 'High'
             );
 

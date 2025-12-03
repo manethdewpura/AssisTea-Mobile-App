@@ -9,6 +9,7 @@ import DailyDataViewScreen from '../screens/teaPlantationManager/DailyDataViewSc
 import EditDailyDataScreen from '../screens/teaPlantationManager/EditDailyDataScreen';
 import ViewLatestScheduleScreen from '../screens/teaPlantationManager/ViewLatestScheduleScreen';
 import AssignmentGenerationScreen from '../screens/teaPlantationManager/AssignmentGenerationScreen';
+import FieldManagementScreen from '../screens/teaPlantationManager/FieldManagementScreen';
 
 export type TeaPlantationStackParamList = {
   TeaPlantationHome: undefined;
@@ -20,6 +21,7 @@ export type TeaPlantationStackParamList = {
   EditDailyData: { dataId: string };
   ViewLatestSchedule: undefined;
   AssignmentGeneration: undefined;
+  FieldManagement: undefined;
 };
 
 const Stack = createNativeStackNavigator<TeaPlantationStackParamList>();
@@ -68,6 +70,11 @@ export const TeaPlantationNavigator: React.FC = () => {
       <Stack.Screen
         name="AssignmentGeneration"
         component={AssignmentGenerationScreen}
+      />
+      <Stack.Screen
+        name="FieldManagement"
+        component={FieldManagementScreen}
+        options={{ title: 'Field Management' }}
       />
     </Stack.Navigator>
   );

@@ -313,6 +313,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
                     mode="date"
                     display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                     onChange={handleDateChange}
+                    minimumDate={new Date(1940, 0, 1)} // Allow birth years from 1940
                     maximumDate={new Date()}
                   />
                 </View>

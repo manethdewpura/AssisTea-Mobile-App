@@ -172,6 +172,14 @@ const TeaPlantationManagerScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.linkText}>View Latest Schedule</Text>
         </TouchableOpacity>
 
+        {/* Manage Fields Link */}
+        <TouchableOpacity
+          style={styles.linkContainer}
+          onPress={() => navigation.navigate('FieldManagement')}
+        >
+          <Text style={styles.linkText}>Manage Fields</Text>
+        </TouchableOpacity>
+
         {/* Spacer */}
         <View style={styles.spacer} />
       </ScrollView>
