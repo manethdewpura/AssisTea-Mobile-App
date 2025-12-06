@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,69 +6,121 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  FlatList,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useAppSelector } from '../../hooks';
-import { selectTheme } from '../../store/selectors';
+import { selectAuth, selectTheme } from '../../store/selectors';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
+import { assignmentStorageService } from '../../services/assignmentStorage.service';
+import { SavedSchedule } from '../../models/SavedSchedule';
 
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
   'ViewLatestSchedule'
 >;
 
-interface ScheduleAssignment {
-  id: string;
-  workerName: string;
-  workerId: string;
-  fieldArea: string;
-  slope: string;
-}
-
-// Mock schedule data
-const MOCK_SCHEDULE: ScheduleAssignment[] = [
-  { id: '1', workerName: 'K.Perera', workerId: 'T-001', fieldArea: 'Field 2', slope: 'Slope 1' },
-  { id: '2', workerName: 'K.Perera', workerId: 'T-001', fieldArea: 'Field 2', slope: 'Slope 1' },
-  { id: '3', workerName: 'K.Perera', workerId: 'T-001', fieldArea: 'Field 2', slope: 'Slope 1' },
-  { id: '4', workerName: 'K.Perera', workerId: 'T-001', fieldArea: 'Field 2', slope: 'Slope 1' },
-  { id: '5', workerName: 'K.Perera', workerId: 'T-001', fieldArea: 'Field 2', slope: 'Slope 1' },
-];
-
 const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppSelector(selectTheme);
-  const [filterType, setFilterType] = useState<'worker' | 'area'>('worker');
+  const { userProfile } = useAppSelector(selectAuth);
+  const [loading, setLoading] = useState(true);
+  const [schedule, setSchedule] = useState<SavedSchedule | null>(null);
 
-  const renderScheduleCard = ({ item }: { item: ScheduleAssignment }) => (
-    <View
-      style={[
-        styles.scheduleCard,
-        { backgroundColor: colors.cardBackground || '#fff' },
-      ]}
-    >
-      <View style={styles.workerSection}>
-        <Text style={[styles.workerName, { color: colors.text }]}>
-          {item.workerName}
-        </Text>
-        <Text style={[styles.workerId, { color: colors.textSecondary }]}>
-          ID: {item.workerId}
-        </Text>
-      </View>
+  useEffect(() => {
+    loadLatestSchedule();
+  }, []);
 
-      <View style={styles.arrow}>
-        <Text style={styles.arrowIcon}>→</Text>
-      </View>
+  const loadLatestSchedule = async () => {
+    if (!userProfile?.plantationId) {
+      setLoading(false);
+      return;
+    }
 
-      <View style={styles.assignmentSection}>
-        <View style={styles.fieldBadge}>
-          <Text style={styles.fieldText}>{item.fieldArea}</Text>
+    try {
+      setLoading(true);
+      const latestSchedule = await assignmentStorageService.getLatestSchedule(
+        userProfile.plantationId
+      );
+      setSchedule(latestSchedule);
+    } catch (error) {
+      console.error('Error loading schedule:', error);
+      Alert.alert('Error', 'Failed to load schedule');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Group assignments by field
+  const groupedAssignments = schedule?.assignments.reduce((acc, assignment) => {
+    const fieldName = assignment.fieldName;
+    if (!acc[fieldName]) {
+      acc[fieldName] = [];
+    }
+    acc[fieldName].push(assignment);
+    return acc;
+  }, {} as Record<string, typeof schedule.assignments>);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.menuIcon}>☰</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>AssisTea</Text>
+          <TouchableOpacity style={styles.notificationButton}>
+            <Text style={styles.notificationIcon}>🔔</Text>
+          </TouchableOpacity>
         </View>
-        <View style={styles.slopeBadge}>
-          <Text style={styles.slopeText}>{item.slope}</Text>
+        <View style={styles.greenSection} />
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color="#7cb342" />
+          <Text style={[styles.loadingText, { color: colors.text }]}>
+            Loading schedule...
+          </Text>
         </View>
-      </View>
-    </View>
-  );
+      </SafeAreaView>
+    );
+  }
+
+  if (!schedule) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.menuIcon}>☰</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>AssisTea</Text>
+          <TouchableOpacity style={styles.notificationButton}>
+            <Text style={styles.notificationIcon}>🔔</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.greenSection} />
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyIcon}>📅</Text>
+          <Text style={[styles.emptyText, { color: colors.text }]}>
+            No schedule found
+          </Text>
+          <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
+            Generate an assignment schedule first
+          </Text>
+          <TouchableOpacity
+            style={styles.generateButton}
+            onPress={() => navigation.navigate('AssignmentGeneration')}
+          >
+            <Text style={styles.generateButtonText}>Generate Schedule</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView
@@ -97,46 +149,69 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        {/* Date Header */}
         <View
           style={[
-            styles.scheduleCard,
             styles.headerCard,
             { backgroundColor: colors.cardBackground || '#fff' },
           ]}
         >
           <View style={styles.dateSection}>
             <Text style={styles.calendarIcon}>📅</Text>
-            <Text style={[styles.dateText, { color: colors.text }]}>
-              Schedule for 19-10-2025
-            </Text>
+            <View style={styles.dateInfo}>
+              <Text style={[styles.dateText, { color: colors.text }]}>
+                Schedule for {new Date(schedule.date).toLocaleDateString()}
+              </Text>
+              <Text style={[styles.statsText, { color: colors.textSecondary }]}>
+                {schedule.totalWorkers} workers • {schedule.totalFields} fields • Avg: {schedule.averageEfficiency.toFixed(1)} kg/hr
+              </Text>
+            </View>
           </View>
         </View>
 
-        {/* Filter Section */}
-        <TouchableOpacity
-          style={[
-            styles.filterBox,
-            { backgroundColor: colors.cardBackground || '#fff' },
-          ]}
-          onPress={() =>
-            setFilterType(filterType === 'worker' ? 'area' : 'worker')
-          }
-        >
-          <Text style={styles.filterIcon}>🔽</Text>
-          <Text style={[styles.filterText, { color: colors.text }]}>
-            {filterType === 'worker' ? 'Worker Wise' : 'Area Wise'}
-          </Text>
-          <Text style={styles.dropdownArrow}>▼</Text>
-        </TouchableOpacity>
+        {/* Field Groups */}
+        {groupedAssignments && Object.entries(groupedAssignments).map(([fieldName, assignments]) => (
+          <View
+            key={fieldName}
+            style={[
+              styles.fieldCard,
+              { backgroundColor: colors.cardBackground || '#fff' },
+            ]}
+          >
+            <View style={styles.fieldHeader}>
+              <Text style={[styles.fieldName, { color: colors.text }]}>
+                {fieldName}
+              </Text>
+              <Text style={[styles.workerCount, { color: colors.textSecondary }]}>
+                {assignments.length} workers
+              </Text>
+            </View>
 
-        {/* Schedule List */}
-        <FlatList
-          data={MOCK_SCHEDULE}
-          renderItem={renderScheduleCard}
-          keyExtractor={item => item.id}
-          scrollEnabled={false}
-          contentContainerStyle={styles.listContent}
-        />
+            {assignments.map((assignment, index) => (
+              <View
+                key={assignment.workerId}
+                style={[
+                  styles.assignmentRow,
+                  index === assignments.length - 1 && styles.lastRow,
+                ]}
+              >
+                <View style={styles.workerInfo}>
+                  <Text style={[styles.workerName, { color: colors.text }]}>
+                    {assignment.workerName}
+                  </Text>
+                  <Text style={[styles.efficiency, { color: colors.textSecondary }]}>
+                    {assignment.predictedEfficiency.toFixed(2)} kg/hour
+                  </Text>
+                </View>
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>
+                    {assignment.predictedEfficiency >= 8 ? '⭐' : '✓'}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
@@ -146,6 +221,48 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  emptyIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 24,
+  },
+  generateButton: {
+    backgroundColor: '#fbc02d',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  generateButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   header: {
     backgroundColor: '#7cb342',
@@ -186,117 +303,100 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   headerCard: {
-    marginTop: 0,
-    marginBottom: 16,
+    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  scheduleCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
   dateSection: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   calendarIcon: {
-    fontSize: 24,
+    fontSize: 32,
     marginRight: 12,
+  },
+  dateInfo: {
+    flex: 1,
   },
   dateText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
+    marginBottom: 4,
   },
-  filterBox: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  filterIcon: {
-    fontSize: 18,
-    marginRight: 10,
-  },
-  filterText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-  },
-  dropdownArrow: {
-    fontSize: 12,
+  statsText: {
+    fontSize: 13,
     color: '#666',
   },
-  listContent: {
-    paddingBottom: 20,
+  fieldCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  workerSection: {
+  fieldHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  fieldName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1b5e20',
+  },
+  workerCount: {
+    fontSize: 13,
+    color: '#666',
+  },
+  assignmentRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  lastRow: {
+    borderBottomWidth: 0,
+  },
+  workerInfo: {
     flex: 1,
   },
   workerName: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     color: '#333',
-    marginBottom: 2,
+    marginBottom: 4,
   },
-  workerId: {
-    fontSize: 12,
-    color: '#999',
+  efficiency: {
+    fontSize: 13,
+    color: '#666',
   },
-  arrow: {
-    marginHorizontal: 12,
-  },
-  arrowIcon: {
-    fontSize: 24,
-    color: '#d32f2f',
-    fontWeight: 'bold',
-  },
-  assignmentSection: {
-    flexDirection: 'row',
-    gap: 8,
+  badge: {
+    backgroundColor: '#e8f5e9',
+    borderRadius: 20,
+    width: 32,
+    height: 32,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  fieldBadge: {
-    backgroundColor: '#1b5e20',
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  fieldText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  slopeBadge: {
-    backgroundColor: '#c8e6c9',
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  slopeText: {
-    color: '#2e7d32',
-    fontSize: 12,
-    fontWeight: '500',
+  badgeText: {
+    fontSize: 16,
   },
 });
 

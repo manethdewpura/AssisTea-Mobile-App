@@ -13,6 +13,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { assignmentService } from '../../services/assignment.service';
 import { fieldService } from '../../services/field.service';
+import { assignmentStorageService } from '../../services/assignmentStorage.service';
 import { AssignmentSchedule, WorkerAssignment } from '../../models/MLPrediction';
 import { useAppSelector } from '../../hooks';
 import { selectAuth } from '../../store/selectors';
@@ -69,9 +70,26 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
             );
 
             setSchedule(generatedSchedule);
+
+            // Automatically save to Firebase
+            try {
+                await assignmentStorageService.saveSchedule({
+                    plantationId: userProfile.plantationId,
+                    date: today,
+                    totalWorkers: generatedSchedule.totalWorkers,
+                    totalFields: generatedSchedule.totalFields,
+                    averageEfficiency: generatedSchedule.averagePredictedEfficiency,
+                    assignments: generatedSchedule.assignments,
+                });
+                console.log('✅ Schedule saved to Firebase');
+            } catch (saveError) {
+                console.error('Failed to save schedule:', saveError);
+                // Don't block user on save failure
+            }
+
             Alert.alert(
                 'Success!',
-                `Generated ${generatedSchedule.assignments.length} assignments with average efficiency ${generatedSchedule.averagePredictedEfficiency.toFixed(2)} kg/hour`
+                `Generated and saved ${generatedSchedule.assignments.length} assignments with average efficiency ${generatedSchedule.averagePredictedEfficiency.toFixed(2)} kg/hour`
             );
         } catch (error) {
             console.error('Assignment generation error:', error);
