@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import TeaPlantationManagerScreen from '../screens/teaPlantationManager/TeaPlantationManagerScreen';
 import WorkerManagementScreen from '../screens/teaPlantationManager/WorkerManagementScreen';
@@ -10,6 +10,7 @@ import EditDailyDataScreen from '../screens/teaPlantationManager/EditDailyDataSc
 import ViewLatestScheduleScreen from '../screens/teaPlantationManager/ViewLatestScheduleScreen';
 import AssignmentGenerationScreen from '../screens/teaPlantationManager/AssignmentGenerationScreen';
 import FieldManagementScreen from '../screens/teaPlantationManager/FieldManagementScreen';
+import { databaseService } from '../services/database.service';
 
 export type TeaPlantationStackParamList = {
   TeaPlantationHome: undefined;
@@ -27,6 +28,20 @@ export type TeaPlantationStackParamList = {
 const Stack = createNativeStackNavigator<TeaPlantationStackParamList>();
 
 export const TeaPlantationNavigator: React.FC = () => {
+  // Initialize SQLite database when this navigator mounts
+  useEffect(() => {
+    const initDatabase = async () => {
+      try {
+        await databaseService.initialize();
+        console.log('📱 SQLite database ready for tea plantation manager!');
+      } catch (error) {
+        console.error('❌ Failed to initialize database:', error);
+      }
+    };
+
+    initDatabase();
+  }, []);
+
   return (
     <Stack.Navigator
       screenOptions={{
