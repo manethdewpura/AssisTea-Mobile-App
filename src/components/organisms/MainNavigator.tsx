@@ -4,6 +4,7 @@ import BottomNavbar from './BottomNavbar';
 import AdminDashboard from '../../screens/admin/AdminDashboard';
 import TeaPlantationManagerScreen from '../../screens/teaPlantationManager/TeaPlantationManagerScreen';
 import WeatherScreen from '../../screens/weather/WeatherScreen';
+import ChatScreen from '../../screens/ChatScreen';
 
 type TabType = 'watering' | 'chat' | 'home' | 'schedule' | 'team';
 
@@ -27,9 +28,9 @@ const MainNavigator: React.FC<MainNavigatorProps> = ({ userRole }) => {
         ) : (
           <TeaPlantationManagerScreen onNavigateToWeather={() => setShowWeatherScreen(true)} />
         );
+      case 'chat':
+        return <ChatScreen />;
     //   case 'watering':
-    //     return < />;
-    //   case 'chat':
     //     return < />;
     //   case 'schedule':
     //     return < />;
