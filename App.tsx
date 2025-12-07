@@ -16,8 +16,14 @@ import MainNavigator from './src/components/organisms/MainNavigator';
 import PlantationSetupModal from './src/components/organisms/PlantationSetupModal';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import NetworkStatus from './src/components/molecule/NetworkStatus';
+import { initBackgroundFetch } from './src/utils';
 
 function App() {
+  // Initialize background fetch when app starts
+  useEffect(() => {
+    initBackgroundFetch();
+  }, []);
+
   return (
     <SafeAreaProvider>
       <Provider store={store}>
@@ -114,7 +120,7 @@ function AppContent() {
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <NetworkStatus />
       {authScreen === 'login' && (
-        <LoginScreen 
+        <LoginScreen
           onSwitchToSignUp={() => setAuthScreen('signup')}
           onSwitchToForgotPassword={() => setAuthScreen('forgot')}
         />
