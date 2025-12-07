@@ -15,7 +15,13 @@ import Button from '../../components/atoms/Button';
 import TopNavbar from '../../components/organisms/TopNavbar';
 import NotificationsScreen from '../NotificationsScreen';
 
-const TeaPlantationManagerScreen: React.FC = () => {
+interface TeaPlantationManagerScreenProps {
+  onNavigateToWeather?: () => void;
+}
+
+const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
+  onNavigateToWeather,
+}) => {
   const { userProfile } = useAppSelector(selectAuth);
   const { colors } = useAppSelector(selectTheme);
   const [plantation, setPlantation] = useState<TeaPlantation | null>(null);
@@ -174,7 +180,7 @@ const TeaPlantationManagerScreen: React.FC = () => {
 
             <Button
               title="🌡️ Weather Monitoring"
-              onPress={() => {}}
+              onPress={onNavigateToWeather || (() => {})}
               style={styles.managementButton}
             />
           </View>
