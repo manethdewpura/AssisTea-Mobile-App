@@ -37,7 +37,11 @@ import CustomAlert, {
   type AlertButton,
 } from '../../components/molecule/CustomAlert';
 
-const AdminDashboard: React.FC = () => {
+interface AdminDashboardProps {
+  onNavigateToWeather?: () => void;
+}
+
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) => {
   const { userProfile } = useAppSelector(selectAuth);
   const { colors } = useAppSelector(selectTheme);
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -492,6 +496,20 @@ const AdminDashboard: React.FC = () => {
             scrollEnabled={false}
           />
         </View>
+
+        {/* Weather Section */}
+        {onNavigateToWeather && (
+          <View style={[styles.section, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Weather Forecast
+            </Text>
+            <Button
+              title="🌤️ View Weather Forecast"
+              onPress={onNavigateToWeather}
+              style={styles.weatherButton}
+            />
+          </View>
+        )}
 
         {/* Create User Modal */}
         <Modal visible={showCreateUserModal} animationType="slide" transparent>
@@ -956,6 +974,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'white',
     fontWeight: '600',
+  },
+  weatherButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 10,
   },
 });
 

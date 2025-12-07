@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import BottomNavbar from './BottomNavbar';
 import AdminDashboard from '../../screens/admin/AdminDashboard';
 import TeaPlantationManagerScreen from '../../screens/teaPlantationManager/TeaPlantationManagerScreen';
+import WeatherScreen from '../../screens/weather/WeatherScreen';
 
 type TabType = 'watering' | 'chat' | 'home' | 'schedule' | 'team';
 
@@ -12,14 +13,19 @@ interface MainNavigatorProps {
 
 const MainNavigator: React.FC<MainNavigatorProps> = ({ userRole }) => {
   const [activeTab, setActiveTab] = useState<TabType>('home');
+  const [showWeatherScreen, setShowWeatherScreen] = useState(false);
 
   const renderScreen = () => {
+    if (showWeatherScreen) {
+      return <WeatherScreen onBackPress={() => setShowWeatherScreen(false)} />;
+    }
+
     switch (activeTab) {
       case 'home':
         return userRole === 'admin' ? (
-          <AdminDashboard />
+          <AdminDashboard onNavigateToWeather={() => setShowWeatherScreen(true)} />
         ) : (
-          <TeaPlantationManagerScreen />
+          <TeaPlantationManagerScreen onNavigateToWeather={() => setShowWeatherScreen(true)} />
         );
     //   case 'watering':
     //     return < />;
@@ -31,9 +37,9 @@ const MainNavigator: React.FC<MainNavigatorProps> = ({ userRole }) => {
     //     return < />;
       default:
         return userRole === 'admin' ? (
-          <AdminDashboard />
+          <AdminDashboard onNavigateToWeather={() => setShowWeatherScreen(true)} />
         ) : (
-          <TeaPlantationManagerScreen />
+          <TeaPlantationManagerScreen onNavigateToWeather={() => setShowWeatherScreen(true)} />
         );
     }
   };
