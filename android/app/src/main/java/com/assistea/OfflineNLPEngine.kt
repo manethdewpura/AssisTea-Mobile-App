@@ -2,6 +2,7 @@ package com.assistea
 
 import android.content.Context
 import ai.onnxruntime.*
+import java.nio.LongBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 
 class OfflineNLPEngine(private val context: Context) {
@@ -84,8 +85,12 @@ class OfflineNLPEngine(private val context: Context) {
     fun generateEmbedding(text: String): FloatArray? {
         if (!isModelLoaded.get()) {
             // Try to initialize synchronously (not recommended for production)
+            var initSuccess = false
             initializeModel { success, _ ->
-                if (!success) return null
+                initSuccess = success
+            }
+            if (!initSuccess) {
+                return null
             }
         }
         
@@ -105,12 +110,13 @@ class OfflineNLPEngine(private val context: Context) {
                 if (index < inputIds.size) inputIds[index] else 0L
             }
             
-            // Create input tensor
+            // Create input tensor - convert LongArray to LongBuffer
             val inputShape = longArrayOf(1, MAX_SEQUENCE_LENGTH.toLong())
-            val inputTensor = OnnxTensor.createTensor(ortEnv!!, paddedInputIds, inputShape)
+            val inputBuffer = LongBuffer.wrap(paddedInputIds)
+            val inputTensor = OnnxTensor.createTensor(ortEnv!!, inputBuffer, inputShape)
             
             // Run inference
-            val inputs = mapOf(MODEL_INPUT_NAME to inputTensor)
+            val inputs: Map<String, OnnxTensor> = mapOf(MODEL_INPUT_NAME to inputTensor)
             val outputs = ortSession!!.run(inputs)
             
             // Extract embeddings (assuming output is named "last_hidden_state" or similar)
@@ -119,7 +125,7 @@ class OfflineNLPEngine(private val context: Context) {
             
             // Clean up
             inputTensor.close()
-            outputs.close()
+            outputTensor?.close()
             
             // Normalize embedding
             return embedding?.let { normalizeEmbedding(it) }

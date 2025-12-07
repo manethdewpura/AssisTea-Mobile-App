@@ -42,13 +42,14 @@ class AgronomistAIModule(reactContext: ReactApplicationContext) : ReactContextBa
             
             // Generate embedding for the query
             val queryEmbedding = offlineNLPEngine.generateEmbedding(query)
-            if (queryEmbedding == null) {
-                promise.reject("EMBEDDING_FAILED", "Failed to generate embedding for query")
-                return
-            }
             
-            // Find best matching answer
-            val bestMatch = knowledgeBaseManager.findBestMatch(queryEmbedding, knowledgeBase)
+            // Find best matching answer (with keyword fallback if embedding fails)
+            val bestMatch = if (queryEmbedding != null) {
+                knowledgeBaseManager.findBestMatch(queryEmbedding, knowledgeBase, query)
+            } else {
+                // If embedding generation fails, use keyword matching
+                knowledgeBaseManager.findBestMatch(FloatArray(0), knowledgeBase, query)
+            }
             
             if (bestMatch != null) {
                 val result = Arguments.createMap()
