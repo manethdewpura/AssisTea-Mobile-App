@@ -97,6 +97,16 @@ export const FIRESTORE_ERRORS = {
     severity: 'medium' as const,
     recoverable: true,
   },
+  'failed-precondition': {
+    userMessage: 'Database configuration error. Please try again or contact support.',
+    severity: 'medium' as const,
+    recoverable: true,
+  },
+  'firestore/failed-precondition': {
+    userMessage: 'Database configuration error. Please try again or contact support.',
+    severity: 'medium' as const,
+    recoverable: true,
+  },
 };
 
 export function handleFirebaseError(error: any): AppError {

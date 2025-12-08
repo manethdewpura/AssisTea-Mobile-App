@@ -6,6 +6,7 @@ import {
   Alert,
   ScrollView,
   BackHandler,
+  TouchableOpacity,
 } from 'react-native';
 import { useAppSelector } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
@@ -185,32 +186,63 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
             />
           </View>
 
-          <View style={styles.quickStatsSection}>
-            <Text style={styles.sectionTitle}>Quick Stats</Text>
-
-            <View style={styles.statsGrid}>
-              <View style={styles.statCard}>
-                <Text style={styles.statNumber}>0</Text>
-                <Text style={styles.statLabel}>Active Workers</Text>
-              </View>
-
-              <View style={styles.statCard}>
-                <Text style={styles.statNumber}>0</Text>
-                <Text style={styles.statLabel}>Tea Varieties</Text>
-              </View>
-
-              <View style={styles.statCard}>
-                <Text style={styles.statNumber}>0</Text>
-                <Text style={styles.statLabel}>This Month's Harvest (kg)</Text>
-              </View>
-
-              <View style={styles.statCard}>
-                <Text style={styles.statNumber}>0</Text>
-                <Text style={styles.statLabel}>Quality Score</Text>
-              </View>
+                  {/* Split Button Container */}
+        <View style={styles.splitButtonContainer}>
+          <TouchableOpacity
+            style={[styles.splitButton, styles.leftButton]}
+            onPress={() => navigation.navigate('DailyDataEntry')}
+          >
+            <View style={styles.buttonContent}>
+              <Text style={styles.buttonIcon}>+</Text>
+              <Text style={styles.buttonText}>Enter Daily Data</Text>
             </View>
-          </View>
+          </TouchableOpacity>
+
+          <View style={styles.buttonDivider} />
+
+          <TouchableOpacity
+            style={[styles.splitButton, styles.rightButton]}
+            onPress={() => navigation.navigate('WorkerManagement')}
+          >
+            <Text style={styles.buttonText}>Manage Workers</Text>
+          </TouchableOpacity>
         </View>
+
+          {/* Generate Schedule Button */}
+        <TouchableOpacity
+          style={styles.scheduleButton}
+          onPress={() => navigation.navigate('AssignmentGeneration')}
+        >
+          <Text style={styles.scheduleIcon}>📅</Text>
+          <Text style={styles.scheduleText}>Generate Today's Schedule</Text>
+        </TouchableOpacity>
+
+        {/* View Daily Data Link */}
+        <TouchableOpacity
+          style={styles.linkContainer}
+          onPress={() => navigation.navigate('DailyDataView')}
+        >
+          <Text style={styles.linkText}>View Daily Data</Text>
+        </TouchableOpacity>
+
+        {/* View Latest Schedule Link */}
+        <TouchableOpacity
+          style={styles.linkContainer}
+          onPress={() => navigation.navigate('ViewLatestSchedule')}
+        >
+          <Text style={styles.linkText}>View Latest Schedule</Text>
+        </TouchableOpacity>
+
+        {/* Manage Fields Link */}
+        <TouchableOpacity
+          style={styles.linkContainer}
+          onPress={() => navigation.navigate('FieldManagement')}
+        >
+          <Text style={styles.linkText}>Manage Fields</Text>
+        </TouchableOpacity>
+
+        </View>
+
       ) : (
         <View style={styles.noPlantationContainer}>
           <Text style={styles.noPlantationTitle}>No Plantation Assigned</Text>
@@ -384,6 +416,43 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     lineHeight: 24,
+  },
+  scheduleButton: {
+    backgroundColor: '#fbc02d',
+    borderRadius: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  scheduleIcon: {
+    fontSize: 20,
+    marginRight: 10,
+  },
+  scheduleText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  linkContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  linkText: {
+    color: '#1b5e20',
+    fontSize: 14,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  spacer: {
+    height: 40,
   },
 });
 
