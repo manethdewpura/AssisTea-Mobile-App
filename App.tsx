@@ -8,6 +8,7 @@ import { useAppSelector } from './src/hooks/redux.hooks';
 import AuthListener from './src/store/listeners/AuthListener';
 import ThemeListener from './src/store/listeners/ThemeListener';
 import NotificationListener from './src/store/listeners/NotificationListener';
+import WeatherListener from './src/store/listeners/WeatherListener';
 import type { ThemeState } from './src/common/types';
 import LoginScreen from './src/screens/auth/LoginScreen';
 import SignUpScreen from './src/screens/auth/SignUpScreen';
@@ -24,9 +25,11 @@ function App() {
         <ThemeListener>
           <NotificationListener>
             <AuthListener>
-              <ErrorBoundary>
-                <AppContent />
-              </ErrorBoundary>
+              <WeatherListener>
+                <ErrorBoundary>
+                  <AppContent />
+                </ErrorBoundary>
+              </WeatherListener>
             </AuthListener>
           </NotificationListener>
         </ThemeListener>
