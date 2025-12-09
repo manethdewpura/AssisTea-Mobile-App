@@ -24,4 +24,5 @@ export interface NotificationState {
     message: string;
     type: 'success' | 'warning' | 'error' | 'info';
   };
+  unreadCount: number;
 }

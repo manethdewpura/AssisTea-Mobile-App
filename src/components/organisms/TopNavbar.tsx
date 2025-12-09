@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { useAppSelector } from '../../hooks';
-import { selectTheme } from '../../store/selectors';
+import { selectTheme, selectNotifications } from '../../store/selectors';
 import HamburgerMenu from './HamburgerMenu';
 
 
@@ -11,8 +11,10 @@ export interface TopNavbarProps {
   unreadCount?: number;
 }
 
-const TopNavbar: React.FC<TopNavbarProps> = ({ onNotificationPress, unreadCount = 0 }) => {
+const TopNavbar: React.FC<TopNavbarProps> = ({ onNotificationPress, unreadCount }) => {
   const { colors, isDark } = useAppSelector(selectTheme);
+  const notifications = useAppSelector(selectNotifications);
+  const resolvedUnreadCount = unreadCount ?? notifications.unreadCount ?? 5;
   const [menuVisible, setMenuVisible] = React.useState(false);
 
   return (
@@ -45,10 +47,10 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ onNotificationPress, unreadCount 
           activeOpacity={0.7}
         >
           <Lucide name="bell" size={24} color={colors.buttonText} />
-          {unreadCount > 0 && (
+          {resolvedUnreadCount > 0 && (
             <View style={[styles.badge, { backgroundColor: colors.error }]}>
               <Text style={styles.badgeText}>
-                {unreadCount > 9 ? '9+' : unreadCount}
+                {resolvedUnreadCount > 9 ? '9+' : resolvedUnreadCount}
               </Text>
             </View>
           )}

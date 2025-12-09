@@ -20,8 +20,6 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { workerService } from '../../services';
 import { handleFirebaseError, logError, validateRequired } from '../../utils';
-import TopNavbar from '../../components/organisms/TopNavbar';
-import NotificationsScreen from '../NotificationsScreen';
 
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
@@ -34,8 +32,6 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [notificationCount] = useState(5); // Mock notification count
 
   const [formData, setFormData] = useState({
     name: '',
@@ -186,30 +182,12 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  if (showNotifications) {
-    return (
-      <KeyboardAvoidingView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <NotificationsScreen onBackPress={() => setShowNotifications(false)} />
-      </KeyboardAvoidingView>
-    );
-  }
-
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <TopNavbar
-        onNotificationPress={() => setShowNotifications(true)}
-        unreadCount={notificationCount}
-      />
-
-        {/* Green Section */}
-        <View style={styles.greenSection} />
 
         {/* Content */}
         <ScrollView

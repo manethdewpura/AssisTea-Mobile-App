@@ -278,26 +278,6 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.menuButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.menuIcon}>☰</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Daily Data</Text>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => navigation.navigate('DailyDataEntry')}
-        >
-          <Text style={styles.addIcon}>+</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Green Section */}
-      <View style={styles.greenSection} />
-
       {/* Filters */}
       <View style={styles.filterContainer}>
         <ScrollView
