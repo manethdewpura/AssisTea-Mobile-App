@@ -95,7 +95,7 @@ const aiSlice = createSlice({
     setAILoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
-    setError: (state, action: PayloadAction<string | null>) => {
+    setAIError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
       state.loading = false;
     },
@@ -111,7 +111,7 @@ export const {
   setLanguage,
   clearHistory,
   setAILoading,
-  setError,
+  setAIError,
   setModelLoaded,
 } = aiSlice.actions;
 

@@ -14,7 +14,7 @@ import { selectTheme, selectAI } from '../store/selectors';
 import {
   sendMessage,
   receiveMessage,
-  setError,
+  setAIError,
   setModelLoaded,
   setAILoading,
 } from '../store/slices/ai.slice';
@@ -113,7 +113,7 @@ const ChatScreen: React.FC = () => {
     try {
       console.log('[ChatScreen] Setting AI loading to true');
       dispatch(setAILoading(true));
-      dispatch(setError(null));
+      dispatch(setAIError(null));
 
       // Query offline AI
       console.log('[ChatScreen] Calling aiService.queryOffline with:', { question, language });
@@ -161,7 +161,7 @@ const ChatScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to get response';
       console.log('[ChatScreen] Error message:', errorMessage);
-      dispatch(setError(errorMessage));
+      dispatch(setAIError(errorMessage));
 
       // Find the message ID for error case too
       const currentMessages = messages;
