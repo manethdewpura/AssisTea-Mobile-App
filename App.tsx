@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar, StyleSheet, View, ActivityIndicator, BackHandler, Alert } from 'react-native';
+import { createNavigationContainerRef } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { store } from './src/store';
@@ -14,9 +15,13 @@ import LoginScreen from './src/screens/auth/LoginScreen';
 import SignUpScreen from './src/screens/auth/SignUpScreen';
 import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
 import MainNavigator from './src/components/organisms/MainNavigator';
+import TopNavbar from './src/components/organisms/TopNavbar';
 import PlantationSetupModal from './src/components/organisms/PlantationSetupModal';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import NetworkStatus from './src/components/molecule/NetworkStatus';
+import NotificationsScreen from './src/screens/NotificationsScreen';
+
+export const navigationRef = createNavigationContainerRef();
 
 function App() {
   return (
@@ -44,9 +49,15 @@ function AppContent() {
   const { isDark, colors } = theme;
   const [authScreen, setAuthScreen] = useState<'login' | 'signup' | 'forgot'>('login');
   const [showPlantationSetup, setShowPlantationSetup] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     const backAction = () => {
+      if (navigationRef.isReady() && navigationRef.canGoBack()) {
+        navigationRef.goBack();
+        return true;
+      }
+
       if (user && userProfile) {
         // If user is logged in, show exit confirmation
         Alert.alert(
@@ -93,8 +104,21 @@ function AppContent() {
     if (userProfile.role === 'admin') {
       return (
         <View style={styles.container}>
+          <TopNavbar onNotificationPress={() => setShowNotifications(true)} />
+          {showNotifications && (
+            <View
+              style={[
+                styles.notificationsOverlay,
+                { backgroundColor: colors.background },
+              ]}
+            >
+              <NotificationsScreen
+                onBackPress={() => setShowNotifications(false)}
+              />
+            </View>
+          )}
           <NetworkStatus />
-          <MainNavigator userRole="admin" />
+          <MainNavigator userRole="admin" navigationRef={navigationRef} />
           <PlantationSetupModal
             visible={showPlantationSetup}
             onClose={() => setShowPlantationSetup(false)}
@@ -105,8 +129,21 @@ function AppContent() {
     } else if (userProfile.role === 'tea_plantation_manager') {
       return (
         <View style={styles.container}>
+          <TopNavbar onNotificationPress={() => setShowNotifications(true)} />
+          {showNotifications && (
+            <View
+              style={[
+                styles.notificationsOverlay,
+                { backgroundColor: colors.background },
+              ]}
+            >
+              <NotificationsScreen
+                onBackPress={() => setShowNotifications(false)}
+              />
+            </View>
+          )}
           <NetworkStatus />
-          <MainNavigator userRole="tea_plantation_manager" />
+          <MainNavigator userRole="tea_plantation_manager" navigationRef={navigationRef} />
         </View>
       );
     }
@@ -140,6 +177,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  notificationsOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 2,
   },
 });
 

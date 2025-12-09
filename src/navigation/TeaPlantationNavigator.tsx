@@ -12,6 +12,10 @@ import AssignmentGenerationScreen from '../screens/teaPlantationManager/Assignme
 import FieldManagementScreen from '../screens/teaPlantationManager/FieldManagementScreen';
 import { databaseService } from '../services/database.service';
 
+interface TeaPlantationNavigatorProps {
+  onNavigateToWeather?: () => void;
+}
+
 export type TeaPlantationStackParamList = {
   TeaPlantationHome: undefined;
   WorkerManagement: undefined;
@@ -27,7 +31,9 @@ export type TeaPlantationStackParamList = {
 
 const Stack = createNativeStackNavigator<TeaPlantationStackParamList>();
 
-export const TeaPlantationNavigator: React.FC = () => {
+export const TeaPlantationNavigator: React.FC<TeaPlantationNavigatorProps> = ({
+  onNavigateToWeather,
+}) => {
   // Initialize SQLite database when this navigator mounts
   useEffect(() => {
     const initDatabase = async () => {
@@ -52,7 +58,9 @@ export const TeaPlantationNavigator: React.FC = () => {
     >
       <Stack.Screen
         name="TeaPlantationHome"
-        component={TeaPlantationManagerScreen}
+        children={() => (
+          <TeaPlantationManagerScreen onNavigateToWeather={onNavigateToWeather} />
+        )}
       />
       <Stack.Screen
         name="WorkerManagement"

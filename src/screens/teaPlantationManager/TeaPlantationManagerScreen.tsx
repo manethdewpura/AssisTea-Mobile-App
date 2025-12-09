@@ -8,13 +8,14 @@ import {
   BackHandler,
   TouchableOpacity,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAppSelector } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import { teaPlantationService } from '../../services';
 import type { TeaPlantation } from '../../common/interfaces';
 import Button from '../../components/atoms/Button';
-import TopNavbar from '../../components/organisms/TopNavbar';
-import NotificationsScreen from '../NotificationsScreen';
+import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 
 interface TeaPlantationManagerScreenProps {
   onNavigateToWeather?: () => void;
@@ -23,12 +24,12 @@ interface TeaPlantationManagerScreenProps {
 const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
   onNavigateToWeather,
 }) => {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<TeaPlantationStackParamList>>();
   const { userProfile } = useAppSelector(selectAuth);
   const { colors } = useAppSelector(selectTheme);
   const [plantation, setPlantation] = useState<TeaPlantation | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [notificationCount] = useState(5); // Mock notification count
 
   const loadPlantationData = useCallback(async () => {
     if (!userProfile?.plantationId) {
@@ -80,23 +81,8 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
     );
   }
 
-  // Show notifications screen if requested
-  if (showNotifications) {
-    return (
-      <View style={styles.fullContainer}>
-        <NotificationsScreen
-          onBackPress={() => setShowNotifications(false)}
-        />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.fullContainer}>
-      <TopNavbar
-        onNotificationPress={() => setShowNotifications(true)}
-        unreadCount={notificationCount}
-      />
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
       >

@@ -14,6 +14,7 @@ const initialState: NotificationState = {
     message: '',
     type: 'info',
   },
+  unreadCount: 0,
 };
 
 const notificationSlice = createSlice({
@@ -105,9 +106,18 @@ const notificationSlice = createSlice({
         retryActionId,
       };
     },
+    setUnreadCount: (state, action: PayloadAction<number>) => {
+      state.unreadCount = action.payload;
+    },
   },
 });
 
-export const { showAlert, hideAlert, showToast, hideToast, showErrorAlert } =
-  notificationSlice.actions;
+export const {
+  showAlert,
+  hideAlert,
+  showToast,
+  hideToast,
+  showErrorAlert,
+  setUnreadCount,
+} = notificationSlice.actions;
 export default notificationSlice.reducer;

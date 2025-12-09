@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppSelector } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -40,7 +40,7 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
     try {
       setLoading(true);
       const latestSchedule = await assignmentStorageService.getLatestSchedule(
-        userProfile.plantationId
+        userProfile.plantationId,
       );
       setSchedule(latestSchedule);
     } catch (error) {
@@ -63,20 +63,9 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.menuIcon}>☰</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>AssisTea</Text>
-          <TouchableOpacity style={styles.notificationButton}>
-            <Text style={styles.notificationIcon}>🔔</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.greenSection} />
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+      >
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color="#7cb342" />
           <Text style={[styles.loadingText, { color: colors.text }]}>
@@ -89,20 +78,9 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
 
   if (!schedule) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.menuIcon}>☰</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>AssisTea</Text>
-          <TouchableOpacity style={styles.notificationButton}>
-            <Text style={styles.notificationIcon}>🔔</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.greenSection} />
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+      >
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>📅</Text>
           <Text style={[styles.emptyText, { color: colors.text }]}>
@@ -126,23 +104,6 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.menuButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.menuIcon}>☰</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>AssisTea</Text>
-        <TouchableOpacity style={styles.notificationButton}>
-          <Text style={styles.notificationIcon}>🔔</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Green Section */}
-      <View style={styles.greenSection} />
-
       {/* Content */}
       <ScrollView
         style={styles.content}
@@ -163,55 +124,64 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
                 Schedule for {new Date(schedule.date).toLocaleDateString()}
               </Text>
               <Text style={[styles.statsText, { color: colors.textSecondary }]}>
-                {schedule.totalWorkers} workers • {schedule.totalFields} fields • Avg: {schedule.averageEfficiency.toFixed(1)} kg/hr
+                {schedule.totalWorkers} workers • {schedule.totalFields} fields
+                • Avg: {schedule.averageEfficiency.toFixed(1)} kg/hr
               </Text>
             </View>
           </View>
         </View>
 
         {/* Field Groups */}
-        {groupedAssignments && Object.entries(groupedAssignments).map(([fieldName, assignments]) => (
-          <View
-            key={fieldName}
-            style={[
-              styles.fieldCard,
-              { backgroundColor: colors.cardBackground || '#fff' },
-            ]}
-          >
-            <View style={styles.fieldHeader}>
-              <Text style={[styles.fieldName, { color: colors.text }]}>
-                {fieldName}
-              </Text>
-              <Text style={[styles.workerCount, { color: colors.textSecondary }]}>
-                {assignments.length} workers
-              </Text>
-            </View>
-
-            {assignments.map((assignment, index) => (
-              <View
-                key={assignment.workerId}
-                style={[
-                  styles.assignmentRow,
-                  index === assignments.length - 1 && styles.lastRow,
-                ]}
-              >
-                <View style={styles.workerInfo}>
-                  <Text style={[styles.workerName, { color: colors.text }]}>
-                    {assignment.workerName}
-                  </Text>
-                  <Text style={[styles.efficiency, { color: colors.textSecondary }]}>
-                    {assignment.predictedEfficiency.toFixed(2)} kg/hour
-                  </Text>
-                </View>
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>
-                    {assignment.predictedEfficiency >= 8 ? '⭐' : '✓'}
-                  </Text>
-                </View>
+        {groupedAssignments &&
+          Object.entries(groupedAssignments).map(([fieldName, assignments]) => (
+            <View
+              key={fieldName}
+              style={[
+                styles.fieldCard,
+                { backgroundColor: colors.cardBackground || '#fff' },
+              ]}
+            >
+              <View style={styles.fieldHeader}>
+                <Text style={[styles.fieldName, { color: colors.text }]}>
+                  {fieldName}
+                </Text>
+                <Text
+                  style={[styles.workerCount, { color: colors.textSecondary }]}
+                >
+                  {assignments.length} workers
+                </Text>
               </View>
-            ))}
-          </View>
-        ))}
+
+              {assignments.map((assignment, index) => (
+                <View
+                  key={assignment.workerId}
+                  style={[
+                    styles.assignmentRow,
+                    index === assignments.length - 1 && styles.lastRow,
+                  ]}
+                >
+                  <View style={styles.workerInfo}>
+                    <Text style={[styles.workerName, { color: colors.text }]}>
+                      {assignment.workerName}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.efficiency,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      {assignment.predictedEfficiency.toFixed(2)} kg/hour
+                    </Text>
+                  </View>
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>
+                      {assignment.predictedEfficiency >= 8 ? '⭐' : '✓'}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          ))}
       </ScrollView>
     </SafeAreaView>
   );
