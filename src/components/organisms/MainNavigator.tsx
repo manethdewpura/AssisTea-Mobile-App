@@ -5,6 +5,7 @@ import AdminDashboard from '../../screens/admin/AdminDashboard';
 import TeaPlantationManagerScreen from '../../screens/teaPlantationManager/TeaPlantationManagerScreen';
 import WeatherScreen from '../../screens/weather/WeatherScreen';
 import ChatScreen from '../../screens/ChatScreen';
+import { NavigationContainer } from '@react-navigation/native';
 
 type TabType = 'watering' | 'chat' | 'home' | 'schedule' | 'team';
 
@@ -46,10 +47,12 @@ const MainNavigator: React.FC<MainNavigatorProps> = ({ userRole }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.screenContainer}>{renderScreen()}</View>
-      <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} />
-    </View>
+    <NavigationContainer>
+      <View style={styles.container}>
+        <View style={styles.screenContainer}>{renderScreen()}</View>
+        <BottomNavbar activeTab={activeTab} onTabChange={setActiveTab} />
+      </View>
+    </NavigationContainer>
   );
 };
 
@@ -63,4 +66,3 @@ const styles = StyleSheet.create({
 });
 
 export default MainNavigator;
-
