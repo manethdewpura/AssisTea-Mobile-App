@@ -1,0 +1,17 @@
+{
+  "gender_mapping": {
+    "Female": 0,
+    "Male": 1
+  },
+  "field_mapping": {
+    "Field_A": 0,
+    "Field_B": 1,
+    "Field_C": 2,
+    "Field_D": 3
+  },
+  "quality_mapping": {
+    "Low": 0,
+    "Medium": 1,
+    "High": 2
+  }
+}
