@@ -108,13 +108,36 @@ android {
     }
 }
 
+repositories {
+    google()
+    mavenCentral()
+    // Add mirrors as fallback
+    maven { url 'https://maven.aliyun.com/repository/public' }
+    maven { url 'https://jitpack.io' }
+}
+
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+
+    // TensorFlow Lite for ML model inference
+    implementation 'org.tensorflow:tensorflow-lite:2.14.0'
+    implementation 'org.tensorflow:tensorflow-lite-support:0.4.4'
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
     } else {
         implementation jscFlavor
     }
+
+    // ONNX Runtime for sentence transformers
+    // https://mvnrepository.com/artifact/com.microsoft.onnxruntime/onnxruntime-android
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.23.2")
+    
+    // OkHttp for HTTP requests
+    // https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
+    implementation("com.squareup.okhttp3:okhttp:5.3.0")
+    
+    // Gson for JSON parsing
+    implementation("com.google.code.gson:gson:2.13.1")
 }

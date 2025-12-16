@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { useAppSelector } from '../../hooks';
 import { selectWeather, selectTheme } from '../../store/selectors';
-import TopNavbar from '../../components/organisms/TopNavbar';
 import { Lucide } from '@react-native-vector-icons/lucide';
 
 interface WeatherScreenProps {
@@ -57,7 +56,6 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
   if (isFetching && !current) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <TopNavbar onNotificationPress={() => {}} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.text }]}>
@@ -71,7 +69,6 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
   if (error && !current) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <TopNavbar onNotificationPress={() => {}} />
         <View style={styles.errorContainer}>
           <Text style={[styles.errorText, { color: colors.error }]}>
             {error}
@@ -97,7 +94,6 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
           <View style={styles.backButton} />
         </View>
       )}
-      {!onBackPress && <TopNavbar onNotificationPress={() => {}} />}
       <ScrollView
         style={styles.scrollView}
         refreshControl={

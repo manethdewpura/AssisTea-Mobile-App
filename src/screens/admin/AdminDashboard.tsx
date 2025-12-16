@@ -21,8 +21,6 @@ import type { TeaPlantation } from '../../common/interfaces';
 import Input from '../../components/atoms/Input';
 import PasswordInput from '../../components/atoms/PasswordInput';
 import Button from '../../components/atoms/Button';
-import TopNavbar from '../../components/organisms/TopNavbar';
-import NotificationsScreen from '../NotificationsScreen';
 import {
   handleFirebaseError,
   logError,
@@ -71,9 +69,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
   const [alertSeverity, setAlertSeverity] = useState<
     'low' | 'medium' | 'high' | 'critical'
   >('medium');
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [notificationCount] = useState(5); // Mock notification count
-
   const showCustomAlert = (
     title: string,
     message: string,
@@ -420,27 +415,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
     </View>
   );
 
-  // Show notifications screen if requested
-  if (showNotifications) {
-    return (
-      <KeyboardAvoidingView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <NotificationsScreen onBackPress={() => setShowNotifications(false)} />
-      </KeyboardAvoidingView>
-    );
-  }
-
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <TopNavbar
-        onNotificationPress={() => setShowNotifications(true)}
-        unreadCount={notificationCount}
-      />
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
       >
