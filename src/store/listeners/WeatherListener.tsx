@@ -19,8 +19,8 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
   const dispatch = useAppDispatch();
   const { location, isBackendConnected } = useAppSelector(selectWeather);
   const { isOnline } = useAppSelector(selectNetwork);
-  const intervalRef = useRef<number | null>(null);
-  const backendCheckIntervalRef = useRef<number | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const backendCheckIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Fetch weather data
   const fetchWeatherData = useCallback(async () => {
@@ -32,19 +32,35 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
       // If backend is connected, sync data to SQLite database
       if (isBackendConnected) {
         try {
-          console.log('Syncing weather data to backend SQLite database...');
-          const syncResult = await backendService.syncAllWeatherData(data.current, data.forecast);
-          console.log('Weather data synced to SQLite:', syncResult);
-        } catch (syncError: any) {
-          // Log sync error but don't fail the fetch
-          console.warn('Failed to sync weather data to backend SQLite:', syncError?.message || syncError);
-          // Optionally update backend connection status if sync fails repeatedly
-          if (syncError?.message?.includes('Failed to sync')) {
-            console.warn('Backend may be disconnected, will retry on next check');
+          console.log('[WeatherListener] Syncing weather data to backend...');
+
+          // First, try to sync any queued data from AsyncStorage
+          const { backgroundSyncService } = await import('../../services');
+          const syncedCount = await backgroundSyncService.syncQueuedData();
+          if (syncedCount > 0) {
+            console.log(`[WeatherListener] Synced ${syncedCount} queued items from AsyncStorage`);
           }
+
+          // Then sync current data
+          const syncResult = await backendService.syncAllWeatherData(data.current, data.forecast);
+          console.log('[WeatherListener] Current weather data synced to backend:', syncResult);
+        } catch (syncError: any) {
+          console.warn('[WeatherListener] Failed to sync to backend:', syncError?.message || syncError);
+
+          // Queue data in AsyncStorage for later sync
+          console.log('[WeatherListener] Queueing data in AsyncStorage for later sync');
+          const { syncQueueService } = await import('../../services');
+          await syncQueueService.addToQueue(data.current, data.forecast);
         }
       } else {
-        console.log('Backend not connected, skipping SQLite sync');
+        // Backend not connected - queue data for later sync
+        console.log('[WeatherListener] Backend not connected, queueing data in AsyncStorage');
+        const { syncQueueService } = await import('../../services');
+        await syncQueueService.addToQueue(data.current, data.forecast);
+
+        // Log queue stats
+        const stats = await syncQueueService.getStats();
+        console.log(`[WeatherListener] Queue stats - Total: ${stats.total}, Unsynced: ${stats.unsynced}`);
       }
     } catch (error: any) {
       dispatch(setError(error.message || 'Failed to fetch weather data'));
@@ -56,9 +72,12 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
   // Check backend connection
   const checkBackendConnection = useCallback(async () => {
     try {
+      console.log('[WeatherListener] Checking backend connection...');
       const isConnected = await backendService.checkBackendConnection();
+      console.log(`[WeatherListener] Backend connection status: ${isConnected ? 'CONNECTED' : 'DISCONNECTED'}`);
       dispatch(setBackendConnected(isConnected));
     } catch (error) {
+      console.error('[WeatherListener] Backend connection check failed:', error);
       dispatch(setBackendConnected(false));
     }
   }, [dispatch]);
@@ -121,7 +140,7 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
       const connected = state.isConnected ?? false;
-      
+
       if (connected && isOnline) {
         // Network came back online, fetch data immediately
         fetchWeatherData();

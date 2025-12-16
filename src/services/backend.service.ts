@@ -4,7 +4,7 @@ import { NetworkError } from '../utils/network.util';
 
 // Backend API configuration
 // TODO: Update this URL when backend is deployed
-const BACKEND_BASE_URL = 'http://127.0.0.1:5000'; // Default Flask backend URL
+const BACKEND_BASE_URL = 'http://192.168.1.5:5000'; // Flask backend URL on local network
 
 export interface BackendSyncResponse {
   success: boolean;
@@ -15,31 +15,58 @@ export interface BackendSyncResponse {
 export const backendService = {
   /**
    * Check if backend is available and connected
+   * Implements retry logic with exponential backoff for resilience
    */
   async checkBackendConnection(): Promise<boolean> {
-    try {
-      await ensureNetworkConnection();
-      
-      // Create a timeout promise
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Timeout')), 5000);
-      });
+    const maxRetries = 3;
+    const timeoutMs = 10000; // Increased to 10 seconds for more reliable checks
 
-      // Race between fetch and timeout
-      const response = await Promise.race([
-        fetch(`${BACKEND_BASE_URL}/health`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }),
-        timeoutPromise,
-      ]);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await ensureNetworkConnection();
 
-      return response.ok;
-    } catch (error) {
-      return false;
+        console.log(`[Backend] Connection check attempt ${attempt}/${maxRetries} to ${BACKEND_BASE_URL}/health`);
+
+        // Create a timeout promise
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('Connection timeout')), timeoutMs);
+        });
+
+        // Race between fetch and timeout
+        const response = await Promise.race([
+          fetch(`${BACKEND_BASE_URL}/health`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }),
+          timeoutPromise,
+        ]);
+
+        if (response.ok) {
+          console.log('[Backend] ✓ Connected successfully');
+          return true;
+        } else {
+          console.warn(`[Backend] Health check failed with status: ${response.status}`);
+        }
+      } catch (error: any) {
+        const errorMsg = error?.message || 'Unknown error';
+        console.warn(`[Backend] Attempt ${attempt}/${maxRetries} failed: ${errorMsg}`);
+
+        // If this was the last attempt, return false
+        if (attempt === maxRetries) {
+          console.error('[Backend] ✗ All connection attempts failed');
+          return false;
+        }
+
+        // Exponential backoff: wait 1s, 2s, 4s between retries
+        const delayMs = Math.pow(2, attempt - 1) * 1000;
+        console.log(`[Backend] Retrying in ${delayMs}ms...`);
+        await new Promise<void>(resolve => setTimeout(() => resolve(), delayMs));
+      }
     }
+
+    return false;
   },
 
   /**

@@ -3,6 +3,8 @@ export * from './user.service';
 export * from './teaPlantation.service';
 export * from './weather.service';
 export * from './backend.service';
+export * from './syncQueue.service';
+export * from './backgroundSync.service';
 export * from './ai.service';
 export * from './worker.Service';
 export * from './dailyData.service';
