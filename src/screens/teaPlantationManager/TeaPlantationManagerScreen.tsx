@@ -87,157 +87,177 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
         style={[styles.container, { backgroundColor: colors.background }]}
       >
 
-      {plantation ? (
-        <View style={styles.plantationContainer}>
-          <Text style={[styles.plantationTitle, { color: colors.text }]}>
-            Your Plantation
-          </Text>
-
-          <View
-            style={[
-              styles.plantationCard,
-              {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.plantationName, { color: colors.text }]}>
-              {plantation.name}
+        {plantation ? (
+          <View style={styles.plantationContainer}>
+            <Text style={[styles.plantationTitle, { color: colors.text }]}>
+              Your Plantation
             </Text>
-            <Text
+
+            <View
               style={[
-                styles.plantationLocation,
-                { color: colors.textSecondary },
+                styles.plantationCard,
+                {
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.border,
+                },
               ]}
             >
-              📍 {plantation.location}
-            </Text>
-            <Text
-              style={[styles.plantationArea, { color: colors.textSecondary }]}
-            >
-              🌱 Area: {plantation.area} acres
-            </Text>
-            {plantation.description && (
+              <Text style={[styles.plantationName, { color: colors.text }]}>
+                {plantation.name}
+              </Text>
               <Text
                 style={[
-                  styles.plantationDescription,
+                  styles.plantationLocation,
                   { color: colors.textSecondary },
                 ]}
               >
-                📝 Description: {plantation.description}
+                📍 {plantation.location}
               </Text>
-            )}
-          </View>
+              <Text
+                style={[styles.plantationArea, { color: colors.textSecondary }]}
+              >
+                🌱 Area: {plantation.area} acres
+              </Text>
+              {plantation.description && (
+                <Text
+                  style={[
+                    styles.plantationDescription,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  📝 Description: {plantation.description}
+                </Text>
+              )}
+            </View>
 
-          <View style={styles.managementSection}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Management Tools
-            </Text>
+            <View style={styles.managementSection}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Management Tools
+              </Text>
 
-            <Button
-              title="📊 View Production Reports"
+              <Button
+                title="📊 View Production Reports"
               onPress={() => {}}
-              style={styles.managementButton}
-            />
+                style={styles.managementButton}
+              />
 
-            <Button
-              title="🌿 Manage Tea Varieties"
+              <Button
+                title="🌿 Manage Tea Varieties"
               onPress={() => {}}
-              style={styles.managementButton}
-            />
+                style={styles.managementButton}
+              />
 
-            <Button
-              title="👥 Manage Workers"
+              <Button
+                title="👥 Manage Workers"
               onPress={() => {}}
-              style={styles.managementButton}
-            />
+                style={styles.managementButton}
+              />
 
-            <Button
-              title="📈 Track Harvest Data"
+              <Button
+                title="📈 Track Harvest Data"
               onPress={() => {}}
-              style={styles.managementButton}
-            />
+                style={styles.managementButton}
+              />
 
-            <Button
-              title="💰 Financial Reports"
+              <Button
+                title="💰 Financial Reports"
               onPress={() => {}}
-              style={styles.managementButton}
-            />
+                style={styles.managementButton}
+              />
 
-            <Button
-              title="🌡️ Weather Monitoring"
+              <Button
+                title="🌡️ Weather Monitoring"
               onPress={onNavigateToWeather || (() => {})}
-              style={styles.managementButton}
-            />
-          </View>
+                style={styles.managementButton}
+              />
+            </View>
 
                   {/* Split Button Container */}
-        <View style={styles.splitButtonContainer}>
-          <TouchableOpacity
-            style={[styles.splitButton, styles.leftButton]}
-            onPress={() => navigation.navigate('DailyDataEntry')}
-          >
-            <View style={styles.buttonContent}>
-              <Text style={styles.buttonIcon}>+</Text>
-              <Text style={styles.buttonText}>Enter Daily Data</Text>
+            <View style={styles.splitButtonContainer}>
+              <TouchableOpacity
+                style={[styles.splitButton, styles.leftButton]}
+                onPress={() => navigation.navigate('DailyDataEntry')}
+              >
+                <View style={styles.buttonContent}>
+                  <Text style={styles.buttonIcon}>📝</Text>
+                  <Text style={styles.buttonText}>Enter Daily Data</Text>
+                </View>
+              </TouchableOpacity>
+
+              <View style={styles.buttonDivider} />
+
+              <TouchableOpacity
+                style={[styles.splitButton, styles.rightButton]}
+                onPress={() => navigation.navigate('DailyDataView')}
+              >
+                <View style={styles.buttonContent}>
+                  <Text style={styles.buttonIcon}>📊</Text>
+                  <Text style={styles.buttonText}>View Daily Data</Text>
+                </View>
+              </TouchableOpacity>
             </View>
-          </TouchableOpacity>
 
-          <View style={styles.buttonDivider} />
+            {/* Split Button 2: Manage Workers | Manage Fields (Yellow) */}
+            <View style={[styles.splitButtonContainer, styles.yellowButton]}>
+              <TouchableOpacity
+                style={[styles.splitButton, styles.leftButton]}
+                onPress={() => navigation.navigate('WorkerManagement')}
+              >
+                <View style={styles.buttonContent}>
+                  <Text style={styles.buttonIcon}>👥</Text>
+                  <Text style={styles.buttonText}>Manage Workers</Text>
+                </View>
+              </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.splitButton, styles.rightButton]}
-            onPress={() => navigation.navigate('WorkerManagement')}
-          >
-            <Text style={styles.buttonText}>Manage Workers</Text>
-          </TouchableOpacity>
-        </View>
+              <View style={styles.buttonDivider} />
 
-          {/* Generate Schedule Button */}
-        <TouchableOpacity
-          style={styles.scheduleButton}
-          onPress={() => navigation.navigate('AssignmentGeneration')}
-        >
-          <Text style={styles.scheduleIcon}>📅</Text>
-          <Text style={styles.scheduleText}>Generate Today's Schedule</Text>
-        </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.splitButton, styles.rightButton]}
+                onPress={() => navigation.navigate('FieldManagement')}
+              >
+                <View style={styles.buttonContent}>
+                  <Text style={styles.buttonIcon}>🌱</Text>
+                  <Text style={styles.buttonText}>Manage Fields</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
 
-        {/* View Daily Data Link */}
-        <TouchableOpacity
-          style={styles.linkContainer}
-          onPress={() => navigation.navigate('DailyDataView')}
-        >
-          <Text style={styles.linkText}>View Daily Data</Text>
-        </TouchableOpacity>
+            {/* Split Button 3: Generate Today's Schedule | View Latest Schedule (Green) */}
+            <View style={styles.splitButtonContainer}>
+              <TouchableOpacity
+                style={[styles.splitButton, styles.leftButton]}
+                onPress={() => navigation.navigate('AssignmentGeneration')}
+              >
+                <View style={styles.buttonContent}>
+                  <Text style={styles.buttonIcon}>📅</Text>
+                  <Text style={styles.buttonText}>Generate Schedule</Text>
+                </View>
+              </TouchableOpacity>
 
-        {/* View Latest Schedule Link */}
-        <TouchableOpacity
-          style={styles.linkContainer}
-          onPress={() => navigation.navigate('ViewLatestSchedule')}
-        >
-          <Text style={styles.linkText}>View Latest Schedule</Text>
-        </TouchableOpacity>
+              <View style={styles.buttonDivider} />
 
-        {/* Manage Fields Link */}
-        <TouchableOpacity
-          style={styles.linkContainer}
-          onPress={() => navigation.navigate('FieldManagement')}
-        >
-          <Text style={styles.linkText}>Manage Fields</Text>
-        </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.splitButton, styles.rightButton]}
+                onPress={() => navigation.navigate('ViewLatestSchedule')}
+              >
+                <View style={styles.buttonContent}>
+                  <Text style={styles.buttonIcon}>📋</Text>
+                  <Text style={styles.buttonText}>View Schedule</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
 
-        </View>
+          </View>
 
-      ) : (
-        <View style={styles.noPlantationContainer}>
-          <Text style={styles.noPlantationTitle}>No Plantation Assigned</Text>
-          <Text style={styles.noPlantationText}>
-            You haven't been assigned to any tea plantation yet. Please contact
-            your administrator.
-          </Text>
-        </View>
-      )}
+        ) : (
+          <View style={styles.noPlantationContainer}>
+            <Text style={styles.noPlantationTitle}>No Plantation Assigned</Text>
+            <Text style={styles.noPlantationText}>
+              You haven't been assigned to any tea plantation yet. Please contact
+              your administrator.
+            </Text>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -403,39 +423,53 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
   },
-  scheduleButton: {
-    backgroundColor: '#fbc02d',
+  splitButtonContainer: {
+    backgroundColor: '#7cb342',
     borderRadius: 10,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
+    overflow: 'hidden',
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  scheduleIcon: {
-    fontSize: 20,
-    marginRight: 10,
+  yellowButton: {
+    backgroundColor: '#fbc02d',
   },
-  scheduleText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  linkContainer: {
+  splitButton: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 40,
   },
-  linkText: {
-    color: '#1b5e20',
-    fontSize: 14,
+  leftButton: {
+    paddingRight: 8,
+  },
+  rightButton: {
+    paddingLeft: 8,
+  },
+  buttonDivider: {
+    width: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    fontSize: 16,
+    color: '#fff',
+    marginRight: 6,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 13,
     fontWeight: '600',
-    textDecorationLine: 'underline',
+    flexShrink: 1,
   },
   spacer: {
     height: 40,
