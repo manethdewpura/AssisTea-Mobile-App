@@ -99,6 +99,40 @@ class DatabaseService {
         );
       `);
 
+            // Activity logs table
+            await this.db.executeSql(`
+        CREATE TABLE IF NOT EXISTS activity_logs (
+          id INTEGER PRIMARY KEY,
+          timestamp TEXT NOT NULL,
+          operation_type TEXT NOT NULL,
+          zone_id INTEGER,
+          status TEXT NOT NULL,
+          duration REAL,
+          pressure REAL,
+          flow_rate REAL,
+          water_volume REAL,
+          fertilizer_volume REAL,
+          start_moisture REAL,
+          end_moisture REAL,
+          notes TEXT,
+          syncStatus TEXT DEFAULT 'pending',
+          createdAt TEXT NOT NULL,
+          updatedAt TEXT NOT NULL
+        );
+      `);
+
+            // Create index on timestamp for faster queries
+            await this.db.executeSql(`
+        CREATE INDEX IF NOT EXISTS idx_activity_logs_timestamp 
+        ON activity_logs(timestamp DESC);
+      `);
+
+            // Create index on syncStatus for sync queries
+            await this.db.executeSql(`
+        CREATE INDEX IF NOT EXISTS idx_activity_logs_sync 
+        ON activity_logs(syncStatus);
+      `);
+
             console.log('✅ All tables created successfully');
         } catch (error) {
             console.error('❌ Error creating tables:', error);

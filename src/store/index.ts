@@ -5,6 +5,7 @@ import networkReducer from './slices/network.slice';
 import notificationReducer from './slices/notification.slice';
 import weatherReducer from './slices/weather.slice';
 import aiReducer from './slices/ai.slice';
+import configReducer from './slices/config.slice';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     notifications: notificationReducer,
     weather: weatherReducer,
     ai: aiReducer,
+    config: configReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
