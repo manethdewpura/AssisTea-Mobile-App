@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Alert,
@@ -13,6 +12,7 @@ import {
   TextInput,
   Modal,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppSelector } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import DateTimePicker from '@react-native-community/datetimepicker';
