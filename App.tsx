@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { StatusBar, StyleSheet, View, ActivityIndicator, BackHandler, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { StatusBar, StyleSheet, View, ActivityIndicator, BackHandler, Alert, Animated, Dimensions, TouchableOpacity } from 'react-native';
 import { createNavigationContainerRef } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
@@ -10,6 +10,7 @@ import AuthListener from './src/store/listeners/AuthListener';
 import ThemeListener from './src/store/listeners/ThemeListener';
 import NotificationListener from './src/store/listeners/NotificationListener';
 import WeatherListener from './src/store/listeners/WeatherListener';
+import ConfigListener from './src/store/listeners/ConfigListener';
 import type { ThemeState } from './src/common/types';
 import LoginScreen from './src/screens/auth/LoginScreen';
 import SignUpScreen from './src/screens/auth/SignUpScreen';
@@ -17,12 +18,14 @@ import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
 import MainNavigator from './src/components/organisms/MainNavigator';
 import TopNavbar from './src/components/organisms/TopNavbar';
 import PlantationSetupModal from './src/components/organisms/PlantationSetupModal';
+import HamburgerMenu from './src/components/organisms/HamburgerMenu';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import NetworkStatus from './src/components/molecule/NetworkStatus';
 import { initBackgroundFetch } from './src/utils';
 import NotificationsScreen from './src/screens/NotificationsScreen';
 
 export const navigationRef = createNavigationContainerRef();
+const { width: screenWidth } = Dimensions.get('window');
 
 function App() {
   // Initialize background fetch when app starts
@@ -34,15 +37,17 @@ function App() {
     <SafeAreaProvider>
       <Provider store={store}>
         <ThemeListener>
-          <NotificationListener>
-            <AuthListener>
+          <ConfigListener>
+            <NotificationListener>
+              <AuthListener>
               <WeatherListener>
-                <ErrorBoundary>
-                  <AppContent />
-                </ErrorBoundary>
+                  <ErrorBoundary>
+                    <AppContent />
+                  </ErrorBoundary>
               </WeatherListener>
-            </AuthListener>
-          </NotificationListener>
+              </AuthListener>
+            </NotificationListener>
+          </ConfigListener>
         </ThemeListener>
       </Provider>
     </SafeAreaProvider>
@@ -56,6 +61,11 @@ function AppContent() {
   const [authScreen, setAuthScreen] = useState<'login' | 'signup' | 'forgot'>('login');
   const [showPlantationSetup, setShowPlantationSetup] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
+  
+  // Animation refs for notifications
+  const notificationsSlideAnim = useRef(new Animated.Value(screenWidth)).current;
+  const notificationsFadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const backAction = () => {
@@ -96,6 +106,57 @@ function AppContent() {
     }
   }, [user, userProfile]);
 
+  // Animate notifications screen
+  useEffect(() => {
+    if (showNotifications) {
+      // Animate both screen and overlay together
+      Animated.parallel([
+        Animated.timing(notificationsSlideAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(notificationsFadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Reset animations when hidden
+      Animated.parallel([
+        Animated.timing(notificationsSlideAnim, {
+          toValue: screenWidth,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(notificationsFadeAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [showNotifications, notificationsSlideAnim, notificationsFadeAnim]);
+
+  const handleCloseNotifications = () => {
+    // Animate both screen and overlay out together
+    Animated.parallel([
+      Animated.timing(notificationsSlideAnim, {
+        toValue: screenWidth,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(notificationsFadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setShowNotifications(false);
+    });
+  };
+
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
@@ -110,17 +171,43 @@ function AppContent() {
     if (userProfile.role === 'admin') {
       return (
         <View style={styles.container}>
-          <TopNavbar onNotificationPress={() => setShowNotifications(true)} />
+          <TopNavbar 
+            onNotificationPress={() => setShowNotifications(true)}
+            onMenuPress={() => setShowHamburgerMenu(true)}
+          />
           {showNotifications && (
-            <View
-              style={[
-                styles.notificationsOverlay,
-                { backgroundColor: colors.background },
-              ]}
-            >
-              <NotificationsScreen
-                onBackPress={() => setShowNotifications(false)}
-              />
+            <View style={styles.notificationsOverlay}>
+              {/* Overlay backdrop */}
+              <Animated.View
+                style={[
+                  styles.notificationsBackdrop,
+                  {
+                    opacity: notificationsFadeAnim,
+                  },
+                ]}
+              >
+                <View style={styles.backdropBlur} />
+                <TouchableOpacity
+                  activeOpacity={1}
+                  onPress={handleCloseNotifications}
+                  style={styles.backdropTouchable}
+                />
+              </Animated.View>
+
+              {/* Notifications Screen */}
+              <Animated.View
+                style={[
+                  styles.notificationsContainer,
+                  {
+                    backgroundColor: colors.background,
+                    transform: [{ translateX: notificationsSlideAnim }],
+                  },
+                ]}
+              >
+                <NotificationsScreen
+                  onBackPress={handleCloseNotifications}
+                />
+              </Animated.View>
             </View>
           )}
           <NetworkStatus />
@@ -130,26 +217,60 @@ function AppContent() {
             onClose={() => setShowPlantationSetup(false)}
             onSuccess={() => setShowPlantationSetup(false)}
           />
+          <HamburgerMenu
+            visible={showHamburgerMenu}
+            onClose={() => setShowHamburgerMenu(false)}
+          />
         </View>
       );
     } else if (userProfile.role === 'tea_plantation_manager') {
       return (
         <View style={styles.container}>
-          <TopNavbar onNotificationPress={() => setShowNotifications(true)} />
+          <TopNavbar 
+            onNotificationPress={() => setShowNotifications(true)}
+            onMenuPress={() => setShowHamburgerMenu(true)}
+          />
           {showNotifications && (
-            <View
-              style={[
-                styles.notificationsOverlay,
-                { backgroundColor: colors.background },
-              ]}
-            >
-              <NotificationsScreen
-                onBackPress={() => setShowNotifications(false)}
-              />
+            <View style={styles.notificationsOverlay}>
+              {/* Overlay backdrop */}
+              <Animated.View
+                style={[
+                  styles.notificationsBackdrop,
+                  {
+                    opacity: notificationsFadeAnim,
+                  },
+                ]}
+              >
+                <View style={styles.backdropBlur} />
+                <TouchableOpacity
+                  activeOpacity={1}
+                  onPress={handleCloseNotifications}
+                  style={styles.backdropTouchable}
+                />
+              </Animated.View>
+
+              {/* Notifications Screen */}
+              <Animated.View
+                style={[
+                  styles.notificationsContainer,
+                  {
+                    backgroundColor: colors.background,
+                    transform: [{ translateX: notificationsSlideAnim }],
+                  },
+                ]}
+              >
+                <NotificationsScreen
+                  onBackPress={handleCloseNotifications}
+                />
+              </Animated.View>
             </View>
           )}
           <NetworkStatus />
           <MainNavigator userRole="tea_plantation_manager" navigationRef={navigationRef} />
+          <HamburgerMenu
+            visible={showHamburgerMenu}
+            onClose={() => setShowHamburgerMenu(false)}
+          />
         </View>
       );
     }
@@ -191,6 +312,25 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 2,
+  },
+  notificationsBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
+  backdropBlur: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  backdropTouchable: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  notificationsContainer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    zIndex: 1,
   },
 });
 
