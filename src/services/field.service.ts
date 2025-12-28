@@ -1,8 +1,21 @@
-import firestore from '@react-native-firebase/firestore';
+import {
+    getFirestore,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    setDoc,
+    updateDoc,
+    deleteDoc,
+    query,
+    where,
+    Timestamp,
+} from '@react-native-firebase/firestore';
 import { Field, CreateFieldInput } from '../models/Field';
 
 class FieldService {
-    private fieldsCollection = firestore().collection('fields');
+    private readonly db = getFirestore();
+    private readonly collectionName = 'fields';
 
     /**
      * Create a new field in Firebase
@@ -12,7 +25,9 @@ class FieldService {
         fieldData: CreateFieldInput,
     ): Promise<Field> {
         try {
-            const fieldId = this.fieldsCollection.doc().id;
+            const fieldsCollection = collection(this.db, this.collectionName);
+            const newDocRef = doc(fieldsCollection);
+            const fieldId = newDocRef.id;
             const now = new Date();
 
             const field: Field = {
@@ -23,10 +38,10 @@ class FieldService {
                 updatedAt: now,
             };
 
-            await this.fieldsCollection.doc(fieldId).set({
+            await setDoc(newDocRef, {
                 ...field,
-                createdAt: firestore.Timestamp.fromDate(now),
-                updatedAt: firestore.Timestamp.fromDate(now),
+                createdAt: Timestamp.fromDate(now),
+                updatedAt: Timestamp.fromDate(now),
             });
 
             return field;
@@ -41,22 +56,25 @@ class FieldService {
      */
     async getFieldsByPlantation(plantationId: string): Promise<Field[]> {
         try {
-            const snapshot = await this.fieldsCollection
-                .where('plantationId', '==', plantationId)
-                .get();
+            const fieldsCollection = collection(this.db, this.collectionName);
+            const q = query(
+                fieldsCollection,
+                where('plantationId', '==', plantationId)
+            );
+            const snapshot = await getDocs(q);
 
-            const fields = snapshot.docs.map(doc => {
-                const data = doc.data();
+            const fields = snapshot.docs.map((docSnapshot: any) => {
+                const data = docSnapshot.data();
                 return {
                     ...data,
-                    id: doc.id,
+                    id: docSnapshot.id,
                     createdAt: data.createdAt?.toDate() || new Date(),
                     updatedAt: data.updatedAt?.toDate() || new Date(),
                 } as Field;
             });
 
             // Sort by creation date (newest first)
-            return fields.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+            return fields.sort((a: Field, b: Field) => b.createdAt.getTime() - a.createdAt.getTime());
         } catch (error) {
             console.error('Error fetching fields:', error);
             throw error;
@@ -68,16 +86,17 @@ class FieldService {
      */
     async getFieldById(fieldId: string): Promise<Field | null> {
         try {
-            const doc = await this.fieldsCollection.doc(fieldId).get();
+            const fieldDocRef = doc(this.db, this.collectionName, fieldId);
+            const docSnapshot = await getDoc(fieldDocRef);
 
-            if (!doc.exists) {
+            if (!docSnapshot.exists()) {
                 return null;
             }
 
-            const data = doc.data()!;
+            const data = docSnapshot.data()!;
             return {
                 ...data,
-                id: doc.id,
+                id: docSnapshot.id,
                 createdAt: data.createdAt?.toDate() || new Date(),
                 updatedAt: data.updatedAt?.toDate() || new Date(),
             } as Field;
@@ -92,9 +111,10 @@ class FieldService {
      */
     async updateField(fieldId: string, updates: Partial<CreateFieldInput>): Promise<void> {
         try {
-            await this.fieldsCollection.doc(fieldId).update({
+            const fieldDocRef = doc(this.db, this.collectionName, fieldId);
+            await updateDoc(fieldDocRef, {
                 ...updates,
-                updatedAt: firestore.Timestamp.now(),
+                updatedAt: Timestamp.now(),
             });
         } catch (error) {
             console.error('Error updating field:', error);
@@ -107,7 +127,8 @@ class FieldService {
      */
     async deleteField(fieldId: string): Promise<void> {
         try {
-            await this.fieldsCollection.doc(fieldId).delete();
+            const fieldDocRef = doc(this.db, this.collectionName, fieldId);
+            await deleteDoc(fieldDocRef);
         } catch (error) {
             console.error('Error deleting field:', error);
             throw error;
@@ -119,10 +140,13 @@ class FieldService {
      */
     async checkFieldNameExists(name: string, plantationId: string): Promise<boolean> {
         try {
-            const snapshot = await this.fieldsCollection
-                .where('name', '==', name)
-                .where('plantationId', '==', plantationId)
-                .get();
+            const fieldsCollection = collection(this.db, this.collectionName);
+            const q = query(
+                fieldsCollection,
+                where('name', '==', name),
+                where('plantationId', '==', plantationId)
+            );
+            const snapshot = await getDocs(q);
 
             return snapshot.docs.length > 0;
         } catch (error) {
