@@ -1,86 +1,42 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAppSelector } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
-import TopNavbar from '../../components/organisms/TopNavbar';
-import NotificationsScreen from '../NotificationsScreen';
 import OptionCard from '../../components/molecule/OptionCard';
-import IrrigationAndFertilizerControlsScreen from './IrrigationAndFertilizerControlsScreen';
-import IrrigationAndFertilizerSetupScreen from './IrrigationAndFertilizerSetupScreen';
-import ActivityLogsScreen from './ActivityLogsScreen';
+import type { IrrigationStackParamList } from '../../navigation/IrrigationNavigator';
 
-type ScreenType = 'main' | 'controls' | 'setup' | 'activityLogs' | 'notifications';
+type IrrigationScreenNavigationProp = NativeStackNavigationProp<
+  IrrigationStackParamList,
+  'IrrigationHome'
+>;
 
 const IrrigationScreen: React.FC = () => {
   const { colors } = useAppSelector(selectTheme);
   const { userProfile } = useAppSelector(selectAuth);
-  const [currentScreen, setCurrentScreen] = useState<ScreenType>('main');
-  const [notificationCount] = useState(5); // Mock notification count
+  const navigation = useNavigation<IrrigationScreenNavigationProp>();
 
   const isAdmin = userProfile?.role === 'admin';
 
-  // Show notifications screen if requested
-  if (currentScreen === 'notifications') {
-    return (
-      <View style={styles.fullContainer}>
-        <NotificationsScreen
-          onBackPress={() => setCurrentScreen('main')}
-        />
-      </View>
-    );
-  }
-
-  // Show Irrigation and Fertilizer Controls screen
-  if (currentScreen === 'controls') {
-    return (
-      <View style={styles.fullContainer}>
-        <IrrigationAndFertilizerControlsScreen
-          onBackPress={() => setCurrentScreen('main')}
-        />
-      </View>
-    );
-  }
-
-  // Show Irrigation and Fertilizer Setup screen
-  if (currentScreen === 'setup') {
-    return (
-      <View style={styles.fullContainer}>
-        <IrrigationAndFertilizerSetupScreen
-          onBackPress={() => setCurrentScreen('main')}
-        />
-      </View>
-    );
-  }
-
-  // Show Activity Logs screen
-  if (currentScreen === 'activityLogs') {
-    return (
-      <View style={styles.fullContainer}>
-        <ActivityLogsScreen
-          onBackPress={() => setCurrentScreen('main')}
-        />
-      </View>
-    );
-  }
-
   const handleControlsPress = () => {
-    setCurrentScreen('controls');
+    navigation.navigate('IrrigationControls');
   };
 
   const handleSetupPress = () => {
-    setCurrentScreen('setup');
+    navigation.navigate('IrrigationSetup');
   };
 
   const handleActivityLogsPress = () => {
-    setCurrentScreen('activityLogs');
+    navigation.navigate('ActivityLogs');
+  };
+
+  const handleSensorDataPress = () => {
+    navigation.navigate('SensorData');
   };
 
   return (
     <View style={styles.fullContainer}>
-      <TopNavbar
-        onNotificationPress={() => setCurrentScreen('notifications')}
-        unreadCount={notificationCount}
-      />
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={styles.contentContainer}
@@ -110,6 +66,14 @@ const IrrigationScreen: React.FC = () => {
             title="Activity Logs"
             description="View history of irrigation and fertilizer activities"
             onPress={handleActivityLogsPress}
+          />
+
+          {/* Sensor Data */}
+          <OptionCard
+            icon="activity"
+            title="Sensor Data"
+            description="View real-time sensor readings and data"
+            onPress={handleSensorDataPress}
           />
         </View>
       </ScrollView>
