@@ -8,3 +8,13 @@ export * from './backgroundSync.service';
 export * from './ai.service';
 export * from './worker.Service';
 export * from './dailyData.service';
+
+export * from './config.service';
+export * from './irrigation.service';
+export * from './fertigation.service';
+export * from './logs.service';
+export * from './schedules.service';
+export * from './sensors.service';
+export * from './zones.service';
+export * from './activityLogsSync.service';
+export * from './sqlite/activityLogsSQLite.service';

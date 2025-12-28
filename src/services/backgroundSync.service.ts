@@ -1,5 +1,6 @@
 import { backendService } from './backend.service';
 import { syncQueueService } from './syncQueue.service';
+import { activityLogsSyncService } from './activityLogsSync.service';
 
 /**
  * Service to sync queued weather data to backend
@@ -50,6 +51,14 @@ export const backgroundSyncService = {
             await syncQueueService.cleanupSyncedItems(7);
 
             console.log(`[BackgroundSync] Successfully synced ${successCount}/${unsyncedItems.length} items`);
+
+            // Also sync activity logs to Firebase
+            try {
+                const activityLogsResult = await activityLogsSyncService.syncPendingLogs();
+                console.log(`[BackgroundSync] Activity logs sync: ${activityLogsResult.synced} synced, ${activityLogsResult.failed} failed`);
+            } catch (activityLogsError) {
+                console.warn('[BackgroundSync] Failed to sync activity logs:', activityLogsError);
+            }
 
             return successCount;
         } catch (error) {
