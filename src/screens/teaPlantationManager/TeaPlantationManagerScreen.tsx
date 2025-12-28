@@ -19,10 +19,12 @@ import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantation
 
 interface TeaPlantationManagerScreenProps {
   onNavigateToWeather?: () => void;
+  onNavigateToSensors?: () => void;
 }
 
 const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
   onNavigateToWeather,
+  onNavigateToSensors,
 }) => {
   const navigation =
     useNavigation<NativeStackNavigationProp<TeaPlantationStackParamList>>();
@@ -86,7 +88,6 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
       >
-
         {plantation ? (
           <View style={styles.plantationContainer}>
             <Text style={[styles.plantationTitle, { color: colors.text }]}>
@@ -137,42 +138,50 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
 
               <Button
                 title="📊 View Production Reports"
-              onPress={() => {}}
+                onPress={() => {}}
                 style={styles.managementButton}
               />
 
               <Button
                 title="🌿 Manage Tea Varieties"
-              onPress={() => {}}
+                onPress={() => {}}
                 style={styles.managementButton}
               />
 
               <Button
                 title="👥 Manage Workers"
-              onPress={() => {}}
+                onPress={() => {}}
                 style={styles.managementButton}
               />
 
               <Button
                 title="📈 Track Harvest Data"
-              onPress={() => {}}
+                onPress={() => {}}
                 style={styles.managementButton}
               />
 
               <Button
                 title="💰 Financial Reports"
-              onPress={() => {}}
+                onPress={() => {}}
                 style={styles.managementButton}
               />
 
               <Button
                 title="🌡️ Weather Monitoring"
-              onPress={onNavigateToWeather || (() => {})}
+                onPress={onNavigateToWeather || (() => {})}
                 style={styles.managementButton}
               />
+              {/* Sensors Section */}
+              {onNavigateToSensors && (
+                <Button
+                  title="📊 Sensor Data"
+                  onPress={onNavigateToSensors || (() => {})}
+                  style={styles.managementButton}
+                />
+              )}
             </View>
 
-                  {/* Split Button Container */}
+            {/* Split Button Container */}
             <View style={styles.splitButtonContainer}>
               <TouchableOpacity
                 style={[styles.splitButton, styles.leftButton]}
@@ -246,15 +255,13 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
                 </View>
               </TouchableOpacity>
             </View>
-
           </View>
-
         ) : (
           <View style={styles.noPlantationContainer}>
             <Text style={styles.noPlantationTitle}>No Plantation Assigned</Text>
             <Text style={styles.noPlantationText}>
-              You haven't been assigned to any tea plantation yet. Please contact
-              your administrator.
+              You haven't been assigned to any tea plantation yet. Please
+              contact your administrator.
             </Text>
           </View>
         )}

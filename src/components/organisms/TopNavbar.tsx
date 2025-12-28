@@ -3,66 +3,57 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { useAppSelector } from '../../hooks';
 import { selectTheme, selectNotifications } from '../../store/selectors';
-import HamburgerMenu from './HamburgerMenu';
 
 
 export interface TopNavbarProps {
   onNotificationPress: () => void;
+  onMenuPress?: () => void;
   unreadCount?: number;
 }
 
-const TopNavbar: React.FC<TopNavbarProps> = ({ onNotificationPress, unreadCount }) => {
+const TopNavbar: React.FC<TopNavbarProps> = ({ onNotificationPress, onMenuPress, unreadCount }) => {
   const { colors, isDark } = useAppSelector(selectTheme);
   const notifications = useAppSelector(selectNotifications);
   const resolvedUnreadCount = unreadCount ?? notifications.unreadCount ?? 5;
-  const [menuVisible, setMenuVisible] = React.useState(false);
 
   return (
-    <>
-      <View
-        style={[
-          styles.container,
-          { backgroundColor: colors.primary },
-          isDark ? styles.noBorder : styles.withBorder,
-        ]}
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.primary },
+        isDark ? styles.noBorder : styles.withBorder,
+      ]}
+    >
+      {/* Hamburger Menu Icon */}
+      <TouchableOpacity
+        style={styles.iconButton}
+        onPress={() => onMenuPress?.()}
+        activeOpacity={0.7}
       >
-        {/* Hamburger Menu Icon */}
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => setMenuVisible(true)}
-          activeOpacity={0.7}
-        >
-          <Lucide name="menu" size={24} color={colors.buttonText} />
-        </TouchableOpacity>
+        <Lucide name="menu" size={24} color={colors.buttonText} />
+      </TouchableOpacity>
 
-        {/* App Name */}
-        <View style={styles.appNameContainer}>
-          <Text style={[styles.appName, { color: colors.buttonText }]}>AssisTea</Text>
-        </View>
-
-        {/* Notification Icon */}
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={onNotificationPress}
-          activeOpacity={0.7}
-        >
-          <Lucide name="bell" size={24} color={colors.buttonText} />
-          {resolvedUnreadCount > 0 && (
-            <View style={[styles.badge, { backgroundColor: colors.error }]}>
-              <Text style={styles.badgeText}>
-                {resolvedUnreadCount > 9 ? '9+' : resolvedUnreadCount}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
+      {/* App Name */}
+      <View style={styles.appNameContainer}>
+        <Text style={[styles.appName, { color: colors.buttonText }]}>AssisTea</Text>
       </View>
 
-      {/* Hamburger Menu */}
-      <HamburgerMenu
-        visible={menuVisible}
-        onClose={() => setMenuVisible(false)}
-      />
-    </>
+      {/* Notification Icon */}
+      <TouchableOpacity
+        style={styles.iconButton}
+        onPress={onNotificationPress}
+        activeOpacity={0.7}
+      >
+        <Lucide name="bell" size={24} color={colors.buttonText} />
+        {resolvedUnreadCount > 0 && (
+          <View style={[styles.badge, { backgroundColor: colors.error }]}>
+            <Text style={styles.badgeText}>
+              {resolvedUnreadCount > 9 ? '9+' : resolvedUnreadCount}
+            </Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    </View>
   );
 };
 

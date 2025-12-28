@@ -37,9 +37,10 @@ import CustomAlert, {
 
 interface AdminDashboardProps {
   onNavigateToWeather?: () => void;
+  onNavigateToSensors?: () => void;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, onNavigateToSensors }) => {
   const { userProfile } = useAppSelector(selectAuth);
   const { colors } = useAppSelector(selectTheme);
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -485,6 +486,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
             <Button
               title="🌤️ View Weather Forecast"
               onPress={onNavigateToWeather}
+              style={styles.weatherButton}
+            />
+          </View>
+        )}
+
+        {/* Sensors Section */}
+        {onNavigateToSensors && (
+          <View style={[styles.section, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Real-Time Sensors
+            </Text>
+            <Button
+              title="📊 View Sensor Data"
+              onPress={onNavigateToSensors}
               style={styles.weatherButton}
             />
           </View>

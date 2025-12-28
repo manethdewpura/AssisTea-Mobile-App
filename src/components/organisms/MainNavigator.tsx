@@ -25,11 +25,15 @@ import {
   TeaPlantationNavigator,
   type TeaPlantationStackParamList,
 } from '../../navigation/TeaPlantationNavigator';
+import {
+  IrrigationNavigator,
+} from '../../navigation/IrrigationNavigator';
 import ViewLatestScheduleScreen from '../../screens/teaPlantationManager/ViewLatestScheduleScreen';
 import WorkerManagementScreen from '../../screens/teaPlantationManager/WorkerManagementScreen';
 import AddWorkerScreen from '../../screens/teaPlantationManager/AddWorkerScreen';
 import WorkerDetailsScreen from '../../screens/teaPlantationManager/WorkerDetailsScreen';
 import WeatherScreen from '../../screens/weather/WeatherScreen';
+import SensorDataScreen from '../../screens/irrigationAndFertigation/SensorDataScreen';
 import { useAppSelector } from '../../hooks';
 import { selectTheme } from '../../store/selectors';
 
@@ -37,6 +41,7 @@ type HomeStackParamList = {
   AdminDashboard: undefined;
   TeaPlantationHome: undefined;
   Weather: undefined;
+  Sensors: undefined;
 };
 
 type MainTabParamList = {
@@ -70,11 +75,11 @@ type MainTabProps<RouteName extends keyof MainTabParamList> = BottomTabScreenPro
 >;
 
 const AdminWateringTab: React.FC<MainTabProps<'Watering'>> = () => (
-  <AdminDashboard />
+  <IrrigationNavigator />
 );
 
 const ManagerWateringTab: React.FC<MainTabProps<'Watering'>> = () => (
-  <TeaPlantationNavigator />
+  <IrrigationNavigator />
 );
 
 const AdminHomeStack: React.FC<MainTabProps<'Home'>> = ({ navigation }) => (
@@ -86,6 +91,9 @@ const AdminHomeStack: React.FC<MainTabProps<'Home'>> = ({ navigation }) => (
           onNavigateToWeather={() =>
             navigation.navigate('Home', { screen: 'Weather' })
           }
+          onNavigateToSensors={() =>
+            navigation.navigate('Home', { screen: 'Sensors' })
+          }
         />
       )}
     />
@@ -93,6 +101,12 @@ const AdminHomeStack: React.FC<MainTabProps<'Home'>> = ({ navigation }) => (
       name="Weather"
       children={({ navigation: homeNav }) => (
         <WeatherScreen onBackPress={() => homeNav.goBack()} />
+      )}
+    />
+    <HomeStack.Screen
+      name="Sensors"
+      children={({ navigation: homeNav }) => (
+        <SensorDataScreen onBackPress={() => homeNav.goBack()} />
       )}
     />
   </HomeStack.Navigator>
@@ -107,6 +121,9 @@ const ManagerHomeStack: React.FC<MainTabProps<'Home'>> = ({ navigation }) => (
           onNavigateToWeather={() =>
             navigation.navigate('Home', { screen: 'Weather' })
           }
+          onNavigateToSensors={() =>
+            navigation.navigate('Home', { screen: 'Sensors' })
+          }
         />
       )}
     />
@@ -114,6 +131,12 @@ const ManagerHomeStack: React.FC<MainTabProps<'Home'>> = ({ navigation }) => (
       name="Weather"
       children={({ navigation: homeNav }) => (
         <WeatherScreen onBackPress={() => homeNav.goBack()} />
+      )}
+    />
+    <HomeStack.Screen
+      name="Sensors"
+      children={({ navigation: homeNav }) => (
+        <SensorDataScreen onBackPress={() => homeNav.goBack()} />
       )}
     />
   </HomeStack.Navigator>
