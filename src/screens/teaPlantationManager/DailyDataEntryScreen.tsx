@@ -391,20 +391,26 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
 
               {showWorkerDropdown && (
                 <View style={styles.dropdownList}>
-                  {workers.map(worker => (
-                    <TouchableOpacity
-                      key={worker.id}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setFormData({ ...formData, workerId: worker.id });
-                        setShowWorkerDropdown(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>
-                        {worker.name} ({worker.workerId})
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                  <ScrollView
+                    style={styles.dropdownScrollView}
+                    nestedScrollEnabled={true}
+                    showsVerticalScrollIndicator={true}
+                  >
+                    {workers.map(worker => (
+                      <TouchableOpacity
+                        key={worker.id}
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          setFormData({ ...formData, workerId: worker.id });
+                          setShowWorkerDropdown(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemText}>
+                          {worker.name} ({worker.workerId})
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
                 </View>
               )}
             </View>
@@ -637,6 +643,7 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     marginBottom: 16,
+    position: 'relative',
   },
   label: {
     fontSize: 14,
@@ -681,7 +688,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e0e0e0',
     marginTop: 4,
-    maxHeight: 150,
+    maxHeight: 200,
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  dropdownScrollView: {
+    maxHeight: 200,
   },
   dropdownItem: {
     paddingHorizontal: 12,
