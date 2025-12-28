@@ -4,3 +4,4 @@ export * from './network.slice';
 export * from './notification.slice';
 export * from './weather.slice';
 export * from './ai.slice';
+export * from './config.slice';
