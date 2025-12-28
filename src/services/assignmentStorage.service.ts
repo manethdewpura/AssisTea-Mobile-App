@@ -1,9 +1,23 @@
-import firestore from '@react-native-firebase/firestore';
+import {
+    getFirestore,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    setDoc,
+    updateDoc,
+    query,
+    where,
+    orderBy,
+    limit,
+    Timestamp,
+} from '@react-native-firebase/firestore';
 import { SavedSchedule, CreateScheduleInput } from '../models/SavedSchedule';
 import { WorkerAssignment } from '../models/MLPrediction';
 
 class AssignmentStorageService {
-    private schedulesCollection = firestore().collection('schedules');
+    private readonly db = getFirestore();
+    private readonly collectionName = 'schedules';
 
     /**
      * Save a new schedule or update if one exists for the same date
@@ -31,7 +45,9 @@ class AssignmentStorageService {
             }
 
             // Create new schedule
-            const scheduleId = this.schedulesCollection.doc().id;
+            const schedulesCollection = collection(this.db, this.collectionName);
+            const newDocRef = doc(schedulesCollection);
+            const scheduleId = newDocRef.id;
             const now = new Date();
 
             const schedule: SavedSchedule = {
@@ -42,10 +58,10 @@ class AssignmentStorageService {
                 status: 'active',
             };
 
-            await this.schedulesCollection.doc(scheduleId).set({
+            await setDoc(newDocRef, {
                 ...schedule,
-                createdAt: firestore.Timestamp.fromDate(now),
-                updatedAt: firestore.Timestamp.fromDate(now),
+                createdAt: Timestamp.fromDate(now),
+                updatedAt: Timestamp.fromDate(now),
             });
 
             return schedule;
@@ -63,18 +79,21 @@ class AssignmentStorageService {
         date: string
     ): Promise<SavedSchedule | null> {
         try {
-            const snapshot = await this.schedulesCollection
-                .where('plantationId', '==', plantationId)
-                .where('date', '==', date)
-                .limit(1)
-                .get();
+            const schedulesCollection = collection(this.db, this.collectionName);
+            const q = query(
+                schedulesCollection,
+                where('plantationId', '==', plantationId),
+                where('date', '==', date),
+                limit(1)
+            );
+            const snapshot = await getDocs(q);
 
             if (snapshot.empty) {
                 return null;
             }
 
-            const doc = snapshot.docs[0];
-            const data = doc.data();
+            const docSnapshot = snapshot.docs[0];
+            const data = docSnapshot.data();
 
             // Filter for active status
             if (data.status !== 'active') {
@@ -83,7 +102,7 @@ class AssignmentStorageService {
 
             return {
                 ...data,
-                id: doc.id,
+                id: docSnapshot.id,
                 createdAt: data.createdAt?.toDate() || new Date(),
                 updatedAt: data.updatedAt?.toDate() || new Date(),
             } as SavedSchedule;
@@ -99,10 +118,13 @@ class AssignmentStorageService {
     async getLatestSchedule(plantationId: string): Promise<SavedSchedule | null> {
         try {
             // Fetch recent schedules without where clause to avoid index
-            const snapshot = await this.schedulesCollection
-                .orderBy('date', 'desc')
-                .limit(50)
-                .get();
+            const schedulesCollection = collection(this.db, this.collectionName);
+            const q = query(
+                schedulesCollection,
+                orderBy('date', 'desc'),
+                limit(50)
+            );
+            const snapshot = await getDocs(q);
 
             if (snapshot.empty) {
                 return null;
@@ -110,16 +132,16 @@ class AssignmentStorageService {
 
             // Filter for this plantation and active status in-memory
             const filteredSchedules = snapshot.docs
-                .map(doc => {
-                    const data = doc.data();
+                .map((docSnapshot: any) => {
+                    const data = docSnapshot.data();
                     return {
                         ...data,
-                        id: doc.id,
+                        id: docSnapshot.id,
                         createdAt: data.createdAt?.toDate() || new Date(),
                         updatedAt: data.updatedAt?.toDate() || new Date(),
                     } as SavedSchedule;
                 })
-                .filter(s => s.plantationId === plantationId && s.status === 'active');
+                .filter((s: SavedSchedule) => s.plantationId === plantationId && s.status === 'active');
 
             return filteredSchedules.length > 0 ? filteredSchedules[0] : null;
         } catch (error) {
@@ -133,26 +155,29 @@ class AssignmentStorageService {
      */
     async getRecentSchedules(
         plantationId: string,
-        limit: number = 10
+        limitCount: number = 10
     ): Promise<SavedSchedule[]> {
         try {
-            const snapshot = await this.schedulesCollection
-                .where('plantationId', '==', plantationId)
-                .orderBy('date', 'desc')
-                .limit(limit)
-                .get();
+            const schedulesCollection = collection(this.db, this.collectionName);
+            const q = query(
+                schedulesCollection,
+                where('plantationId', '==', plantationId),
+                orderBy('date', 'desc'),
+                limit(limitCount)
+            );
+            const snapshot = await getDocs(q);
 
             return snapshot.docs
-                .map(doc => {
-                    const data = doc.data();
+                .map((docSnapshot: any) => {
+                    const data = docSnapshot.data();
                     return {
                         ...data,
-                        id: doc.id,
+                        id: docSnapshot.id,
                         createdAt: data.createdAt?.toDate() || new Date(),
                         updatedAt: data.updatedAt?.toDate() || new Date(),
                     } as SavedSchedule;
                 })
-                .filter(s => s.status === 'active');
+                .filter((s: SavedSchedule) => s.status === 'active');
         } catch (error) {
             console.error('Error fetching recent schedules:', error);
             throw error;
@@ -170,10 +195,11 @@ class AssignmentStorageService {
             const updateData: any = { ...updates };
 
             if (updates.updatedAt) {
-                updateData.updatedAt = firestore.Timestamp.fromDate(updates.updatedAt);
+                updateData.updatedAt = Timestamp.fromDate(updates.updatedAt);
             }
 
-            await this.schedulesCollection.doc(scheduleId).update(updateData);
+            const scheduleDocRef = doc(this.db, this.collectionName, scheduleId);
+            await updateDoc(scheduleDocRef, updateData);
         } catch (error) {
             console.error('Error updating schedule:', error);
             throw error;
@@ -185,9 +211,10 @@ class AssignmentStorageService {
      */
     async deleteSchedule(scheduleId: string): Promise<void> {
         try {
-            await this.schedulesCollection.doc(scheduleId).update({
+            const scheduleDocRef = doc(this.db, this.collectionName, scheduleId);
+            await updateDoc(scheduleDocRef, {
                 status: 'archived',
-                updatedAt: firestore.Timestamp.now(),
+                updatedAt: Timestamp.now(),
             });
         } catch (error) {
             console.error('Error deleting schedule:', error);
@@ -200,16 +227,17 @@ class AssignmentStorageService {
      */
     async getScheduleById(scheduleId: string): Promise<SavedSchedule | null> {
         try {
-            const doc = await this.schedulesCollection.doc(scheduleId).get();
+            const scheduleDocRef = doc(this.db, this.collectionName, scheduleId);
+            const docSnapshot = await getDoc(scheduleDocRef);
 
-            if (!doc.exists) {
+            if (!docSnapshot.exists()) {
                 return null;
             }
 
-            const data = doc.data()!;
+            const data = docSnapshot.data()!;
             return {
                 ...data,
-                id: doc.id,
+                id: docSnapshot.id,
                 createdAt: data.createdAt?.toDate() || new Date(),
                 updatedAt: data.updatedAt?.toDate() || new Date(),
             } as SavedSchedule;
