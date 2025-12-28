@@ -44,8 +44,8 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
   const [selectedField, setSelectedField] = useState<string>('');
   const [selectedQuality, setSelectedQuality] = useState<string>('');
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
-  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [showDateRangeModal, setShowDateRangeModal] = useState(false);
+  const [activeDatePicker, setActiveDatePicker] = useState<'start' | 'end' | null>(null);
   const [showWorkerDropdown, setShowWorkerDropdown] = useState(false);
   const [showFieldDropdown, setShowFieldDropdown] = useState(false);
   const [showQualityDropdown, setShowQualityDropdown] = useState(false);
@@ -258,7 +258,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
       setFilterType('dateRange');
     }
     if (Platform.OS === 'android') {
-      setShowStartDatePicker(false);
+      setActiveDatePicker(null);
     }
   };
 
@@ -270,7 +270,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
       setFilterType('dateRange');
     }
     if (Platform.OS === 'android') {
-      setShowEndDatePicker(false);
+      setActiveDatePicker(null);
     }
   };
 
@@ -325,18 +325,8 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               filterType === 'dateRange' && styles.filterButtonActive,
             ]}
             onPress={() => {
-              if (!startDateFilter) {
-                setShowStartDatePicker(true);
-              } else if (!endDateFilter) {
-                setShowEndDatePicker(true);
-              } else {
-                // Reset date range
-                setStartDateFilter('');
-                setEndDateFilter('');
-                setStartDate(null);
-                setEndDate(null);
-                setFilterType('all');
-              }
+              // Open a dedicated date range modal
+              setShowDateRangeModal(true);
             }}
           >
             <Text
@@ -348,9 +338,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               📆{' '}
               {startDateFilter && endDateFilter
                 ? `${startDateFilter} to ${endDateFilter}`
-                : startDateFilter
-                  ? `${startDateFilter} to ...`
-                  : 'Date Range'}
+                : 'Date Range'}
             </Text>
           </TouchableOpacity>
 
@@ -494,16 +482,106 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
         </Modal>
       )}
 
-      {showStartDatePicker && (
+      {showDateRangeModal && (
         <Modal
-          visible={showStartDatePicker}
+          visible={showDateRangeModal}
           transparent
           animationType="slide"
-          onRequestClose={() => setShowStartDatePicker(false)}
+          onRequestClose={() => {
+            setShowDateRangeModal(false);
+            setActiveDatePicker(null);
+          }}
+        >
+          <View style={styles.dateRangeModalOverlay}>
+            <View style={styles.dateRangeModalContent}>
+              {/* Header */}
+              <View style={styles.dateRangeHeader}>
+                <Text style={styles.dateRangeTitle}>Select Date Range</Text>
+                <TouchableOpacity onPress={() => {
+                  setShowDateRangeModal(false);
+                  setActiveDatePicker(null);
+                }}>
+                  <Text style={styles.dateRangeCloseButton}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* From Date Section */}
+              <View style={styles.dateSection}>
+                <Text style={styles.dateSectionLabel}>From Date</Text>
+                <TouchableOpacity
+                  style={styles.dateDisplayBox}
+                  onPress={() => setActiveDatePicker('start')}
+                >
+                  <Text style={styles.dateDisplayText}>
+                    {startDate ? startDate.toISOString().split('T')[0] : 'Tap to select start date'}
+                  </Text>
+                  <Text style={styles.calendarIcon}>📅</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* To Date Section */}
+              <View style={styles.dateSection}>
+                <Text style={styles.dateSectionLabel}>To Date</Text>
+                <TouchableOpacity
+                  style={styles.dateDisplayBox}
+                  onPress={() => setActiveDatePicker('end')}
+                >
+                  <Text style={styles.dateDisplayText}>
+                    {endDate ? endDate.toISOString().split('T')[0] : 'Tap to select end date'}
+                  </Text>
+                  <Text style={styles.calendarIcon}>📅</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Action Buttons */}
+              <View style={styles.dateRangeActions}>
+                <TouchableOpacity
+                  style={styles.clearDateButton}
+                  onPress={() => {
+                    setStartDate(null);
+                    setEndDate(null);
+                    setStartDateFilter('');
+                    setEndDateFilter('');
+                    setFilterType('all');
+                    setActiveDatePicker(null);
+                  }}
+                >
+                  <Text style={styles.clearDateButtonText}>Clear</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.applyDateButton,
+                    (!startDate || !endDate) && styles.applyDateButtonDisabled
+                  ]}
+                  onPress={() => {
+                    if (startDate && endDate) {
+                      setFilterType('dateRange');
+                      setShowDateRangeModal(false);
+                      setActiveDatePicker(null);
+                    }
+                  }}
+                  disabled={!startDate || !endDate}
+                >
+                  <Text style={styles.applyDateButtonText}>Apply Filter</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* Date Pickers - shown conditionally */}
+      {activeDatePicker === 'start' && (
+        <Modal
+          visible={activeDatePicker === 'start'}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setActiveDatePicker(null)}
         >
           <View style={styles.datePickerModal}>
             <View style={styles.datePickerHeader}>
-              <TouchableOpacity onPress={() => setShowStartDatePicker(false)}>
+              <TouchableOpacity onPress={() => setActiveDatePicker(null)}>
                 <Text style={styles.datePickerHeaderText}>Done</Text>
               </TouchableOpacity>
             </View>
@@ -518,16 +596,16 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
         </Modal>
       )}
 
-      {showEndDatePicker && (
+      {activeDatePicker === 'end' && (
         <Modal
-          visible={showEndDatePicker}
+          visible={activeDatePicker === 'end'}
           transparent
           animationType="slide"
-          onRequestClose={() => setShowEndDatePicker(false)}
+          onRequestClose={() => setActiveDatePicker(null)}
         >
           <View style={styles.datePickerModal}>
             <View style={styles.datePickerHeader}>
-              <TouchableOpacity onPress={() => setShowEndDatePicker(false)}>
+              <TouchableOpacity onPress={() => setActiveDatePicker(null)}>
                 <Text style={styles.datePickerHeaderText}>Done</Text>
               </TouchableOpacity>
             </View>
@@ -759,6 +837,103 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#7cb342',
+  },
+  dateRangeModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  dateRangeModalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 20,
+  },
+  dateRangeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  dateRangeTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
+  },
+  dateRangeCloseButton: {
+    fontSize: 24,
+    color: '#666',
+    fontWeight: '300',
+  },
+  dateSection: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  dateSectionLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  dateDisplayBox: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#7cb342',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dateDisplayText: {
+    fontSize: 15,
+    color: '#333',
+    fontWeight: '500',
+  },
+  calendarIcon: {
+    fontSize: 18,
+  },
+  dateRangeActions: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 8,
+    gap: 12,
+  },
+  clearDateButton: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#7cb342',
+  },
+  clearDateButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#7cb342',
+  },
+  applyDateButton: {
+    flex: 1,
+    backgroundColor: '#7cb342',
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  applyDateButtonDisabled: {
+    backgroundColor: '#ccc',
+    opacity: 0.6,
+  },
+  applyDateButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
   content: {
     flex: 1,
