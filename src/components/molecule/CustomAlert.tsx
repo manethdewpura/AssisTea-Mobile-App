@@ -7,6 +7,8 @@ import {
   Dimensions,
   Animated,
   Easing,
+  AppState,
+  AppStateStatus,
 } from 'react-native';
 import { useAppSelector } from '../../hooks';
 import { selectTheme } from '../../store/selectors';
@@ -42,12 +44,49 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
   const { colors } = useAppSelector(selectTheme);
   const [fadeAnim] = React.useState(new Animated.Value(0));
   const [scaleAnim] = React.useState(new Animated.Value(0.8));
+  const [appState, setAppState] = React.useState<AppStateStatus>(
+    AppState.currentState,
+  );
+  const isMountedRef = React.useRef(true);
 
   const safeButtons: AlertButton[] = Array.isArray(buttons)
     ? buttons
     : [{ text: 'OK', style: 'default' as const }];
 
+  // Track component mount state
   React.useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // Monitor app state to prevent showing modal when app is in background
+  React.useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      setAppState(nextAppState);
+      // If app goes to background and modal is visible, dismiss it
+      if (
+        nextAppState !== 'active' &&
+        visible &&
+        onDismiss &&
+        isMountedRef.current
+      ) {
+        onDismiss();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [visible, onDismiss]);
+
+  React.useEffect(() => {
+    // Only animate if component is mounted and app is active
+    if (!isMountedRef.current || appState !== 'active') {
+      return;
+    }
+
     if (visible) {
       Animated.parallel([
         Animated.timing(fadeAnim, {
@@ -79,7 +118,7 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
         }),
       ]).start();
     }
-  }, [visible, fadeAnim, scaleAnim]);
+  }, [visible, fadeAnim, scaleAnim, appState]);
 
   const getSeverityColor = () => {
     switch (severity) {
@@ -131,12 +170,16 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
     }
   };
 
-  if (!visible) return null;
+  // Only render modal if component is mounted, app is active, and visible is true
+  const shouldShowModal =
+    visible && isMountedRef.current && appState === 'active';
+
+  if (!shouldShowModal) return null;
 
   return (
     <Modal
       transparent
-      visible={visible}
+      visible={shouldShowModal}
       animationType="none"
       onRequestClose={onDismiss}
     >

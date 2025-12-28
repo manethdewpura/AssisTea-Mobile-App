@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Modal,
   ScrollView,
   Image,
   Dimensions,
@@ -29,37 +28,56 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({ visible, onClose }) => {
   const dispatch = useAppDispatch();
   const { colors } = useAppSelector(selectTheme);
   const { userProfile } = useAppSelector(selectAuth);
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  // Initialize animations off-screen and invisible
+  const slideAnim = useRef(new Animated.Value(-screenWidth * 0.85)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
-      // Reset to off-screen position first, then animate in
-      slideAnim.setValue(-screenWidth * 0.85);
-      fadeAnim.setValue(0);
-      
-      // Slide in the menu
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start(() => {
-        // Show overlay instantly after menu animation completes
-        fadeAnim.setValue(1);
-      });
+      // Animate both menu and overlay together
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Reset animations when hidden
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: -screenWidth * 0.85,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
     }
   }, [visible, slideAnim, fadeAnim]);
 
   const handleClose = () => {
-    // Hide overlay instantly
-    fadeAnim.setValue(0);
-    
-    // Slide out the menu
-    Animated.timing(slideAnim, {
-      toValue: -screenWidth * 0.85,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
+    // Animate both menu and overlay out together
+    Animated.parallel([
+      Animated.timing(slideAnim, {
+        toValue: -screenWidth * 0.85,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
       onClose();
     });
   };
@@ -80,25 +98,40 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({ visible, onClose }) => {
       : 'Tea Plantation Manager';
   };
 
+  if (!visible) {
+    return null;
+  }
+
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
-    >
-      <View style={styles.modalContainer}>
-        {/* Menu Content */}
-        <Animated.View
-          style={[
-            styles.menuContainer,
-            {
-              backgroundColor: colors.surface,
-              borderRightColor: colors.border,
-              transform: [{ translateX: slideAnim }],
-            },
-          ]}
-        >
+    <View style={styles.overlayContainer}>
+      {/* Overlay - positioned absolutely to cover entire screen */}
+      <Animated.View
+        style={[
+          styles.overlay,
+          {
+            opacity: fadeAnim,
+          },
+        ]}
+      >
+        <View style={styles.blurOverlay} />
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={handleClose}
+          style={styles.overlayTouchable}
+        />
+      </Animated.View>
+
+      {/* Menu Content */}
+      <Animated.View
+        style={[
+          styles.menuContainer,
+          {
+            backgroundColor: colors.surface,
+            borderRightColor: colors.border,
+            transform: [{ translateX: slideAnim }],
+          },
+        ]}
+      >
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <TouchableOpacity
@@ -151,35 +184,22 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({ visible, onClose }) => {
             </TouchableOpacity>
           </View>
         </Animated.View>
-
-        {/* Overlay */}
-        <Animated.View
-          style={[
-            styles.overlay,
-            {
-              opacity: fadeAnim,
-            },
-          ]}
-        >
-          <View style={styles.blurOverlay} />
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={handleClose}
-            style={styles.overlayTouchable}
-          />
-        </Animated.View>
-      </View>
-    </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  modalContainer: {
-    flex: 1,
-    flexDirection: 'row',
+  overlayContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 2,
   },
   overlay: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
   },
   blurOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -189,6 +209,10 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   menuContainer: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
     width: screenWidth * 0.85,
     maxWidth: 400,
     borderRightWidth: 1,

@@ -6,6 +6,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { useAppSelector } from '../hooks';
 import { selectTheme } from '../store/selectors';
@@ -28,6 +29,7 @@ interface NotificationsScreenProps {
 const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
   onBackPress,
 }) => {
+  const navigation = useNavigation();
   const { colors } = useAppSelector(selectTheme);
   const [notifications] = useState<Notification[]>([
     {
@@ -114,7 +116,10 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
       edges={['top']}
     >
       {/* Header */}
-      <ScreenHeader title="Notifications" onBackPress={onBackPress} />
+      <ScreenHeader 
+        title="Notifications" 
+        onBackPress={onBackPress || (() => navigation.goBack())} 
+      />
 
       <ScrollView
         style={styles.notificationsContainer}
