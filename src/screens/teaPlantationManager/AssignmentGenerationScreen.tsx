@@ -7,8 +7,8 @@ import {
     ScrollView,
     ActivityIndicator,
     Alert,
-    SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { assignmentService } from '../../services/assignment.service';

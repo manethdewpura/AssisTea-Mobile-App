@@ -1,4 +1,15 @@
-import firestore from '@react-native-firebase/firestore';
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+} from '@react-native-firebase/firestore';
 import type { CreateWorkerInput } from '../models/Worker';
 
 interface Worker extends CreateWorkerInput {
@@ -9,7 +20,8 @@ interface Worker extends CreateWorkerInput {
 }
 
 class WorkerService {
-  private workersCollection = firestore().collection('workers');
+  private readonly db = getFirestore();
+  private readonly collectionName = 'workers';
 
   /**
    * Create a new worker in Firebase
@@ -19,7 +31,9 @@ class WorkerService {
     workerData: CreateWorkerInput,
   ): Promise<Worker> {
     try {
-      const workerId = this.workersCollection.doc().id;
+      const workersCollection = collection(this.db, this.collectionName);
+      const newDocRef = doc(workersCollection);
+      const workerId = newDocRef.id;
       const now = Date.now();
 
       const worker: Worker = {
@@ -30,7 +44,7 @@ class WorkerService {
         updatedAt: now,
       };
 
-      await this.workersCollection.doc(workerId).set(worker);
+      await setDoc(newDocRef, worker);
       return worker;
     } catch (error) {
       throw error;
@@ -43,13 +57,16 @@ class WorkerService {
    */
   async getWorkersByPlantation(plantationId: string): Promise<Worker[]> {
     try {
-      const snapshot = await this.workersCollection
-        .where('plantationId', '==', plantationId)
-        .get();
+      const workersCollection = collection(this.db, this.collectionName);
+      const q = query(
+        workersCollection,
+        where('plantationId', '==', plantationId)
+      );
+      const snapshot = await getDocs(q);
 
       // Sort manually after fetching to avoid index requirement
-      const workers = snapshot.docs.map(doc => doc.data() as Worker);
-      return workers.sort((a, b) => b.createdAt - a.createdAt);
+      const workers = snapshot.docs.map((docSnapshot: any) => docSnapshot.data() as Worker);
+      return workers.sort((a: Worker, b: Worker) => b.createdAt - a.createdAt);
     } catch (error) {
       throw error;
     }
@@ -60,8 +77,9 @@ class WorkerService {
    */
   async getWorkerById(workerId: string): Promise<Worker | null> {
     try {
-      const doc = await this.workersCollection.doc(workerId).get();
-      return doc.exists() ? (doc.data() as Worker) : null;
+      const workerDocRef = doc(this.db, this.collectionName, workerId);
+      const docSnapshot = await getDoc(workerDocRef);
+      return docSnapshot.exists() ? (docSnapshot.data() as Worker) : null;
     } catch (error) {
       throw error;
     }
@@ -72,7 +90,8 @@ class WorkerService {
    */
   async updateWorker(workerId: string, updates: Partial<Worker>): Promise<void> {
     try {
-      await this.workersCollection.doc(workerId).update({
+      const workerDocRef = doc(this.db, this.collectionName, workerId);
+      await updateDoc(workerDocRef, {
         ...updates,
         updatedAt: Date.now(),
       });
@@ -86,7 +105,8 @@ class WorkerService {
    */
   async deleteWorker(workerId: string): Promise<void> {
     try {
-      await this.workersCollection.doc(workerId).delete();
+      const workerDocRef = doc(this.db, this.collectionName, workerId);
+      await deleteDoc(workerDocRef);
     } catch (error) {
       throw error;
     }
@@ -100,10 +120,13 @@ class WorkerService {
     plantationId: string,
   ): Promise<Worker | null> {
     try {
-      const snapshot = await this.workersCollection
-        .where('workerId', '==', workerId)
-        .where('plantationId', '==', plantationId)
-        .get();
+      const workersCollection = collection(this.db, this.collectionName);
+      const q = query(
+        workersCollection,
+        where('workerId', '==', workerId),
+        where('plantationId', '==', plantationId)
+      );
+      const snapshot = await getDocs(q);
 
       if (snapshot.docs.length === 0) {
         return null;
@@ -120,10 +143,13 @@ class WorkerService {
    */
   async checkWorkerIdExists(workerId: string, plantationId: string): Promise<boolean> {
     try {
-      const snapshot = await this.workersCollection
-        .where('workerId', '==', workerId)
-        .where('plantationId', '==', plantationId)
-        .get();
+      const workersCollection = collection(this.db, this.collectionName);
+      const q = query(
+        workersCollection,
+        where('workerId', '==', workerId),
+        where('plantationId', '==', plantationId)
+      );
+      const snapshot = await getDocs(q);
 
       return snapshot.docs.length > 0;
     } catch (error) {

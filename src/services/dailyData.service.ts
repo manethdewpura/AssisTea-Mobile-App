@@ -1,8 +1,21 @@
-import firestore from '@react-native-firebase/firestore';
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  writeBatch,
+} from '@react-native-firebase/firestore';
 import type { CreateDailyDataInput, DailyData } from '../models/DailyData';
 
 class DailyDataService {
-  private dailyDataCollection = firestore().collection('dailyData');
+  private readonly db = getFirestore();
+  private readonly collectionName = 'dailyData';
 
   /**
    * Create a new daily data entry in Firebase
@@ -12,15 +25,17 @@ class DailyDataService {
     data: CreateDailyDataInput,
   ): Promise<DailyData> {
     try {
-      const dataId = this.dailyDataCollection.doc().id;
+      const dailyDataCollection = collection(this.db, this.collectionName);
+      const newDocRef = doc(dailyDataCollection);
+      const dataId = newDocRef.id;
       const now = Date.now();
 
       const dailyData: DailyData = {
         id: dataId,
         ...data,
         plantationId,
-        teaPluckedKg: typeof data.teaPluckedKg === 'string' 
-          ? parseFloat(data.teaPluckedKg) 
+        teaPluckedKg: typeof data.teaPluckedKg === 'string'
+          ? parseFloat(data.teaPluckedKg)
           : data.teaPluckedKg,
         timeSpentHours: typeof data.timeSpentHours === 'string'
           ? parseFloat(data.timeSpentHours)
@@ -29,7 +44,7 @@ class DailyDataService {
         updatedAt: now,
       };
 
-      await this.dailyDataCollection.doc(dataId).set(dailyData);
+      await setDoc(newDocRef, dailyData);
       return dailyData;
     } catch (error) {
       throw error;
@@ -44,18 +59,20 @@ class DailyDataService {
     dataArray: CreateDailyDataInput[],
   ): Promise<DailyData[]> {
     try {
-      const batch = firestore().batch();
+      const batch = writeBatch(this.db);
       const now = Date.now();
       const createdData: DailyData[] = [];
+      const dailyDataCollection = collection(this.db, this.collectionName);
 
       dataArray.forEach(data => {
-        const dataId = this.dailyDataCollection.doc().id;
+        const newDocRef = doc(dailyDataCollection);
+        const dataId = newDocRef.id;
         const dailyData: DailyData = {
           id: dataId,
           ...data,
           plantationId,
-          teaPluckedKg: typeof data.teaPluckedKg === 'string' 
-            ? parseFloat(data.teaPluckedKg) 
+          teaPluckedKg: typeof data.teaPluckedKg === 'string'
+            ? parseFloat(data.teaPluckedKg)
             : data.teaPluckedKg,
           timeSpentHours: typeof data.timeSpentHours === 'string'
             ? parseFloat(data.timeSpentHours)
@@ -64,8 +81,7 @@ class DailyDataService {
           updatedAt: now,
         };
 
-        const docRef = this.dailyDataCollection.doc(dataId);
-        batch.set(docRef, dailyData);
+        batch.set(newDocRef, dailyData);
         createdData.push(dailyData);
       });
 
@@ -86,13 +102,16 @@ class DailyDataService {
   ): Promise<DailyData[]> {
     try {
       // Fetch all data for the plantation first
-      const snapshot = await this.dailyDataCollection
-        .where('plantationId', '==', plantationId)
-        .get();
+      const dailyDataCollection = collection(this.db, this.collectionName);
+      const q = query(
+        dailyDataCollection,
+        where('plantationId', '==', plantationId)
+      );
+      const snapshot = await getDocs(q);
 
-      let dailyData = snapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id,
+      let dailyData = snapshot.docs.map((docSnapshot: any) => ({
+        ...docSnapshot.data(),
+        id: docSnapshot.id,
       })) as DailyData[];
 
       // Filter by date range in memory to avoid composite index requirements
@@ -120,13 +139,16 @@ class DailyDataService {
   ): Promise<DailyData[]> {
     try {
       // Fetch all data for the worker first
-      const snapshot = await this.dailyDataCollection
-        .where('workerId', '==', workerId)
-        .get();
+      const dailyDataCollection = collection(this.db, this.collectionName);
+      const q = query(
+        dailyDataCollection,
+        where('workerId', '==', workerId)
+      );
+      const snapshot = await getDocs(q);
 
-      let dailyData = snapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id,
+      let dailyData = snapshot.docs.map((docSnapshot: any) => ({
+        ...docSnapshot.data(),
+        id: docSnapshot.id,
       })) as DailyData[];
 
       // Filter by date range in memory to avoid composite index requirements
@@ -149,13 +171,14 @@ class DailyDataService {
    */
   async getDailyDataById(dataId: string): Promise<DailyData | null> {
     try {
-      const doc = await this.dailyDataCollection.doc(dataId).get();
-      if (!doc.exists()) return null;
-      
+      const docRef = doc(this.db, this.collectionName, dataId);
+      const docSnapshot = await getDoc(docRef);
+      if (!docSnapshot.exists()) return null;
+
       // Ensure the id field is included
       return {
-        ...doc.data(),
-        id: doc.id,
+        ...docSnapshot.data(),
+        id: docSnapshot.id,
       } as DailyData;
     } catch (error) {
       throw error;
@@ -189,7 +212,8 @@ class DailyDataService {
             : updates.timeSpentHours;
       }
 
-      await this.dailyDataCollection.doc(dataId).update(updateData);
+      const docRef = doc(this.db, this.collectionName, dataId);
+      await updateDoc(docRef, updateData);
     } catch (error) {
       throw error;
     }
@@ -200,7 +224,8 @@ class DailyDataService {
    */
   async deleteDailyData(dataId: string): Promise<void> {
     try {
-      await this.dailyDataCollection.doc(dataId).delete();
+      const docRef = doc(this.db, this.collectionName, dataId);
+      await deleteDoc(docRef);
     } catch (error) {
       throw error;
     }
