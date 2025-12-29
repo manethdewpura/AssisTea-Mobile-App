@@ -18,10 +18,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
-import { dailyDataService, workerService } from '../../services';
+import { dailyDataService, workerService, fieldService } from '../../services';
 import { handleFirebaseError, logError } from '../../utils';
 import type { DailyData } from '../../models/DailyData';
 import type { Worker } from '../../models/Worker';
+import type { Field } from '../../models/Field';
 
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
@@ -30,11 +31,15 @@ type Props = NativeStackScreenProps<
 
 type FilterType = 'all' | 'date' | 'dateRange' | 'worker' | 'field' | 'quality';
 
+// Predefined quality levels - always show these three options
+const QUALITY_LEVELS = ['Low', 'Medium', 'High'];
+
 const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
   const { colors } = useAppSelector(selectTheme);
   const { userProfile } = useAppSelector(selectAuth);
   const [dailyData, setDailyData] = useState<DailyData[]>([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
+  const [fields, setFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -52,8 +57,6 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
   const [dateFilter, setDateFilter] = useState<string>('');
   const [startDateFilter, setStartDateFilter] = useState<string>('');
   const [endDateFilter, setEndDateFilter] = useState<string>('');
-  const [fieldAreas, setFieldAreas] = useState<string[]>([]);
-  const [qualityLevels, setQualityLevels] = useState<string[]>([]);
 
   // Check if workerId is passed from route params (from WorkerDetailsScreen)
   useEffect(() => {
@@ -73,6 +76,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
 
   useEffect(() => {
     loadWorkers();
+    loadFields();
   }, []);
 
   // Refresh data when screen comes into focus (e.g., after editing)
@@ -100,6 +104,22 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
+  const loadFields = async () => {
+    if (!userProfile?.plantationId) {
+      return;
+    }
+
+    try {
+      const fetchedFields = await fieldService.getFieldsByPlantation(
+        userProfile.plantationId,
+      );
+      setFields(fetchedFields);
+    } catch (error: any) {
+      const appError = handleFirebaseError(error);
+      logError(appError, 'DailyDataViewScreen - LoadFields');
+    }
+  };
+
   const loadDailyData = async () => {
     if (!userProfile?.plantationId) {
       setLoading(false);
@@ -109,16 +129,10 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
     try {
       setLoading(true);
 
-      // Always fetch all data first to populate dropdown options
+      // Always fetch all data first for filtering
       const allData = await dailyDataService.getDailyDataByPlantation(
         userProfile.plantationId,
       );
-
-      // Extract unique field areas and quality levels for dropdowns from ALL data
-      const uniqueFields = [...new Set(allData.map(d => d.fieldArea))].filter(Boolean).sort();
-      const uniqueQualities = [...new Set(allData.map(d => d.teaLeafQuality))].filter(Boolean).sort();
-      setFieldAreas(uniqueFields);
-      setQualityLevels(uniqueQualities);
 
       // Now apply filtering based on filterType
       let data: DailyData[] = [];
@@ -466,12 +480,12 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
         {showFieldDropdown && (
           <View style={styles.workerDropdown}>
             <ScrollView style={styles.workerDropdownList}>
-              {fieldAreas.map(field => (
+              {fields.map((field: Field) => (
                 <TouchableOpacity
-                  key={field}
+                  key={field.id}
                   style={styles.workerDropdownItem}
                   onPress={() => {
-                    setSelectedField(field);
+                    setSelectedField(field.name);
                     setFilterType('field');
                     setShowFieldDropdown(false);
 
@@ -485,7 +499,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                     setSelectedQuality('');
                   }}
                 >
-                  <Text style={styles.workerDropdownText}>{field}</Text>
+                  <Text style={styles.workerDropdownText}>{field.name}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -495,7 +509,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
         {showQualityDropdown && (
           <View style={styles.workerDropdown}>
             <ScrollView style={styles.workerDropdownList}>
-              {qualityLevels.map(quality => (
+              {QUALITY_LEVELS.map((quality: string) => (
                 <TouchableOpacity
                   key={quality}
                   style={styles.workerDropdownItem}
