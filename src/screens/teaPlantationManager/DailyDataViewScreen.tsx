@@ -108,6 +108,19 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
 
     try {
       setLoading(true);
+
+      // Always fetch all data first to populate dropdown options
+      const allData = await dailyDataService.getDailyDataByPlantation(
+        userProfile.plantationId,
+      );
+
+      // Extract unique field areas and quality levels for dropdowns from ALL data
+      const uniqueFields = [...new Set(allData.map(d => d.fieldArea))].filter(Boolean).sort();
+      const uniqueQualities = [...new Set(allData.map(d => d.teaLeafQuality))].filter(Boolean).sort();
+      setFieldAreas(uniqueFields);
+      setQualityLevels(uniqueQualities);
+
+      // Now apply filtering based on filterType
       let data: DailyData[] = [];
 
       if (filterType === 'date' && dateFilter) {
@@ -128,26 +141,17 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           startDateFilter || undefined,
           endDateFilter || undefined,
         );
-      } else {
-        // Fetch all data for 'all', 'field', and 'quality' filters
-        data = await dailyDataService.getDailyDataByPlantation(
-          userProfile.plantationId,
-        );
-      }
-
-      // Client-side filtering for field and quality
-      if (filterType === 'field' && selectedField) {
-        data = data.filter(d => d.fieldArea === selectedField);
+      } else if (filterType === 'field' && selectedField) {
+        // Client-side filtering for field
+        data = allData.filter(d => d.fieldArea === selectedField);
       } else if (filterType === 'quality' && selectedQuality) {
-        data = data.filter(d => d.teaLeafQuality === selectedQuality);
+        // Client-side filtering for quality
+        data = allData.filter(d => d.teaLeafQuality === selectedQuality);
+      } else {
+        // Show all data
+        data = allData;
       }
 
-      // Extract unique field areas and quality levels for dropdowns
-      const uniqueFields = [...new Set(data.map(d => d.fieldArea))].filter(Boolean).sort();
-      const uniqueQualities = [...new Set(data.map(d => d.teaLeafQuality))].filter(Boolean).sort();
-
-      setFieldAreas(uniqueFields);
-      setQualityLevels(uniqueQualities);
       setDailyData(data);
     } catch (error: any) {
       // Log the actual error for debugging
@@ -191,6 +195,15 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
       const dateString = date.toISOString().split('T')[0];
       setDateFilter(dateString);
       setFilterType('date');
+
+      // Clear other filters
+      setStartDateFilter('');
+      setEndDateFilter('');
+      setStartDate(null);
+      setEndDate(null);
+      setSelectedWorkerId('');
+      setSelectedField('');
+      setSelectedQuality('');
     }
 
     if (Platform.OS === 'android') {
@@ -202,6 +215,15 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
     setSelectedWorkerId(workerId);
     setFilterType('worker');
     setShowWorkerDropdown(false);
+
+    // Clear other filters
+    setDateFilter('');
+    setStartDateFilter('');
+    setEndDateFilter('');
+    setStartDate(null);
+    setEndDate(null);
+    setSelectedField('');
+    setSelectedQuality('');
   };
 
   const getWorkerName = (workerId: string) => {
@@ -256,6 +278,12 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
       const dateString = date.toISOString().split('T')[0];
       setStartDateFilter(dateString);
       setFilterType('dateRange');
+
+      // Clear other filters (only when start date is selected)
+      setDateFilter('');
+      setSelectedWorkerId('');
+      setSelectedField('');
+      setSelectedQuality('');
     }
     if (Platform.OS === 'android') {
       setActiveDatePicker(null);
@@ -307,7 +335,10 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               styles.filterButton,
               filterType === 'date' && styles.filterButtonActive,
             ]}
-            onPress={() => setShowDatePicker(true)}
+            onPress={() => {
+              // Always allow changing date filter
+              setShowDatePicker(true);
+            }}
           >
             <Text
               style={[
@@ -325,7 +356,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               filterType === 'dateRange' && styles.filterButtonActive,
             ]}
             onPress={() => {
-              // Open a dedicated date range modal
+              // Always allow changing date range filter
               setShowDateRangeModal(true);
             }}
           >
@@ -347,7 +378,12 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               styles.filterButton,
               filterType === 'worker' && styles.filterButtonActive,
             ]}
-            onPress={() => setShowWorkerDropdown(!showWorkerDropdown)}
+            onPress={() => {
+              // Always open worker dropdown and close others
+              setShowWorkerDropdown(!showWorkerDropdown);
+              setShowFieldDropdown(false);
+              setShowQualityDropdown(false);
+            }}
           >
             <Text
               style={[
@@ -367,7 +403,12 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               styles.filterButton,
               filterType === 'field' && styles.filterButtonActive,
             ]}
-            onPress={() => setShowFieldDropdown(!showFieldDropdown)}
+            onPress={() => {
+              // Always open field dropdown and close others
+              setShowFieldDropdown(!showFieldDropdown);
+              setShowWorkerDropdown(false);
+              setShowQualityDropdown(false);
+            }}
           >
             <Text
               style={[
@@ -385,7 +426,12 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               styles.filterButton,
               filterType === 'quality' && styles.filterButtonActive,
             ]}
-            onPress={() => setShowQualityDropdown(!showQualityDropdown)}
+            onPress={() => {
+              // Always open quality dropdown and close others
+              setShowQualityDropdown(!showQualityDropdown);
+              setShowWorkerDropdown(false);
+              setShowFieldDropdown(false);
+            }}
           >
             <Text
               style={[
@@ -428,6 +474,15 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                     setSelectedField(field);
                     setFilterType('field');
                     setShowFieldDropdown(false);
+
+                    // Clear other filters
+                    setDateFilter('');
+                    setStartDateFilter('');
+                    setEndDateFilter('');
+                    setStartDate(null);
+                    setEndDate(null);
+                    setSelectedWorkerId('');
+                    setSelectedQuality('');
                   }}
                 >
                   <Text style={styles.workerDropdownText}>{field}</Text>
@@ -448,6 +503,15 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                     setSelectedQuality(quality);
                     setFilterType('quality');
                     setShowQualityDropdown(false);
+
+                    // Clear other filters
+                    setDateFilter('');
+                    setStartDateFilter('');
+                    setEndDateFilter('');
+                    setStartDate(null);
+                    setEndDate(null);
+                    setSelectedWorkerId('');
+                    setSelectedField('');
                   }}
                 >
                   <Text style={styles.workerDropdownText}>{quality}</Text>
