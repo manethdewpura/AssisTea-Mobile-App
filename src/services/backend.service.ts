@@ -73,7 +73,7 @@ export const backendService = {
     try {
       await ensureNetworkConnection();
 
-      const response = await fetch(`${BACKEND_BASE_URL}/weather/current`, {
+      const response = await fetch(`${BACKEND_BASE_URL}/api/weather/current`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,7 +109,7 @@ export const backendService = {
     try {
       await ensureNetworkConnection();
 
-      const response = await fetch(`${BACKEND_BASE_URL}/weather/forecast`, {
+      const response = await fetch(`${BACKEND_BASE_URL}/api/weather/forecast`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -146,7 +146,7 @@ export const backendService = {
     try {
       await ensureNetworkConnection();
 
-      const response = await fetch(`${BACKEND_BASE_URL}/weather/sync`, {
+      const response = await fetch(`${BACKEND_BASE_URL}/api/weather/sync`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
