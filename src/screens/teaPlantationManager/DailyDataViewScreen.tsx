@@ -18,10 +18,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
-import { dailyDataService, workerService } from '../../services';
+import { dailyDataService, workerService, fieldService } from '../../services';
 import { handleFirebaseError, logError } from '../../utils';
 import type { DailyData } from '../../models/DailyData';
 import type { Worker } from '../../models/Worker';
+import type { Field } from '../../models/Field';
 
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
@@ -30,11 +31,15 @@ type Props = NativeStackScreenProps<
 
 type FilterType = 'all' | 'date' | 'dateRange' | 'worker' | 'field' | 'quality';
 
+// Predefined quality levels - always show these three options
+const QUALITY_LEVELS = ['Low', 'Medium', 'High'];
+
 const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
   const { colors } = useAppSelector(selectTheme);
   const { userProfile } = useAppSelector(selectAuth);
   const [dailyData, setDailyData] = useState<DailyData[]>([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
+  const [fields, setFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -44,16 +49,14 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
   const [selectedField, setSelectedField] = useState<string>('');
   const [selectedQuality, setSelectedQuality] = useState<string>('');
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
-  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [showDateRangeModal, setShowDateRangeModal] = useState(false);
+  const [activeDatePicker, setActiveDatePicker] = useState<'start' | 'end' | null>(null);
   const [showWorkerDropdown, setShowWorkerDropdown] = useState(false);
   const [showFieldDropdown, setShowFieldDropdown] = useState(false);
   const [showQualityDropdown, setShowQualityDropdown] = useState(false);
   const [dateFilter, setDateFilter] = useState<string>('');
   const [startDateFilter, setStartDateFilter] = useState<string>('');
   const [endDateFilter, setEndDateFilter] = useState<string>('');
-  const [fieldAreas, setFieldAreas] = useState<string[]>([]);
-  const [qualityLevels, setQualityLevels] = useState<string[]>([]);
 
   // Check if workerId is passed from route params (from WorkerDetailsScreen)
   useEffect(() => {
@@ -73,6 +76,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
 
   useEffect(() => {
     loadWorkers();
+    loadFields();
   }, []);
 
   // Refresh data when screen comes into focus (e.g., after editing)
@@ -100,6 +104,22 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
+  const loadFields = async () => {
+    if (!userProfile?.plantationId) {
+      return;
+    }
+
+    try {
+      const fetchedFields = await fieldService.getFieldsByPlantation(
+        userProfile.plantationId,
+      );
+      setFields(fetchedFields);
+    } catch (error: any) {
+      const appError = handleFirebaseError(error);
+      logError(appError, 'DailyDataViewScreen - LoadFields');
+    }
+  };
+
   const loadDailyData = async () => {
     if (!userProfile?.plantationId) {
       setLoading(false);
@@ -108,6 +128,13 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
 
     try {
       setLoading(true);
+
+      // Always fetch all data first for filtering
+      const allData = await dailyDataService.getDailyDataByPlantation(
+        userProfile.plantationId,
+      );
+
+      // Now apply filtering based on filterType
       let data: DailyData[] = [];
 
       if (filterType === 'date' && dateFilter) {
@@ -128,26 +155,17 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           startDateFilter || undefined,
           endDateFilter || undefined,
         );
-      } else {
-        // Fetch all data for 'all', 'field', and 'quality' filters
-        data = await dailyDataService.getDailyDataByPlantation(
-          userProfile.plantationId,
-        );
-      }
-
-      // Client-side filtering for field and quality
-      if (filterType === 'field' && selectedField) {
-        data = data.filter(d => d.fieldArea === selectedField);
+      } else if (filterType === 'field' && selectedField) {
+        // Client-side filtering for field
+        data = allData.filter(d => d.fieldArea === selectedField);
       } else if (filterType === 'quality' && selectedQuality) {
-        data = data.filter(d => d.teaLeafQuality === selectedQuality);
+        // Client-side filtering for quality
+        data = allData.filter(d => d.teaLeafQuality === selectedQuality);
+      } else {
+        // Show all data
+        data = allData;
       }
 
-      // Extract unique field areas and quality levels for dropdowns
-      const uniqueFields = [...new Set(data.map(d => d.fieldArea))].filter(Boolean).sort();
-      const uniqueQualities = [...new Set(data.map(d => d.teaLeafQuality))].filter(Boolean).sort();
-
-      setFieldAreas(uniqueFields);
-      setQualityLevels(uniqueQualities);
       setDailyData(data);
     } catch (error: any) {
       // Log the actual error for debugging
@@ -191,6 +209,15 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
       const dateString = date.toISOString().split('T')[0];
       setDateFilter(dateString);
       setFilterType('date');
+
+      // Clear other filters
+      setStartDateFilter('');
+      setEndDateFilter('');
+      setStartDate(null);
+      setEndDate(null);
+      setSelectedWorkerId('');
+      setSelectedField('');
+      setSelectedQuality('');
     }
 
     if (Platform.OS === 'android') {
@@ -202,6 +229,15 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
     setSelectedWorkerId(workerId);
     setFilterType('worker');
     setShowWorkerDropdown(false);
+
+    // Clear other filters
+    setDateFilter('');
+    setStartDateFilter('');
+    setEndDateFilter('');
+    setStartDate(null);
+    setEndDate(null);
+    setSelectedField('');
+    setSelectedQuality('');
   };
 
   const getWorkerName = (workerId: string) => {
@@ -256,9 +292,15 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
       const dateString = date.toISOString().split('T')[0];
       setStartDateFilter(dateString);
       setFilterType('dateRange');
+
+      // Clear other filters (only when start date is selected)
+      setDateFilter('');
+      setSelectedWorkerId('');
+      setSelectedField('');
+      setSelectedQuality('');
     }
     if (Platform.OS === 'android') {
-      setShowStartDatePicker(false);
+      setActiveDatePicker(null);
     }
   };
 
@@ -270,7 +312,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
       setFilterType('dateRange');
     }
     if (Platform.OS === 'android') {
-      setShowEndDatePicker(false);
+      setActiveDatePicker(null);
     }
   };
 
@@ -307,7 +349,10 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               styles.filterButton,
               filterType === 'date' && styles.filterButtonActive,
             ]}
-            onPress={() => setShowDatePicker(true)}
+            onPress={() => {
+              // Always allow changing date filter
+              setShowDatePicker(true);
+            }}
           >
             <Text
               style={[
@@ -325,18 +370,8 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               filterType === 'dateRange' && styles.filterButtonActive,
             ]}
             onPress={() => {
-              if (!startDateFilter) {
-                setShowStartDatePicker(true);
-              } else if (!endDateFilter) {
-                setShowEndDatePicker(true);
-              } else {
-                // Reset date range
-                setStartDateFilter('');
-                setEndDateFilter('');
-                setStartDate(null);
-                setEndDate(null);
-                setFilterType('all');
-              }
+              // Always allow changing date range filter
+              setShowDateRangeModal(true);
             }}
           >
             <Text
@@ -348,9 +383,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               📆{' '}
               {startDateFilter && endDateFilter
                 ? `${startDateFilter} to ${endDateFilter}`
-                : startDateFilter
-                  ? `${startDateFilter} to ...`
-                  : 'Date Range'}
+                : 'Date Range'}
             </Text>
           </TouchableOpacity>
 
@@ -359,7 +392,12 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               styles.filterButton,
               filterType === 'worker' && styles.filterButtonActive,
             ]}
-            onPress={() => setShowWorkerDropdown(!showWorkerDropdown)}
+            onPress={() => {
+              // Always open worker dropdown and close others
+              setShowWorkerDropdown(!showWorkerDropdown);
+              setShowFieldDropdown(false);
+              setShowQualityDropdown(false);
+            }}
           >
             <Text
               style={[
@@ -379,7 +417,12 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               styles.filterButton,
               filterType === 'field' && styles.filterButtonActive,
             ]}
-            onPress={() => setShowFieldDropdown(!showFieldDropdown)}
+            onPress={() => {
+              // Always open field dropdown and close others
+              setShowFieldDropdown(!showFieldDropdown);
+              setShowWorkerDropdown(false);
+              setShowQualityDropdown(false);
+            }}
           >
             <Text
               style={[
@@ -397,7 +440,12 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               styles.filterButton,
               filterType === 'quality' && styles.filterButtonActive,
             ]}
-            onPress={() => setShowQualityDropdown(!showQualityDropdown)}
+            onPress={() => {
+              // Always open quality dropdown and close others
+              setShowQualityDropdown(!showQualityDropdown);
+              setShowWorkerDropdown(false);
+              setShowFieldDropdown(false);
+            }}
           >
             <Text
               style={[
@@ -432,17 +480,26 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
         {showFieldDropdown && (
           <View style={styles.workerDropdown}>
             <ScrollView style={styles.workerDropdownList}>
-              {fieldAreas.map(field => (
+              {fields.map((field: Field) => (
                 <TouchableOpacity
-                  key={field}
+                  key={field.id}
                   style={styles.workerDropdownItem}
                   onPress={() => {
-                    setSelectedField(field);
+                    setSelectedField(field.name);
                     setFilterType('field');
                     setShowFieldDropdown(false);
+
+                    // Clear other filters
+                    setDateFilter('');
+                    setStartDateFilter('');
+                    setEndDateFilter('');
+                    setStartDate(null);
+                    setEndDate(null);
+                    setSelectedWorkerId('');
+                    setSelectedQuality('');
                   }}
                 >
-                  <Text style={styles.workerDropdownText}>{field}</Text>
+                  <Text style={styles.workerDropdownText}>{field.name}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -452,7 +509,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
         {showQualityDropdown && (
           <View style={styles.workerDropdown}>
             <ScrollView style={styles.workerDropdownList}>
-              {qualityLevels.map(quality => (
+              {QUALITY_LEVELS.map((quality: string) => (
                 <TouchableOpacity
                   key={quality}
                   style={styles.workerDropdownItem}
@@ -460,6 +517,15 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                     setSelectedQuality(quality);
                     setFilterType('quality');
                     setShowQualityDropdown(false);
+
+                    // Clear other filters
+                    setDateFilter('');
+                    setStartDateFilter('');
+                    setEndDateFilter('');
+                    setStartDate(null);
+                    setEndDate(null);
+                    setSelectedWorkerId('');
+                    setSelectedField('');
                   }}
                 >
                   <Text style={styles.workerDropdownText}>{quality}</Text>
@@ -494,16 +560,106 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
         </Modal>
       )}
 
-      {showStartDatePicker && (
+      {showDateRangeModal && (
         <Modal
-          visible={showStartDatePicker}
+          visible={showDateRangeModal}
           transparent
           animationType="slide"
-          onRequestClose={() => setShowStartDatePicker(false)}
+          onRequestClose={() => {
+            setShowDateRangeModal(false);
+            setActiveDatePicker(null);
+          }}
+        >
+          <View style={styles.dateRangeModalOverlay}>
+            <View style={styles.dateRangeModalContent}>
+              {/* Header */}
+              <View style={styles.dateRangeHeader}>
+                <Text style={styles.dateRangeTitle}>Select Date Range</Text>
+                <TouchableOpacity onPress={() => {
+                  setShowDateRangeModal(false);
+                  setActiveDatePicker(null);
+                }}>
+                  <Text style={styles.dateRangeCloseButton}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* From Date Section */}
+              <View style={styles.dateSection}>
+                <Text style={styles.dateSectionLabel}>From Date</Text>
+                <TouchableOpacity
+                  style={styles.dateDisplayBox}
+                  onPress={() => setActiveDatePicker('start')}
+                >
+                  <Text style={styles.dateDisplayText}>
+                    {startDate ? startDate.toISOString().split('T')[0] : 'Tap to select start date'}
+                  </Text>
+                  <Text style={styles.calendarIcon}>📅</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* To Date Section */}
+              <View style={styles.dateSection}>
+                <Text style={styles.dateSectionLabel}>To Date</Text>
+                <TouchableOpacity
+                  style={styles.dateDisplayBox}
+                  onPress={() => setActiveDatePicker('end')}
+                >
+                  <Text style={styles.dateDisplayText}>
+                    {endDate ? endDate.toISOString().split('T')[0] : 'Tap to select end date'}
+                  </Text>
+                  <Text style={styles.calendarIcon}>📅</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Action Buttons */}
+              <View style={styles.dateRangeActions}>
+                <TouchableOpacity
+                  style={styles.clearDateButton}
+                  onPress={() => {
+                    setStartDate(null);
+                    setEndDate(null);
+                    setStartDateFilter('');
+                    setEndDateFilter('');
+                    setFilterType('all');
+                    setActiveDatePicker(null);
+                  }}
+                >
+                  <Text style={styles.clearDateButtonText}>Clear</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.applyDateButton,
+                    (!startDate || !endDate) && styles.applyDateButtonDisabled
+                  ]}
+                  onPress={() => {
+                    if (startDate && endDate) {
+                      setFilterType('dateRange');
+                      setShowDateRangeModal(false);
+                      setActiveDatePicker(null);
+                    }
+                  }}
+                  disabled={!startDate || !endDate}
+                >
+                  <Text style={styles.applyDateButtonText}>Apply Filter</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* Date Pickers - shown conditionally */}
+      {activeDatePicker === 'start' && (
+        <Modal
+          visible={activeDatePicker === 'start'}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setActiveDatePicker(null)}
         >
           <View style={styles.datePickerModal}>
             <View style={styles.datePickerHeader}>
-              <TouchableOpacity onPress={() => setShowStartDatePicker(false)}>
+              <TouchableOpacity onPress={() => setActiveDatePicker(null)}>
                 <Text style={styles.datePickerHeaderText}>Done</Text>
               </TouchableOpacity>
             </View>
@@ -518,16 +674,16 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
         </Modal>
       )}
 
-      {showEndDatePicker && (
+      {activeDatePicker === 'end' && (
         <Modal
-          visible={showEndDatePicker}
+          visible={activeDatePicker === 'end'}
           transparent
           animationType="slide"
-          onRequestClose={() => setShowEndDatePicker(false)}
+          onRequestClose={() => setActiveDatePicker(null)}
         >
           <View style={styles.datePickerModal}>
             <View style={styles.datePickerHeader}>
-              <TouchableOpacity onPress={() => setShowEndDatePicker(false)}>
+              <TouchableOpacity onPress={() => setActiveDatePicker(null)}>
                 <Text style={styles.datePickerHeaderText}>Done</Text>
               </TouchableOpacity>
             </View>
@@ -759,6 +915,103 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#7cb342',
+  },
+  dateRangeModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  dateRangeModalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 20,
+  },
+  dateRangeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  dateRangeTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
+  },
+  dateRangeCloseButton: {
+    fontSize: 24,
+    color: '#666',
+    fontWeight: '300',
+  },
+  dateSection: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  dateSectionLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  dateDisplayBox: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#7cb342',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dateDisplayText: {
+    fontSize: 15,
+    color: '#333',
+    fontWeight: '500',
+  },
+  calendarIcon: {
+    fontSize: 18,
+  },
+  dateRangeActions: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 8,
+    gap: 12,
+  },
+  clearDateButton: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#7cb342',
+  },
+  clearDateButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#7cb342',
+  },
+  applyDateButton: {
+    flex: 1,
+    backgroundColor: '#7cb342',
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  applyDateButtonDisabled: {
+    backgroundColor: '#ccc',
+    opacity: 0.6,
+  },
+  applyDateButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
   content: {
     flex: 1,

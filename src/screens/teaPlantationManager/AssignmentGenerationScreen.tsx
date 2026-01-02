@@ -110,11 +110,7 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
         <SafeAreaView style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Text style={styles.backButtonText}>← Back</Text>
-                </TouchableOpacity>
                 <Text style={styles.headerTitle}>Assignment Generation</Text>
-                <View style={styles.placeholder} />
             </View>
 
             <ScrollView style={styles.content}>
@@ -122,7 +118,7 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
                 <View style={styles.infoCard}>
                     <Text style={styles.infoTitle}>🤖 ML-Powered Assignments</Text>
                     <Text style={styles.infoText}>
-                        Our AI analyzes worker experience, age, field conditions, and historical data to
+                        Our ML model analyzes worker experience, age, field conditions, and historical data to
                         generate optimized work assignments.
                     </Text>
                 </View>
@@ -211,14 +207,10 @@ const styles = StyleSheet.create({
         backgroundColor: '#7cb342',
         paddingHorizontal: 16,
         paddingVertical: 12,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
+        justifyContent: 'center',
     },
-    backButton: { padding: 8 },
-    backButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
     headerTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
-    placeholder: { width: 50 },
     content: { flex: 1, padding: 16 },
     infoCard: {
         backgroundColor: '#e8f5e9',
