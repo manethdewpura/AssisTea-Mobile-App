@@ -32,8 +32,6 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
       // If backend is connected, sync data to SQLite database
       if (isBackendConnected) {
         try {
-          console.log('[WeatherListener] Syncing weather data to backend...');
-
           // First, try to sync any queued data from AsyncStorage
           const { backgroundSyncService } = await import('../../services');
           const syncedCount = await backgroundSyncService.syncQueuedData();
@@ -48,13 +46,11 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
           console.warn('[WeatherListener] Failed to sync to backend:', syncError?.message || syncError);
 
           // Queue data in AsyncStorage for later sync
-          console.log('[WeatherListener] Queueing data in AsyncStorage for later sync');
           const { syncQueueService } = await import('../../services');
           await syncQueueService.addToQueue(data.current, data.forecast);
         }
       } else {
         // Backend not connected - queue data for later sync
-        console.log('[WeatherListener] Backend not connected, queueing data in AsyncStorage');
         const { syncQueueService } = await import('../../services');
         await syncQueueService.addToQueue(data.current, data.forecast);
 
@@ -72,9 +68,7 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
   // Check backend connection
   const checkBackendConnection = useCallback(async () => {
     try {
-      console.log('[WeatherListener] Checking backend connection...');
       const isConnected = await backendService.checkBackendConnection();
-      console.log(`[WeatherListener] Backend connection status: ${isConnected ? 'CONNECTED' : 'DISCONNECTED'}`);
       dispatch(setBackendConnected(isConnected));
     } catch (error) {
       console.error('[WeatherListener] Backend connection check failed:', error);
@@ -123,10 +117,10 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
     // Initial backend check
     checkBackendConnection();
 
-    // Check backend connection every 30 seconds
+    // Check backend connection every 5 minutes
     backendCheckIntervalRef.current = setInterval(() => {
       checkBackendConnection();
-    }, 30000);
+    }, 300000);
 
     return () => {
       if (backendCheckIntervalRef.current) {

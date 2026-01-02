@@ -9,7 +9,7 @@ export const initBackgroundFetch = async () => {
         // Configure Background Fetch
         await BackgroundFetch.configure(
             {
-                minimumFetchInterval: 180, // Fetch every 3 hours
+                minimumFetchInterval: 60, // Fetch every 1 hour
                 stopOnTerminate: false,   // Continue after app closed
                 startOnBoot: true,        // Start after device reboot
                 enableHeadless: true,     // Work in headless (background) mode

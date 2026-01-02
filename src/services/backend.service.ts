@@ -4,7 +4,7 @@ import { NetworkError } from '../utils/network.util';
 
 // Backend API configuration
 // TODO: Update this URL when backend is deployed
-const BACKEND_BASE_URL = 'http://192.168.1.5:5000'; // Flask backend URL on local network
+const BACKEND_BASE_URL = 'http://192.168.1.4:5000'; // Flask backend URL on local network
 
 export interface BackendSyncResponse {
   success: boolean;
@@ -25,8 +25,6 @@ export const backendService = {
       try {
         await ensureNetworkConnection();
 
-        console.log(`[Backend] Connection check attempt ${attempt}/${maxRetries} to ${BACKEND_BASE_URL}/health`);
-
         // Create a timeout promise
         const timeoutPromise = new Promise<never>((_, reject) => {
           setTimeout(() => reject(new Error('Connection timeout')), timeoutMs);
@@ -44,10 +42,9 @@ export const backendService = {
         ]);
 
         if (response.ok) {
-          console.log('[Backend] ✓ Connected successfully');
           return true;
         } else {
-          console.warn(`[Backend] Health check failed with status: ${response.status}`);
+          console.warn(`Backend Health check failed with status: ${response.status}`);
         }
       } catch (error: any) {
         const errorMsg = error?.message || 'Unknown error';
@@ -55,13 +52,11 @@ export const backendService = {
 
         // If this was the last attempt, return false
         if (attempt === maxRetries) {
-          console.error('[Backend] ✗ All connection attempts failed');
           return false;
         }
 
         // Exponential backoff: wait 1s, 2s, 4s between retries
         const delayMs = Math.pow(2, attempt - 1) * 1000;
-        console.log(`[Backend] Retrying in ${delayMs}ms...`);
         await new Promise<void>(resolve => setTimeout(() => resolve(), delayMs));
       }
     }
@@ -78,7 +73,7 @@ export const backendService = {
     try {
       await ensureNetworkConnection();
 
-      const response = await fetch(`${BACKEND_BASE_URL}/weather/current`, {
+      const response = await fetch(`${BACKEND_BASE_URL}/api/weather/current`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +109,7 @@ export const backendService = {
     try {
       await ensureNetworkConnection();
 
-      const response = await fetch(`${BACKEND_BASE_URL}/weather/forecast`, {
+      const response = await fetch(`${BACKEND_BASE_URL}/api/weather/forecast`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -151,7 +146,7 @@ export const backendService = {
     try {
       await ensureNetworkConnection();
 
-      const response = await fetch(`${BACKEND_BASE_URL}/weather/sync`, {
+      const response = await fetch(`${BACKEND_BASE_URL}/api/weather/sync`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

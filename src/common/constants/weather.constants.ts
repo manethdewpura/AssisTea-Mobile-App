@@ -6,7 +6,7 @@ export const WEATHER_API_CONFIG = {
   DEFAULT_LAT: 6.308746,
   DEFAULT_LON: 80.418792,
   UNITS: 'metric',
-  FETCH_INTERVAL: 3600000*3, // 3 hours in milliseconds
+  FETCH_INTERVAL: 3600000*1, // 1 hour in milliseconds
 } as const;
 
 export const WEATHER_ENDPOINTS = {
