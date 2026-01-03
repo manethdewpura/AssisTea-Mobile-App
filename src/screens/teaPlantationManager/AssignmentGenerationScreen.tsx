@@ -38,11 +38,12 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
             // 1. Try to sync workers from Firebase to SQLite (background)
             try {
                 const firebaseWorkers = await workerService.getWorkersByPlantation(userProfile.plantationId);
-                await workerSQLiteService.clearWorkers(userProfile.plantationId);
+                // Do not clear all local workers to avoid losing offline-created/unsynced records.
+                // Instead, insert/update Firebase workers into SQLite.
                 for (const worker of firebaseWorkers) {
                     await workerSQLiteService.insertWorker(worker);
                 }
-                console.log(`✅ ${firebaseWorkers.length} workers cached to SQLite`);
+                console.log(`✅ ${firebaseWorkers.length} workers synced to SQLite`);
             } catch (err) {
                 console.warn('⚠️ Worker sync failed (using cached):', err);
             }
