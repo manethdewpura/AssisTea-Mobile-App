@@ -70,7 +70,13 @@ class UnifiedFieldService {
 
     async deleteField(fieldId: string): Promise<void> {
         await fieldSQLiteService.deleteField(fieldId);
-        firestore().collection('fields').doc(fieldId).delete().catch(() => { });
+        firestore()
+            .collection('fields')
+            .doc(fieldId)
+            .delete()
+            .catch(error => {
+                console.warn('⚠️ Failed to delete field from Firebase:', fieldId, error);
+            });
     }
 
     async getFields(plantationId: string): Promise<Field[]> {
