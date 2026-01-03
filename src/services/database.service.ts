@@ -99,6 +99,23 @@ class DatabaseService {
         );
       `);
 
+            // Workers table
+            await this.db.executeSql(`
+        CREATE TABLE IF NOT EXISTS workers (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          workerId TEXT NOT NULL,
+          birthDate TEXT NOT NULL,
+          age INTEGER NOT NULL,
+          experience TEXT NOT NULL,
+          gender TEXT NOT NULL,
+          plantationId TEXT NOT NULL,
+          createdAt INTEGER NOT NULL,
+          updatedAt INTEGER NOT NULL,
+          syncStatus TEXT DEFAULT 'pending'
+        );
+      `);
+
             // Activity logs table
             await this.db.executeSql(`
         CREATE TABLE IF NOT EXISTS activity_logs (

@@ -12,8 +12,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { assignmentService } from '../../services/assignment.service';
-import { fieldService } from '../../services/field.service';
-import { assignmentStorageService } from '../../services/assignmentStorage.service';
+import { unifiedFieldService } from '../../services/unifiedField.service';
+import { unifiedScheduleService } from '../../services/unifiedSchedule.service';
+import { workerService } from '../../services/worker.Service';
+import { workerSQLiteService } from '../../services/sqlite/workerSQLite.service';
 import { AssignmentSchedule, WorkerAssignment } from '../../models/MLPrediction';
 import { useAppSelector } from '../../hooks';
 import { selectAuth } from '../../store/selectors';
@@ -33,8 +35,22 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
 
         setLoading(true);
         try {
-            // Fetch real fields from Firebase
-            const fields = await fieldService.getFieldsByPlantation(userProfile.plantationId);
+            // 1. Try to sync workers from Firebase to SQLite (background)
+            try {
+                const firebaseWorkers = await workerService.getWorkersByPlantation(userProfile.plantationId);
+                // Do not clear all local workers to avoid losing offline-created/unsynced records.
+                // Instead, insert/update Firebase workers into SQLite.
+                for (const worker of firebaseWorkers) {
+                    await workerSQLiteService.insertWorker(worker);
+                }
+                console.log(`✅ ${firebaseWorkers.length} workers synced to SQLite`);
+            } catch (err) {
+                console.warn('⚠️ Worker sync failed (using cached):', err);
+            }
+
+            // 2. Load fields from SQLite (offline-first)
+            await unifiedFieldService.pullFromFirebase(userProfile.plantationId);
+            const fields = await unifiedFieldService.getFields(userProfile.plantationId);
 
             if (fields.length === 0) {
                 Alert.alert(
@@ -62,6 +78,7 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
 
             const today = new Date().toISOString().split('T')[0];
 
+            // 3. Generate assignments (ML runs offline!)
             const generatedSchedule = await assignmentService.generateAssignments(
                 userProfile.plantationId,
                 today,
@@ -71,9 +88,9 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
 
             setSchedule(generatedSchedule);
 
-            // Automatically save to Firebase
+            // 4. Save to SQLite (offline-capable)
             try {
-                await assignmentStorageService.saveSchedule({
+                await unifiedScheduleService.saveSchedule({
                     plantationId: userProfile.plantationId,
                     date: today,
                     totalWorkers: generatedSchedule.totalWorkers,
@@ -81,10 +98,9 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
                     averageEfficiency: generatedSchedule.averagePredictedEfficiency,
                     assignments: generatedSchedule.assignments,
                 });
-                console.log('✅ Schedule saved to Firebase');
+                console.log('✅ Schedule saved (offline-safe)');
             } catch (saveError) {
                 console.error('Failed to save schedule:', saveError);
-                // Don't block user on save failure
             }
 
             Alert.alert(
