@@ -36,7 +36,9 @@ class UnifiedScheduleService {
 
     async deleteSchedule(scheduleId: string): Promise<void> {
         await scheduleSQLiteService.deleteSchedule(scheduleId);
-        assignmentStorageService.deleteSchedule(scheduleId).catch(() => { });
+        assignmentStorageService.deleteSchedule(scheduleId).catch((error) => {
+            console.error('⚠️ Failed to delete schedule from assignment storage:', error);
+        });
     }
 
     private async syncToFirebase(schedule: SavedSchedule): Promise<void> {
