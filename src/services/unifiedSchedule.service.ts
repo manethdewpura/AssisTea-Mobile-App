@@ -8,7 +8,7 @@ import { SavedSchedule } from '../models/SavedSchedule';
 class UnifiedScheduleService {
     async saveSchedule(scheduleData: Omit<SavedSchedule, 'id' | 'createdAt' | 'updatedAt' | 'status'>): Promise<SavedSchedule> {
         const schedule: SavedSchedule = {
-            id: `schedule_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            id: `schedule_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
             ...scheduleData,
             createdAt: new Date(),
             updatedAt: new Date(),
