@@ -10,12 +10,8 @@ class UnifiedFieldService {
      * Generate Firestore-compatible ID
      */
     private generateFirestoreId(): string {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let id = '';
-        for (let i = 0; i < 20; i++) {
-            id += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return id;
+        // Use Firestore's built-in auto-ID generation to avoid weak randomness and collisions
+        return firestore().collection('fields').doc().id;
     }
 
     /**
