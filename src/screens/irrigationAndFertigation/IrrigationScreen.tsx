@@ -35,6 +35,10 @@ const IrrigationScreen: React.FC = () => {
     navigation.navigate('SensorData');
   };
 
+  const handleSolenoidStatusPress = () => {
+    navigation.navigate('SolenoidStatus');
+  };
+
   return (
     <View style={styles.fullContainer}>
       <ScrollView
@@ -60,20 +64,28 @@ const IrrigationScreen: React.FC = () => {
             />
           )}
 
-          {/* Activity Logs */}
-          <OptionCard
-            icon="file-text"
-            title="Activity Logs"
-            description="View history of irrigation and fertilizer activities"
-            onPress={handleActivityLogsPress}
-          />
-
           {/* Sensor Data */}
           <OptionCard
             icon="activity"
             title="Sensor Data"
             description="View real-time sensor readings and data"
             onPress={handleSensorDataPress}
+          />
+
+          {/* Solenoid Valve Status */}
+          <OptionCard
+            icon="circle"
+            title="Solenoid Valve Status"
+            description="View status of all solenoid valves in the system"
+            onPress={handleSolenoidStatusPress}
+          />
+
+          {/* Activity Logs */}
+          <OptionCard
+            icon="file-text"
+            title="Activity Logs"
+            description="View history of irrigation and fertilizer activities"
+            onPress={handleActivityLogsPress}
           />
         </View>
       </ScrollView>
