@@ -8,6 +8,7 @@ import {
   BackHandler,
   TouchableOpacity,
 } from 'react-native';
+import { Lucide } from '@react-native-vector-icons/lucide';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAppSelector } from '../../hooks';
@@ -131,56 +132,6 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
               )}
             </View>
 
-            <View style={styles.managementSection}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Management Tools
-              </Text>
-
-              <Button
-                title="📊 View Production Reports"
-                onPress={() => {}}
-                style={styles.managementButton}
-              />
-
-              <Button
-                title="🌿 Manage Tea Varieties"
-                onPress={() => {}}
-                style={styles.managementButton}
-              />
-
-              <Button
-                title="👥 Manage Workers"
-                onPress={() => {}}
-                style={styles.managementButton}
-              />
-
-              <Button
-                title="📈 Track Harvest Data"
-                onPress={() => {}}
-                style={styles.managementButton}
-              />
-
-              <Button
-                title="💰 Financial Reports"
-                onPress={() => {}}
-                style={styles.managementButton}
-              />
-
-              <Button
-                title="🌡️ Weather Monitoring"
-                onPress={onNavigateToWeather || (() => {})}
-                style={styles.managementButton}
-              />
-              {/* Sensors Section */}
-              {onNavigateToSensors && (
-                <Button
-                  title="📊 Sensor Data"
-                  onPress={onNavigateToSensors || (() => {})}
-                  style={styles.managementButton}
-                />
-              )}
-            </View>
-
             {/* Split Button Container */}
             <View style={styles.splitButtonContainer}>
               <TouchableOpacity
@@ -238,7 +189,7 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
                 onPress={() => navigation.navigate('AssignmentGeneration')}
               >
                 <View style={styles.buttonContent}>
-                  <Text style={styles.buttonIcon}>📅</Text>
+                  <Lucide name="calendar" size={16} color="#fff" style={{ marginRight: 6 }} />
                   <Text style={styles.buttonText}>Generate Schedule</Text>
                 </View>
               </TouchableOpacity>
