@@ -5,6 +5,7 @@ import IrrigationAndFertilizerControlsScreen from '../screens/irrigationAndFerti
 import IrrigationAndFertilizerSetupScreen from '../screens/irrigationAndFertigation/IrrigationAndFertilizerSetupScreen';
 import ActivityLogsScreen from '../screens/irrigationAndFertigation/ActivityLogsScreen';
 import SensorDataScreen from '../screens/irrigationAndFertigation/SensorDataScreen';
+import SolenoidStatusScreen from '../screens/irrigationAndFertigation/SolenoidStatusScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import { databaseService } from '../services/database.service';
 
@@ -14,6 +15,7 @@ export type IrrigationStackParamList = {
   IrrigationSetup: undefined;
   ActivityLogs: undefined;
   SensorData: undefined;
+  SolenoidStatus: undefined;
   Notifications: undefined;
 };
 
@@ -61,6 +63,10 @@ export const IrrigationNavigator: React.FC = () => {
       <Stack.Screen
         name="SensorData"
         component={SensorDataScreen}
+      />
+      <Stack.Screen
+        name="SolenoidStatus"
+        component={SolenoidStatusScreen}
       />
       <Stack.Screen
         name="Notifications"

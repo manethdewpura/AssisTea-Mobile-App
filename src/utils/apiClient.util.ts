@@ -94,12 +94,28 @@ class ApiClient {
 
       // Check if response indicates success
       if (!response.ok) {
+        // Extract error message, prioritizing message field for user-friendly errors
+        const errorMessage = data.message || data.error || `HTTP ${response.status}: ${response.statusText}`;
+        const userMessage = data.message || data.error || `Request failed: ${response.statusText}`;
+        
         throw new AppError(
-          data.error || data.message || `HTTP ${response.status}: ${response.statusText}`,
+          errorMessage,
           `HTTP_${response.status}`,
           response.status >= 500 ? 'high' : 'medium',
           response.status < 500,
-          data.error || `Request failed: ${response.statusText}`
+          userMessage
+        );
+      }
+      
+      // Also check if the response data indicates failure (even with 200 status)
+      if (data.success === false) {
+        const errorMessage = data.message || data.error || 'Request failed';
+        throw new AppError(
+          errorMessage,
+          'API_ERROR',
+          'medium',
+          true,
+          errorMessage
         );
       }
 

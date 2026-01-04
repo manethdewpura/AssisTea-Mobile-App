@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Modal, Platform, KeyboardAvoidingView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Modal, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -308,11 +308,13 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
 
   const formatTime = (time: string): string => {
     try {
-      const [hours, minutes] = time.split(':');
+      const parts = time.split(':');
+      const hours = parts[0] || '00';
+      const minutes = parts[1] || '00';
       const hour = parseInt(hours, 10);
       const ampm = hour >= 12 ? 'PM' : 'AM';
       const displayHour = hour % 12 || 12;
-      return `${displayHour}:${minutes} ${ampm}`;
+      return `${displayHour}:${minutes.padStart(2, '0')} ${ampm}`;
     } catch {
       return time;
     }
@@ -334,20 +336,26 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
   ];
 
   const handleTimeChange = (event: any, date?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowTimePicker(false);
-    }
+    // On Android, the native dialog only fires onChange when user confirms (taps OK)
     if (date) {
+      // Use local time methods to ensure we get the correct time
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      const hoursStr = hours.toString().padStart(2, '0');
+      const minutesStr = minutes.toString().padStart(2, '0');
+      const timeString = `${hoursStr}:${minutesStr}:00`;
+      
       setSelectedTime(date);
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
-      const timeString = `${hours}:${minutes}:00`;
       
       if (isIrrigationTimePicker) {
         setIrrigationForm({ ...irrigationForm, time: timeString });
       } else {
         setFertigationForm({ ...fertigationForm, time: timeString });
       }
+      setShowTimePicker(false);
+    } else {
+      // User cancelled
+      setShowTimePicker(false);
     }
   };
 
@@ -708,13 +716,13 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
 
       {/* Irrigation Schedule Modal */}
       <Modal
-        visible={showIrrigationModal}
+        visible={showIrrigationModal && !showTimePicker && !showDayPicker}
         transparent
         animationType="slide"
         onRequestClose={() => setShowIrrigationModal(false)}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior="height"
           style={styles.modalOverlay}
         >
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
@@ -747,7 +755,12 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
                   onPress={() => {
                     setIsIrrigationTimePicker(true);
                     const [hours, minutes] = irrigationForm.time.split(':');
-                    setSelectedTime(new Date(2000, 0, 1, parseInt(hours, 10), parseInt(minutes, 10)));
+                    const hour = parseInt(hours, 10);
+                    const minute = parseInt(minutes, 10);
+                    // Create date with today's date to avoid timezone issues
+                    const today = new Date();
+                    const timeDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour, minute, 0);
+                    setSelectedTime(timeDate);
                     setShowTimePicker(true);
                   }}
                   style={[styles.pickerButton, { backgroundColor: colors.background, borderColor: colors.border }]}
@@ -807,13 +820,13 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
 
       {/* Fertigation Schedule Modal */}
       <Modal
-        visible={showFertigationModal}
+        visible={showFertigationModal && !showTimePicker && !showDayPicker}
         transparent
         animationType="slide"
         onRequestClose={() => setShowFertigationModal(false)}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior="height"
           style={styles.modalOverlay}
         >
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
@@ -846,7 +859,12 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
                   onPress={() => {
                     setIsIrrigationTimePicker(false);
                     const [hours, minutes] = fertigationForm.time.split(':');
-                    setSelectedTime(new Date(2000, 0, 1, parseInt(hours, 10), parseInt(minutes, 10)));
+                    const hour = parseInt(hours, 10);
+                    const minute = parseInt(minutes, 10);
+                    // Create date with today's date to avoid timezone issues
+                    const today = new Date();
+                    const timeDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour, minute, 0);
+                    setSelectedTime(timeDate);
                     setShowTimePicker(true);
                   }}
                   style={[styles.pickerButton, { backgroundColor: colors.background, borderColor: colors.border }]}
@@ -965,30 +983,13 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
 
       {/* Time Picker */}
       {showTimePicker && (
-        <Modal
-          visible={showTimePicker}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setShowTimePicker(false)}
-        >
-          <View style={styles.pickerModalOverlay}>
-            <View style={[styles.pickerModalContent, { backgroundColor: colors.surface }]}>
-              <View style={styles.pickerModalHeader}>
-                <Text style={[styles.pickerModalTitle, { color: colors.text }]}>Select Time</Text>
-                <TouchableOpacity onPress={() => setShowTimePicker(false)}>
-                  <Text style={[styles.pickerModalDone, { color: colors.primary }]}>Done</Text>
-                </TouchableOpacity>
-              </View>
-              <DateTimePicker
-                value={selectedTime}
-                mode="time"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={handleTimeChange}
-                is24Hour={false}
-              />
-            </View>
-          </View>
-        </Modal>
+        <DateTimePicker
+          value={selectedTime}
+          mode="time"
+          display="default"
+          onChange={handleTimeChange}
+          is24Hour={false}
+        />
       )}
 
     </SafeAreaView>

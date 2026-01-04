@@ -1,5 +1,5 @@
 import { apiClient, ApiResponse } from '../utils/apiClient.util';
-import { handleFirebaseError, logError } from '../utils/errorHandling.util';
+import { AppError, logError } from '../utils/errorHandling.util';
 
 export interface IrrigationStatus {
   is_running: boolean;
@@ -31,12 +31,29 @@ export const irrigationService = {
       );
 
       if (!response.success) {
-        throw new Error(response.error || 'Failed to start irrigation');
+        // Extract the actual error message from the response
+        const errorMessage = response.message || response.error || 'Failed to start irrigation';
+        throw new Error(errorMessage);
       }
 
       return response.data || response;
-    } catch (error) {
-      const appError = handleFirebaseError(error);
+    } catch (error: any) {
+      // If it's already an AppError with a user message, preserve it
+      if (error instanceof AppError && error.userMessage) {
+        logError(error, 'irrigationService - startIrrigation');
+        throw error;
+      }
+      
+      // Otherwise, convert to AppError preserving the message
+      const appError = error instanceof AppError 
+        ? error 
+        : new AppError(
+            error.message || 'Failed to start irrigation',
+            'IRRIGATION_ERROR',
+            'medium',
+            true,
+            error.message || 'Failed to start irrigation'
+          );
       logError(appError, 'irrigationService - startIrrigation');
       throw appError;
     }
