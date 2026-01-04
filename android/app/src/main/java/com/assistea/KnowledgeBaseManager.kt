@@ -80,21 +80,32 @@ class KnowledgeBaseManager(private val context: Context) {
     private val offlineNLPEngine: OfflineNLPEngine by lazy { OfflineNLPEngine(context) }
     
     companion object {
-        private const val KNOWLEDGE_BASE_FILE = "agronomist_knowledge.json"
+        private const val KNOWLEDGE_BASE_FILE_PREFIX = "agronomist_knowledge_"
+        private const val KNOWLEDGE_BASE_FILE_SUFFIX = ".json"
         private const val MIN_SIMILARITY_THRESHOLD = 0.15  // Lowered threshold for better matching
         private const val KEYWORD_MATCH_THRESHOLD = 0.2  // Use keyword matching if similarity is low
     }
     
+    private var currentLanguage: String = "en"
+    private val knowledgeBaseCache = mutableMapOf<String, List<KnowledgeEntry>>()
+    
     /**
-     * Load knowledge base from assets
+     * Load knowledge base from assets based on language
+     * @param language Language code (en, si, ta)
      */
-    fun loadKnowledgeBase(): List<KnowledgeEntry> {
-        if (knowledgeBase.isNotEmpty()) {
+    fun loadKnowledgeBase(language: String = "en"): List<KnowledgeEntry> {
+        // Update current language
+        currentLanguage = language
+        
+        // Return cached knowledge base if already loaded for this language
+        if (knowledgeBaseCache.containsKey(language)) {
+            knowledgeBase = knowledgeBaseCache[language] ?: emptyList()
             return knowledgeBase
         }
         
         try {
-            val inputStream: InputStream = context.assets.open(KNOWLEDGE_BASE_FILE)
+            val fileName = "$KNOWLEDGE_BASE_FILE_PREFIX$language$KNOWLEDGE_BASE_FILE_SUFFIX"
+            val inputStream: InputStream = context.assets.open(fileName)
             val json = inputStream.bufferedReader().use { it.readText() }
             inputStream.close()
             
@@ -111,9 +122,16 @@ class KnowledgeBaseManager(private val context: Context) {
                 }
             }
             
+            // Cache the knowledge base for this language
+            knowledgeBaseCache[language] = knowledgeBase
+            
             return knowledgeBase
         } catch (e: Exception) {
             e.printStackTrace()
+            // Fallback to English if the language-specific file is not found
+            if (language != "en") {
+                return loadKnowledgeBase("en")
+            }
             return emptyList()
         }
     }

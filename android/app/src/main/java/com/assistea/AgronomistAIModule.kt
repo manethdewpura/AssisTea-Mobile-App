@@ -22,7 +22,7 @@ class AgronomistAIModule(reactContext: ReactApplicationContext) : ReactContextBa
     /**
      * Query the offline knowledge base using semantic similarity
      * @param query The user's question
-     * @param language Language preference (en/si)
+     * @param language Language preference (en/si/ta)
      * @param promise Promise to resolve with the response
      */
     @ReactMethod
@@ -33,8 +33,22 @@ class AgronomistAIModule(reactContext: ReactApplicationContext) : ReactContextBa
                 return
             }
             
-            // Load knowledge base if not already loaded
-            val knowledgeBase = knowledgeBaseManager.loadKnowledgeBase()
+            // Detect the language of the query
+            val detectedLanguage = LanguageDetector.detectLanguage(query)
+            
+            // Check if the detected language matches the selected language
+            // Only check if we're confident about the detection (not null)
+            if (detectedLanguage != null && detectedLanguage != language) {
+                val errorMessage = LanguageDetector.getLanguageMismatchMessage(detectedLanguage, language)
+                promise.reject("LANGUAGE_MISMATCH", errorMessage)
+                return
+            }
+            
+            // If language detection is uncertain (null), proceed with the query
+            // This allows mixed-language queries or queries that are too short to detect
+            
+            // Load knowledge base for the specified language
+            val knowledgeBase = knowledgeBaseManager.loadKnowledgeBase(language)
             if (knowledgeBase.isEmpty()) {
                 promise.reject("NO_KNOWLEDGE_BASE", "Knowledge base is empty or could not be loaded")
                 return
@@ -71,7 +85,7 @@ class AgronomistAIModule(reactContext: ReactApplicationContext) : ReactContextBa
      * Query OpenAI GPT-4.1 API for online responses
      * TODO: Implement when LLMService is ready
      * @param query The user's question
-     * @param language Language preference (en/si)
+     * @param language Language preference (en/si/ta)
      * @param promise Promise to resolve with the response
      */
     @ReactMethod
