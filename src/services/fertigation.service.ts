@@ -20,13 +20,13 @@ export interface StartFertigationResponse {
 
 export const fertigationService = {
   /**
-   * Start fertigation for a specific zone
+   * Start fertigation for the system zone
    */
-  async startFertigation(zoneId: number): Promise<StartFertigationResponse> {
+  async startFertigation(): Promise<StartFertigationResponse> {
     try {
       const response = await apiClient.post<StartFertigationResponse>(
         '/fertigation/start',
-        { zone_id: zoneId }
+        {}
       );
 
       if (!response.success) {

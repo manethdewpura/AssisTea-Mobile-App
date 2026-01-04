@@ -1,5 +1,7 @@
 import * as Keychain from 'react-native-keychain';
 import { AppError } from '../utils/errorHandling.util';
+import { apiClient } from '../utils/apiClient.util';
+import { handleFirebaseError, logError } from '../utils/errorHandling.util';
 
 const BACKEND_URL_SERVICE = 'assistea_backend_url';
 const KEYCHAIN_OPTIONS = {
@@ -113,5 +115,42 @@ export const configService = {
     const start = url.substring(0, 12);
     const end = url.substring(url.length - 8);
     return `${start}...${end}`;
+  },
+
+  /**
+   * Get zone configuration information (read-only)
+   */
+  async getZoneInfo(): Promise<{
+    zone_id: number;
+    valve_gpio_pin: number;
+    soil_moisture_sensor_channel: number;
+    altitude: number;
+    slope: number;
+    area: number;
+    base_pressure: number;
+  }> {
+    try {
+      const response = await apiClient.get<{
+        zone: {
+          zone_id: number;
+          valve_gpio_pin: number;
+          soil_moisture_sensor_channel: number;
+          altitude: number;
+          slope: number;
+          area: number;
+          base_pressure: number;
+        };
+      }>('/system/zone-info');
+
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to get zone information');
+      }
+
+      return response.zone || response.data?.zone;
+    } catch (error) {
+      const appError = handleFirebaseError(error);
+      logError(appError, 'configService - getZoneInfo');
+      throw appError;
+    }
   },
 };

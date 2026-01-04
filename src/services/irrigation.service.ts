@@ -21,13 +21,13 @@ export interface StartIrrigationResponse {
 
 export const irrigationService = {
   /**
-   * Start irrigation for a specific zone
+   * Start irrigation for the system zone
    */
-  async startIrrigation(zoneId: number): Promise<StartIrrigationResponse> {
+  async startIrrigation(): Promise<StartIrrigationResponse> {
     try {
       const response = await apiClient.post<StartIrrigationResponse>(
         '/irrigation/start',
-        { zone_id: zoneId }
+        {}
       );
 
       if (!response.success) {

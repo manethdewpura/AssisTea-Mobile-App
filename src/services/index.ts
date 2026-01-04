@@ -16,6 +16,5 @@ export * from './fertigation.service';
 export * from './logs.service';
 export * from './schedules.service';
 export * from './sensors.service';
-export * from './zones.service';
 export * from './activityLogsSync.service';
 export * from './sqlite/activityLogsSQLite.service';

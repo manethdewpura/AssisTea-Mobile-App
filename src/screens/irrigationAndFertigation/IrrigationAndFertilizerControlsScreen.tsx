@@ -26,7 +26,6 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
 
   const [irrigationStatus, setIrrigationStatus] = useState<IrrigationStatus | null>(null);
   const [fertigationStatus, setFertigationStatus] = useState<FertigationStatus | null>(null);
-  const [zoneId, setZoneId] = useState<string>('1');
   const [loadingIrrigation, setLoadingIrrigation] = useState(false);
   const [loadingFertigation, setLoadingFertigation] = useState(false);
 
@@ -71,18 +70,12 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
       return;
     }
 
-    const zone = parseInt(zoneId, 10);
-    if (isNaN(zone) || zone < 1) {
-      Alert.alert('Invalid Zone', 'Please enter a valid zone ID (1 or higher)');
-      return;
-    }
-
     try {
       setLoadingIrrigation(true);
-      await irrigationService.startIrrigation(zone);
+      await irrigationService.startIrrigation();
       dispatch(
         showToast({
-          message: `Irrigation started for zone ${zone}`,
+          message: 'Irrigation started',
           type: 'success',
         })
       );
@@ -123,18 +116,12 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
       return;
     }
 
-    const zone = parseInt(zoneId, 10);
-    if (isNaN(zone) || zone < 1) {
-      Alert.alert('Invalid Zone', 'Please enter a valid zone ID (1 or higher)');
-      return;
-    }
-
     try {
       setLoadingFertigation(true);
-      await fertigationService.startFertigation(zone);
+      await fertigationService.startFertigation();
       dispatch(
         showToast({
-          message: `Fertigation started for zone ${zone}`,
+          message: 'Fertigation started',
           type: 'success',
         })
       );
@@ -180,6 +167,7 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
     return `${minutes}m ${secs}s`;
   };
 
+
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
@@ -198,22 +186,6 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
             </Text>
           </View>
         )}
-
-        {/* Zone Selection */}
-        <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Zone Selection</Text>
-          <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
-            Select the zone to control
-          </Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-            value={zoneId}
-            onChangeText={setZoneId}
-            placeholder="Zone ID"
-            placeholderTextColor={colors.textSecondary}
-            keyboardType="numeric"
-          />
-        </View>
 
         {/* Irrigation Controls */}
         <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -235,12 +207,6 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
               </View>
               {irrigationStatus.is_running && (
                 <>
-                  {irrigationStatus.current_zone && (
-                    <View style={styles.statusRow}>
-                      <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>Zone:</Text>
-                      <Text style={[styles.statusValue, { color: colors.text }]}>{irrigationStatus.current_zone}</Text>
-                    </View>
-                  )}
                   {irrigationStatus.duration && (
                     <View style={styles.statusRow}>
                       <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>Duration:</Text>
@@ -304,12 +270,6 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
               </View>
               {fertigationStatus.is_running && (
                 <>
-                  {fertigationStatus.current_zone && (
-                    <View style={styles.statusRow}>
-                      <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>Zone:</Text>
-                      <Text style={[styles.statusValue, { color: colors.text }]}>{fertigationStatus.current_zone}</Text>
-                    </View>
-                  )}
                   {fertigationStatus.duration && (
                     <View style={styles.statusRow}>
                       <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>Duration:</Text>
