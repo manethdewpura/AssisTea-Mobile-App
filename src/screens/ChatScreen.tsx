@@ -171,11 +171,18 @@ const ChatScreen: React.FC = () => {
         .find(msg => msg.question === question && !msg.answer);
       const actualQuestionId = questionMessage?.id || `user-${Date.now()}`;
 
+      // Check if it's a language mismatch error - display the message directly
+      const isLanguageMismatch = errorMessage.includes('appears to be in') || 
+                                 errorMessage.includes('ඔබගේ ප්‍රශ්නය') ||
+                                 errorMessage.includes('உங்கள் வினா');
+      
       // Show error message in chat
       // Redux slice will fallback to most recent unanswered message if questionId doesn't match
       const errorPayload = {
         questionId: actualQuestionId,
-        answer: `Sorry, I encountered an error: ${errorMessage}. Please try again.`,
+        answer: isLanguageMismatch 
+          ? errorMessage 
+          : `Sorry, I encountered an error: ${errorMessage}. Please try again.`,
         source: 'offline' as const,
         confidence: 0,
       };

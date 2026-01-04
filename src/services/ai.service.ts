@@ -76,9 +76,21 @@ class AIService {
         language,
       );
       return result;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
+    } catch (error: any) {
+      // React Native native module errors can come in different formats
+      // Check for language mismatch error - the message should contain the localized text
+      const errorMessage = error?.message || error?.userInfo?.message || 
+                          (error instanceof Error ? error.message : 'Unknown error');
+      
+      // Check if it's a language mismatch error by checking the error code or message content
+      if (error?.code === 'LANGUAGE_MISMATCH' || 
+          errorMessage.includes('appears to be in') ||
+          errorMessage.includes('ඔබගේ ප්‍රශ්නය') ||
+          errorMessage.includes('உங்கள் வினா')) {
+        // Return the error message directly (it already contains the localized message)
+        throw new Error(errorMessage);
+      }
+      
       throw new Error(`Offline query failed: ${errorMessage}`);
     }
   }
