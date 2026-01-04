@@ -73,6 +73,30 @@ const LanguageSelector: React.FC = () => {
             සිංහල
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.languageButton,
+            language === 'ta' && [
+              styles.languageButtonActive,
+              { backgroundColor: colors.primary },
+            ],
+          ]}
+          onPress={() => handleLanguageChange('ta')}
+          activeOpacity={0.7}
+        >
+          <Text
+            style={[
+              styles.languageText,
+              {
+                color:
+                  language === 'ta' ? colors.textInverse : colors.textSecondary,
+                fontWeight: language === 'ta' ? '600' : '400',
+              },
+            ]}
+          >
+            தமிழ்
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -92,17 +116,21 @@ const styles = StyleSheet.create({
   },
   languageButton: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 40,
   },
   languageButtonActive: {
     // Active state styling handled inline
   },
   languageText: {
     fontSize: 14,
+    lineHeight: 20,
+    includeFontPadding: true,
+    textAlign: 'center',
   },
 });
 
