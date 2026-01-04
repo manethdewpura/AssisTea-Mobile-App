@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Modal, Platform, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -8,7 +8,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAppSelector, useAppDispatch } from '../../hooks';
 import { selectTheme, selectConfig } from '../../store/selectors';
 import Button from '../../components/atoms/Button';
-import { configService, schedulesService, IrrigationSchedule, FertigationSchedule, CreateScheduleData, zonesService, ZoneConfig, CreateZoneConfigData } from '../../services';
+import { configService, schedulesService, IrrigationSchedule, FertigationSchedule, CreateScheduleData } from '../../services';
 import { validateUrl, normalizeUrl } from '../../services/config.service';
 import { saveBackendUrl, loadBackendUrl } from '../../store/slices/config.slice';
 import { showToast } from '../../store/slices/notification.slice';
@@ -30,8 +30,16 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
   const [irrigationSchedules, setIrrigationSchedules] = useState<IrrigationSchedule[]>([]);
   const [fertigationSchedules, setFertigationSchedules] = useState<FertigationSchedule[]>([]);
   const [loadingSchedules, setLoadingSchedules] = useState(false);
-  const [zoneConfigs, setZoneConfigs] = useState<ZoneConfig[]>([]);
-  const [loadingZones, setLoadingZones] = useState(false);
+  const [zoneInfo, setZoneInfo] = useState<{
+    zone_id: number;
+    valve_gpio_pin: number;
+    soil_moisture_sensor_channel: number;
+    altitude: number;
+    slope: number;
+    area: number;
+    base_pressure: number;
+  } | null>(null);
+  const [loadingZoneInfo, setLoadingZoneInfo] = useState(false);
   
   // Schedule creation modals
   const [showIrrigationModal, setShowIrrigationModal] = useState(false);
@@ -40,30 +48,13 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
   const [showDayPicker, setShowDayPicker] = useState(false);
   const [isIrrigationTimePicker, setIsIrrigationTimePicker] = useState(true);
   
-  // Zone configuration modal
-  const [showZoneModal, setShowZoneModal] = useState(false);
-  const [editingZone, setEditingZone] = useState<ZoneConfig | null>(null);
-  const [zoneForm, setZoneForm] = useState<CreateZoneConfigData>({
-    zone_id: 1,
-    name: '',
-    altitude: 0,
-    slope: 0,
-    area: 0,
-    base_pressure: 200,
-    valve_gpio_pin: 17,
-    enabled: 'true',
-  });
-  const [savingZone, setSavingZone] = useState(false);
-  
   // Form data
   const [irrigationForm, setIrrigationForm] = useState<CreateScheduleData>({
-    zone_id: 1,
     day_of_week: 0,
     time: '08:00:00',
     enabled: true,
   });
   const [fertigationForm, setFertigationForm] = useState<CreateScheduleData>({
-    zone_id: 1,
     day_of_week: 0,
     time: '08:00:00',
     enabled: true,
@@ -93,26 +84,18 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
     }
   }, [backendUrl]);
 
-  const loadZoneConfigs = useCallback(async () => {
+  const loadZoneInfo = useCallback(async () => {
     if (!backendUrl) return;
 
     try {
-      setLoadingZones(true);
-      const zones = await zonesService.getZoneConfigs().catch((error: any) => {
-        // If 404, endpoint doesn't exist yet - that's okay, just return empty array
-        if (error?.message?.includes('404') || error?.userMessage?.includes('404')) {
-          console.warn('Zones API endpoint not available yet');
-          return [];
-        }
-        console.warn('Failed to load zone configurations:', error);
-        return [];
-      });
-      setZoneConfigs(zones);
+      setLoadingZoneInfo(true);
+      const info = await configService.getZoneInfo().catch(() => null);
+      setZoneInfo(info);
     } catch (error: any) {
-      console.warn('Failed to load zone configurations:', error);
-      setZoneConfigs([]);
+      console.warn('Failed to load zone information:', error);
+      setZoneInfo(null);
     } finally {
-      setLoadingZones(false);
+      setLoadingZoneInfo(false);
     }
   }, [backendUrl]);
 
@@ -120,9 +103,9 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
     if (backendUrl) {
       setBackendUrlInput(backendUrl);
       loadSchedules();
-      loadZoneConfigs();
+      loadZoneInfo();
     }
-  }, [backendUrl, loadSchedules, loadZoneConfigs]);
+  }, [backendUrl, loadSchedules, loadZoneInfo]);
 
   const handleSaveBackendUrl = async () => {
     if (!backendUrlInput.trim()) {
@@ -143,7 +126,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
         })
       );
       await loadSchedules();
-      await loadZoneConfigs();
+      await loadZoneInfo();
     } catch (error: any) {
       dispatch(showToast({
         message: error.userMessage || error.message || 'Failed to save backend URL',
@@ -314,6 +297,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
         })
       );
       await loadSchedules();
+      await loadZoneInfo();
     } catch (error: any) {
       dispatch(showToast({
         message: error.userMessage || error.message || 'Failed to update schedule',
@@ -384,8 +368,9 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
         type: 'success',
       }));
       setShowIrrigationModal(false);
-      setIrrigationForm({ zone_id: 1, day_of_week: 0, time: '08:00:00', enabled: true });
+      setIrrigationForm({ day_of_week: 0, time: '08:00:00', enabled: true });
       await loadSchedules();
+      await loadZoneInfo();
     } catch (error: any) {
       dispatch(showToast({
         message: error.userMessage || error.message || 'Failed to create irrigation schedule',
@@ -413,8 +398,9 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
         type: 'success',
       }));
       setShowFertigationModal(false);
-      setFertigationForm({ zone_id: 1, day_of_week: 0, time: '08:00:00', enabled: true });
+      setFertigationForm({ day_of_week: 0, time: '08:00:00', enabled: true });
       await loadSchedules();
+      await loadZoneInfo();
     } catch (error: any) {
       dispatch(showToast({
         message: error.userMessage || error.message || 'Failed to create fertigation schedule',
@@ -445,6 +431,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
         type: 'success',
       }));
       await loadSchedules();
+      await loadZoneInfo();
     } catch (error: any) {
       dispatch(showToast({
         message: error.userMessage || error.message || 'Failed to delete schedule',
@@ -453,110 +440,6 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
     }
   };
 
-  const handleOpenZoneModal = (zone?: ZoneConfig) => {
-    if (zone) {
-      setEditingZone(zone);
-      setZoneForm({
-        zone_id: zone.zone_id,
-        name: zone.name,
-        altitude: zone.altitude,
-        slope: zone.slope,
-        area: zone.area,
-        base_pressure: zone.base_pressure,
-        valve_gpio_pin: zone.valve_gpio_pin,
-        pump_gpio_pin: zone.pump_gpio_pin,
-        soil_moisture_sensor_pin: zone.soil_moisture_sensor_pin,
-        pressure_sensor_pin: zone.pressure_sensor_pin,
-        enabled: zone.enabled,
-      });
-    } else {
-      setEditingZone(null);
-      setZoneForm({
-        zone_id: zoneConfigs.length > 0 ? Math.max(...zoneConfigs.map(z => z.zone_id)) + 1 : 1,
-        name: '',
-        altitude: 0,
-        slope: 0,
-        area: 0,
-        base_pressure: 200,
-        valve_gpio_pin: 17,
-        enabled: 'true',
-      });
-    }
-    setShowZoneModal(true);
-  };
-
-  const handleCloseZoneModal = () => {
-    setShowZoneModal(false);
-    setEditingZone(null);
-  };
-
-  const handleSaveZoneConfig = async () => {
-    if (!backendUrl) {
-      dispatch(showToast({
-        message: 'Backend URL not configured',
-        type: 'error',
-      }));
-      return;
-    }
-
-    if (!zoneForm.name.trim()) {
-      dispatch(showToast({
-        message: 'Zone name is required',
-        type: 'error',
-      }));
-      return;
-    }
-
-    try {
-      setSavingZone(true);
-      if (editingZone) {
-        await zonesService.updateZoneConfig(editingZone.zone_id, zoneForm);
-        dispatch(showToast({
-          message: 'Zone configuration updated successfully',
-          type: 'success',
-        }));
-      } else {
-        await zonesService.createZoneConfig(zoneForm);
-        dispatch(showToast({
-          message: 'Zone configuration created successfully',
-          type: 'success',
-        }));
-      }
-      handleCloseZoneModal();
-      await loadZoneConfigs();
-    } catch (error: any) {
-      dispatch(showToast({
-        message: error.userMessage || error.message || 'Failed to save zone configuration',
-        type: 'error',
-      }));
-    } finally {
-      setSavingZone(false);
-    }
-  };
-
-  const handleDeleteZoneConfig = async (zoneId: number) => {
-    if (!backendUrl) {
-      dispatch(showToast({
-        message: 'Backend URL not configured',
-        type: 'error',
-      }));
-      return;
-    }
-
-    try {
-      await zonesService.deleteZoneConfig(zoneId);
-      dispatch(showToast({
-        message: 'Zone configuration deleted successfully',
-        type: 'success',
-      }));
-      await loadZoneConfigs();
-    } catch (error: any) {
-      dispatch(showToast({
-        message: error.userMessage || error.message || 'Failed to delete zone configuration',
-        type: 'error',
-      }));
-    }
-  };
 
   return (
     <SafeAreaView
@@ -617,82 +500,68 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Zone Configuration */}
-        <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionHeaderText}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Zone Configuration
-              </Text>
-              <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
-                Configure zone parameters like slope, altitude, area, and GPIO pins
-              </Text>
+        {/* Zone Information */}
+        {backendUrl && (
+          <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionHeaderText}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                  Zone Information
+                </Text>
+                <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
+                  System zone configuration (read-only)
+                </Text>
+              </View>
             </View>
-            <Button
-              title="+ Add"
-              onPress={() => handleOpenZoneModal()}
-              disabled={!backendUrl}
-              variant="secondary"
-              style={styles.addButton}
-            />
-          </View>
 
-          {loadingZones ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-                Loading zones...
-              </Text>
-            </View>
-          ) : zoneConfigs.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Lucide name="map-pin" size={48} color={colors.textSecondary} />
-              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                No zone configurations
-              </Text>
-            </View>
-          ) : (
-            zoneConfigs.map(zone => (
-              <View
-                key={zone.zone_id}
-                style={[styles.scheduleItem, { backgroundColor: colors.background, borderColor: colors.border }]}
-              >
-                <View style={styles.scheduleInfo}>
-                  <Text style={[styles.scheduleText, { color: colors.text }]}>
-                    Zone {zone.zone_id}: {zone.name}
-                  </Text>
-                  <View style={styles.zoneDetails}>
-                    <Text style={[styles.zoneDetailText, { color: colors.textSecondary }]}>
-                      Slope: {zone.slope}° | Altitude: {zone.altitude}m | Area: {zone.area}m²
-                    </Text>
-                    <Text style={[styles.zoneDetailText, { color: colors.textSecondary }]}>
-                      Pressure: {zone.base_pressure}kPa | Valve GPIO: {zone.valve_gpio_pin}
-                    </Text>
-                  </View>
-                  <View style={[styles.statusBadge, { backgroundColor: zone.enabled === 'true' ? colors.success + '20' : colors.textSecondary + '20' }]}>
-                    <Text style={[styles.statusText, { color: zone.enabled === 'true' ? colors.success : colors.textSecondary }]}>
-                      {zone.enabled === 'true' ? 'ENABLED' : 'DISABLED'}
-                    </Text>
-                  </View>
+            {loadingZoneInfo ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+                  Loading zone information...
+                </Text>
+              </View>
+            ) : zoneInfo ? (
+              <View style={[styles.zoneInfoContainer, { backgroundColor: colors.background }]}>
+                <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Zone ID:</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.zone_id}</Text>
                 </View>
-                <View style={styles.scheduleActions}>
-                  <TouchableOpacity
-                    onPress={() => handleOpenZoneModal(zone)}
-                    style={[styles.editButton, { backgroundColor: colors.primary + '20' }]}
-                  >
-                    <Lucide name="pencil" size={16} color={colors.primary} />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => handleDeleteZoneConfig(zone.zone_id)}
-                    style={[styles.deleteButton, { backgroundColor: colors.error + '20' }]}
-                  >
-                    <Lucide name="trash-2" size={16} color={colors.error} />
-                  </TouchableOpacity>
+                <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Altitude:</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.altitude} m</Text>
+                </View>
+                <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Slope:</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.slope}°</Text>
+                </View>
+                <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Area:</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.area} m²</Text>
+                </View>
+                <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Base Pressure:</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.base_pressure} kPa</Text>
+                </View>
+                <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Valve GPIO Pin:</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.valve_gpio_pin}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Soil Moisture Sensor Channel:</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.soil_moisture_sensor_channel}</Text>
                 </View>
               </View>
-            ))
-          )}
-        </View>
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Lucide name="info" size={48} color={colors.textSecondary} />
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                  Zone information not available
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Irrigation Schedule Setup */}
         <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -736,7 +605,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
               >
                 <View style={styles.scheduleInfo}>
                   <Text style={[styles.scheduleText, { color: colors.text }]}>
-                    Zone {schedule.zone_id} - {getDayName(schedule.day_of_week)} at {formatTime(schedule.time)}
+                    {getDayName(schedule.day_of_week)} at {formatTime(schedule.time)}
                   </Text>
                   <View style={[styles.statusBadge, { backgroundColor: schedule.enabled ? colors.success + '20' : colors.textSecondary + '20' }]}>
                     <Text style={[styles.statusText, { color: schedule.enabled ? colors.success : colors.textSecondary }]}>
@@ -807,7 +676,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
               >
                 <View style={styles.scheduleInfo}>
                   <Text style={[styles.scheduleText, { color: colors.text }]}>
-                    Zone {schedule.zone_id} - {getDayName(schedule.day_of_week)} at {formatTime(schedule.time)}
+                    {getDayName(schedule.day_of_week)} at {formatTime(schedule.time)}
                   </Text>
                   <View style={[styles.statusBadge, { backgroundColor: schedule.enabled ? colors.success + '20' : colors.textSecondary + '20' }]}>
                     <Text style={[styles.statusText, { color: schedule.enabled ? colors.success : colors.textSecondary }]}>
@@ -857,35 +726,6 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
             </View>
 
             <ScrollView style={styles.modalBody}>
-              {/* Zone Selection */}
-              <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.text }]}>Zone</Text>
-                <View style={styles.zoneSelector}>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(zone => (
-                    <TouchableOpacity
-                      key={zone}
-                      onPress={() => setIrrigationForm({ ...irrigationForm, zone_id: zone })}
-                      style={[
-                        styles.zoneButton,
-                        {
-                          backgroundColor: irrigationForm.zone_id === zone ? colors.primary : colors.background,
-                          borderColor: colors.border,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.zoneButtonText,
-                          { color: irrigationForm.zone_id === zone ? '#fff' : colors.text },
-                        ]}
-                      >
-                        {zone}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
               {/* Day of Week Selection */}
               <View style={styles.formGroup}>
                 <Text style={[styles.label, { color: colors.text }]}>Day of Week</Text>
@@ -985,35 +825,6 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
             </View>
 
             <ScrollView style={styles.modalBody}>
-              {/* Zone Selection */}
-              <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.text }]}>Zone</Text>
-                <View style={styles.zoneSelector}>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(zone => (
-                    <TouchableOpacity
-                      key={zone}
-                      onPress={() => setFertigationForm({ ...fertigationForm, zone_id: zone })}
-                      style={[
-                        styles.zoneButton,
-                        {
-                          backgroundColor: fertigationForm.zone_id === zone ? colors.primary : colors.background,
-                          borderColor: colors.border,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.zoneButtonText,
-                          { color: fertigationForm.zone_id === zone ? '#fff' : colors.text },
-                        ]}
-                      >
-                        {zone}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
               {/* Day of Week Selection */}
               <View style={styles.formGroup}>
                 <Text style={[styles.label, { color: colors.text }]}>Day of Week</Text>
@@ -1180,201 +991,6 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
         </Modal>
       )}
 
-      {/* Zone Configuration Modal */}
-      <Modal
-        visible={showZoneModal}
-        transparent
-        animationType="slide"
-        onRequestClose={handleCloseZoneModal}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-        >
-          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>
-                {editingZone ? 'Edit Zone Configuration' : 'Add Zone Configuration'}
-              </Text>
-              <TouchableOpacity onPress={handleCloseZoneModal}>
-                <Lucide name="x" size={24} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalBody}>
-              {/* Zone ID */}
-              <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.text }]}>Zone ID</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                  value={zoneForm.zone_id.toString()}
-                  onChangeText={(text) => setZoneForm({ ...zoneForm, zone_id: parseInt(text, 10) || 1 })}
-                  keyboardType="numeric"
-                  editable={!editingZone}
-                />
-              </View>
-
-              {/* Zone Name */}
-              <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.text }]}>Zone Name *</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                  value={zoneForm.name}
-                  onChangeText={(text) => setZoneForm({ ...zoneForm, name: text })}
-                  placeholder="e.g., North Field"
-                  placeholderTextColor={colors.textSecondary}
-                />
-              </View>
-
-              {/* Altitude */}
-              <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.text }]}>Altitude (meters above sea level)</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                  value={zoneForm.altitude.toString()}
-                  onChangeText={(text) => setZoneForm({ ...zoneForm, altitude: parseFloat(text) || 0 })}
-                  keyboardType="decimal-pad"
-                  placeholder="0"
-                  placeholderTextColor={colors.textSecondary}
-                />
-              </View>
-
-              {/* Slope */}
-              <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.text }]}>Slope (degrees)</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                  value={zoneForm.slope.toString()}
-                  onChangeText={(text) => setZoneForm({ ...zoneForm, slope: parseFloat(text) || 0 })}
-                  keyboardType="decimal-pad"
-                  placeholder="0"
-                  placeholderTextColor={colors.textSecondary}
-                />
-              </View>
-
-              {/* Area */}
-              <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.text }]}>Area (square meters)</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                  value={zoneForm.area.toString()}
-                  onChangeText={(text) => setZoneForm({ ...zoneForm, area: parseFloat(text) || 0 })}
-                  keyboardType="decimal-pad"
-                  placeholder="0"
-                  placeholderTextColor={colors.textSecondary}
-                />
-              </View>
-
-              {/* Base Pressure */}
-              <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.text }]}>Base Pressure (kPa)</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                  value={zoneForm.base_pressure.toString()}
-                  onChangeText={(text) => setZoneForm({ ...zoneForm, base_pressure: parseFloat(text) || 200 })}
-                  keyboardType="decimal-pad"
-                  placeholder="200"
-                  placeholderTextColor={colors.textSecondary}
-                />
-              </View>
-
-              {/* Valve GPIO Pin */}
-              <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.text }]}>Valve GPIO Pin *</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                  value={zoneForm.valve_gpio_pin.toString()}
-                  onChangeText={(text) => setZoneForm({ ...zoneForm, valve_gpio_pin: parseInt(text, 10) || 17 })}
-                  keyboardType="numeric"
-                  placeholder="17"
-                  placeholderTextColor={colors.textSecondary}
-                />
-              </View>
-
-              {/* Pump GPIO Pin (Optional) */}
-              <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.text }]}>Pump GPIO Pin (Optional)</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                  value={zoneForm.pump_gpio_pin?.toString() || ''}
-                  onChangeText={(text) => setZoneForm({ ...zoneForm, pump_gpio_pin: text ? parseInt(text, 10) : undefined })}
-                  keyboardType="numeric"
-                  placeholder="Leave empty if not used"
-                  placeholderTextColor={colors.textSecondary}
-                />
-              </View>
-
-              {/* Soil Moisture Sensor Pin (Optional) */}
-              <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.text }]}>Soil Moisture Sensor Pin (Optional)</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                  value={zoneForm.soil_moisture_sensor_pin?.toString() || ''}
-                  onChangeText={(text) => setZoneForm({ ...zoneForm, soil_moisture_sensor_pin: text ? parseInt(text, 10) : undefined })}
-                  keyboardType="numeric"
-                  placeholder="Leave empty if not used"
-                  placeholderTextColor={colors.textSecondary}
-                />
-              </View>
-
-              {/* Pressure Sensor Pin (Optional) */}
-              <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.text }]}>Pressure Sensor Pin (Optional)</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                  value={zoneForm.pressure_sensor_pin?.toString() || ''}
-                  onChangeText={(text) => setZoneForm({ ...zoneForm, pressure_sensor_pin: text ? parseInt(text, 10) : undefined })}
-                  keyboardType="numeric"
-                  placeholder="Leave empty if not used"
-                  placeholderTextColor={colors.textSecondary}
-                />
-              </View>
-
-              {/* Enable/Disable Toggle */}
-              <View style={styles.formGroup}>
-                <TouchableOpacity
-                  onPress={() => setZoneForm({ ...zoneForm, enabled: zoneForm.enabled === 'true' ? 'false' : 'true' })}
-                  style={styles.toggleRow}
-                >
-                  <Text style={[styles.label, { color: colors.text }]}>Enabled</Text>
-                  <View
-                    style={[
-                      styles.switch,
-                      {
-                        backgroundColor: zoneForm.enabled === 'true' ? colors.success : colors.textSecondary,
-                      },
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.switchThumb,
-                        {
-                          transform: [{ translateX: zoneForm.enabled === 'true' ? 20 : 0 }],
-                        },
-                      ]}
-                    />
-                  </View>
-                </TouchableOpacity>
-              </View>
-            </ScrollView>
-
-            <View style={styles.modalFooter}>
-              <Button
-                title="Cancel"
-                onPress={handleCloseZoneModal}
-                variant="secondary"
-                style={styles.modalButton}
-              />
-              <Button
-                title={editingZone ? 'Update' : 'Create'}
-                onPress={handleSaveZoneConfig}
-                loading={savingZone}
-                style={styles.modalButton}
-              />
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
     </SafeAreaView>
   );
 };
@@ -1570,8 +1186,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   zoneButton: {
-    width: 50,
+    minWidth: 50,
     height: 50,
+    paddingHorizontal: 12,
     borderRadius: 8,
     borderWidth: 1,
     alignItems: 'center',
@@ -1580,6 +1197,18 @@ const styles = StyleSheet.create({
   zoneButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  emptyZonesMessage: {
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyZonesText: {
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
   },
   pickerButton: {
     flexDirection: 'row',
@@ -1655,6 +1284,27 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  zoneInfoContainer: {
+    borderRadius: 8,
+    padding: 16,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+  },
+  infoLabel: {
+    fontSize: 14,
+    flex: 1,
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'right',
   },
 });
 

@@ -20,14 +20,12 @@ export interface FertigationSchedule {
 }
 
 export interface CreateScheduleData {
-  zone_id: number;
   day_of_week: number;
   time: string;
   enabled?: boolean;
 }
 
 export interface UpdateScheduleData {
-  zone_id?: number;
   day_of_week?: number;
   time?: string;
   enabled?: boolean;
