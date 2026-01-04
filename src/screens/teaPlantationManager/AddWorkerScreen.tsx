@@ -39,7 +39,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
     birthDate: '',
     age: '',
     experience: '',
-    gender: 'Male' as 'Male' | 'Female' | 'Other',
+    gender: 'Male' as 'Male' | 'Female',
   });
 
   const [errors, setErrors] = useState({
@@ -360,7 +360,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: colors.text }]}>Gender</Text>
               <View style={styles.genderContainer}>
-                {(['Male', 'Female', 'Other'] as const).map(gender => (
+                {(['Male', 'Female'] as const).map(gender => (
                   <TouchableOpacity
                     key={gender}
                     style={[
