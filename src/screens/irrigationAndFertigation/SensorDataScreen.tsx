@@ -84,7 +84,21 @@ const SensorDataScreen: React.FC<SensorDataScreenProps> = () => {
 
   const formatTimestamp = (timestamp: string): string => {
     try {
-      const date = new Date(timestamp);
+      // Normalize timestamp: if it's ISO format without timezone, treat as UTC
+      // Backend timestamps are typically UTC but may not have 'Z' indicator
+      let normalizedTimestamp = timestamp;
+      if (timestamp && timestamp.includes('T')) {
+        // Check if it's ISO format without timezone (ends with seconds or milliseconds, no Z or offset)
+        const hasTimezone = timestamp.endsWith('Z') || 
+                           /[+-]\d{2}:\d{2}$/.test(timestamp) || 
+                           /[+-]\d{4}$/.test(timestamp);
+        if (!hasTimezone) {
+          // ISO format without timezone - append 'Z' to treat as UTC
+          normalizedTimestamp = timestamp + 'Z';
+        }
+      }
+      
+      const date = new Date(normalizedTimestamp);
       return date.toLocaleString('en-US', {
         month: 'short',
         day: 'numeric',

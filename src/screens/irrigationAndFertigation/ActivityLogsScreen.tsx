@@ -104,7 +104,21 @@ const ActivityLogsScreen: React.FC = () => {
 
   const formatTimestamp = (timestamp: string): string => {
     try {
-      const date = new Date(timestamp);
+      // Normalize timestamp: if it's ISO format without timezone, treat as UTC
+      // Backend timestamps are typically UTC but may not have 'Z' indicator
+      let normalizedTimestamp = timestamp;
+      if (timestamp && timestamp.includes('T')) {
+        // Check if it's ISO format without timezone (ends with seconds or milliseconds, no Z or offset)
+        const hasTimezone = timestamp.endsWith('Z') || 
+                           /[+-]\d{2}:\d{2}$/.test(timestamp) || 
+                           /[+-]\d{4}$/.test(timestamp);
+        if (!hasTimezone) {
+          // ISO format without timezone - append 'Z' to treat as UTC
+          normalizedTimestamp = timestamp + 'Z';
+        }
+      }
+      
+      const date = new Date(normalizedTimestamp);
       const now = new Date();
       const diffMs = now.getTime() - date.getTime();
       const diffMins = Math.floor(diffMs / 60000);
@@ -120,7 +134,14 @@ const ActivityLogsScreen: React.FC = () => {
       } else if (diffDays < 7) {
         return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
       } else {
-        return date.toLocaleDateString();
+        // Use toLocaleString to ensure local timezone is displayed
+        return date.toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
       }
     } catch {
       return timestamp;
