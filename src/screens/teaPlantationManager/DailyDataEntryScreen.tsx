@@ -12,6 +12,7 @@ import {
   TextInput,
   Modal,
 } from 'react-native';
+import { Lucide } from '@react-native-vector-icons/lucide';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppSelector } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
@@ -328,7 +329,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
                 style={styles.calendarButton}
                 onPress={() => setShowDatePicker(true)}
               >
-                <Text style={styles.calendarIcon}>📅</Text>
+                <Lucide name="calendar" size={24} color="#7cb342" />
               </TouchableOpacity>
             </View>
 
