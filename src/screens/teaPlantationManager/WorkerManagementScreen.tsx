@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { Lucide } from '@react-native-vector-icons/lucide';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppSelector } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
@@ -127,15 +128,9 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
       <View style={styles.workerActions}>
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => handleViewWorker(item.id)}
-        >
-          <Text style={styles.actionIcon}>👁️</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.actionButton}
           onPress={() => handleDeleteWorker(item.id, item.name)}
         >
-          <Text style={styles.actionIcon}>🗑️</Text>
+          <Lucide name="trash-2" size={20} color="#f44336" />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -227,7 +222,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   searchContainer: {
-    backgroundColor: '#2d5016',
+    backgroundColor: '#f5f5f5',
     paddingHorizontal: 16,
     paddingVertical: 12,
     flexDirection: 'row',
@@ -236,7 +231,7 @@ const styles = StyleSheet.create({
   searchIcon: {
     fontSize: 20,
     marginRight: 10,
-    color: '#fff',
+    color: '#666',
   },
   searchInput: {
     flex: 1,
@@ -308,9 +303,17 @@ const styles = StyleSheet.create({
   actionIcon: {
     fontSize: 18,
   },
+  viewIcon: {
+    fontSize: 20,
+    color: '#F4B124',
+  },
+  deleteIcon: {
+    fontSize: 20,
+    color: '#f44336',
+  },
   addButton: {
     position: 'absolute',
-    bottom: 80,
+    bottom: 16,
     right: 16,
     backgroundColor: '#7cb342',
     borderRadius: 25,

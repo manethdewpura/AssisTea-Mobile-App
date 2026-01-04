@@ -8,6 +8,7 @@ import {
     ActivityIndicator,
     Alert,
 } from 'react-native';
+import { Lucide } from '@react-native-vector-icons/lucide';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
@@ -124,11 +125,6 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>Assignment Generation</Text>
-            </View>
-
             <ScrollView style={styles.content}>
                 {/* Info Card */}
                 <View style={styles.infoCard}>
@@ -206,7 +202,7 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
 
                 {!schedule && !loading && (
                     <View style={styles.emptyState}>
-                        <Text style={styles.emptyIcon}>📅</Text>
+                        <Lucide name="calendar" size={64} color="#ccc" />
                         <Text style={styles.emptyText}>
                             No schedule generated yet.{'\n'}Tap the button above to create one!
                         </Text>

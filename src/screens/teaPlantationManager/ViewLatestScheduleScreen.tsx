@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { Lucide } from '@react-native-vector-icons/lucide';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppSelector } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
@@ -82,7 +83,7 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
         style={[styles.container, { backgroundColor: colors.background }]}
       >
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>📅</Text>
+          <Lucide name="calendar" size={64} color="#ccc" />
           <Text style={[styles.emptyText, { color: colors.text }]}>
             No schedule found
           </Text>
@@ -118,7 +119,7 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
           ]}
         >
           <View style={styles.dateSection}>
-            <Text style={styles.calendarIcon}>📅</Text>
+            <Lucide name="calendar" size={32} color="#7cb342" style={{ marginRight: 12 }} />
             <View style={styles.dateInfo}>
               <Text style={[styles.dateText, { color: colors.text }]}>
                 Schedule for {new Date(schedule.date).toLocaleDateString()}

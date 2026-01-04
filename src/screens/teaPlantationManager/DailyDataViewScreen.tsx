@@ -11,6 +11,7 @@ import {
   Modal,
   TextInput,
 } from 'react-native';
+import { Lucide } from '@react-native-vector-icons/lucide';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppSelector } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
@@ -354,14 +355,17 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               setShowDatePicker(true);
             }}
           >
-            <Text
-              style={[
-                styles.filterButtonText,
-                filterType === 'date' && styles.filterButtonTextActive,
-              ]}
-            >
-              📅 {dateFilter || 'Select Date'}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Lucide name="calendar" size={16} color={filterType === 'date' ? '#fff' : '#1976D2'} />
+              <Text
+                style={[
+                  styles.filterButtonText,
+                  filterType === 'date' && styles.filterButtonTextActive,
+                ]}
+              >
+                {dateFilter || 'Select Date'}
+              </Text>
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -374,17 +378,19 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               setShowDateRangeModal(true);
             }}
           >
-            <Text
-              style={[
-                styles.filterButtonText,
-                filterType === 'dateRange' && styles.filterButtonTextActive,
-              ]}
-            >
-              📆{' '}
-              {startDateFilter && endDateFilter
-                ? `${startDateFilter} to ${endDateFilter}`
-                : 'Date Range'}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Lucide name="calendar" size={16} color={filterType === 'dateRange' ? '#fff' : '#1976D2'} />
+              <Text
+                style={[
+                  styles.filterButtonText,
+                  filterType === 'dateRange' && styles.filterButtonTextActive,
+                ]}
+              >
+                {startDateFilter && endDateFilter
+                  ? `${startDateFilter} to ${endDateFilter}`
+                  : 'Date Range'}
+              </Text>
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -593,7 +599,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                   <Text style={styles.dateDisplayText}>
                     {startDate ? startDate.toISOString().split('T')[0] : 'Tap to select start date'}
                   </Text>
-                  <Text style={styles.calendarIcon}>📅</Text>
+                  <Lucide name="calendar" size={18} color="#7cb342" />
                 </TouchableOpacity>
               </View>
 
@@ -607,7 +613,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                   <Text style={styles.dateDisplayText}>
                     {endDate ? endDate.toISOString().split('T')[0] : 'Tap to select end date'}
                   </Text>
-                  <Text style={styles.calendarIcon}>📅</Text>
+                  <Lucide name="calendar" size={18} color="#7cb342" />
                 </TouchableOpacity>
               </View>
 
@@ -747,13 +753,13 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                     style={styles.editButton}
                     onPress={() => handleEdit(data.id)}
                   >
-                    <Text style={styles.editIcon}>✏️</Text>
+                    <Lucide name="pencil" size={18} color="#F4B124" />
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.deleteButton}
                     onPress={() => handleDelete(data)}
                   >
-                    <Text style={styles.deleteIcon}>🗑️</Text>
+                    <Lucide name="trash-2" size={18} color="#f44336" />
                   </TouchableOpacity>
                 </View>
               </View>

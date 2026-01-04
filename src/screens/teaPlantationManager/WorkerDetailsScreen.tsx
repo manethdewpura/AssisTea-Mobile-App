@@ -210,16 +210,6 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
               </View>
             </View>
           </View>
-
-          {/* View Daily Data Button */}
-          <TouchableOpacity
-            style={styles.viewDataButton}
-            onPress={() =>
-              navigation.navigate('DailyDataView', { workerId: worker.id })
-            }
-          >
-            <Text style={styles.viewDataButtonText}>📊 View Daily Data</Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -341,11 +331,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-  },
-  viewDataButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
 

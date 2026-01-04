@@ -10,6 +10,7 @@ import {
     Alert,
     ActivityIndicator,
 } from 'react-native';
+import { Lucide } from '@react-native-vector-icons/lucide';
 import { useAppSelector } from '../../hooks/redux.hooks';
 import { selectAuth } from '../../store/selectors';
 import { fieldService } from '../../services/field.service';
@@ -154,13 +155,13 @@ export default function FieldManagementScreen() {
                         style={styles.editButton}
                         onPress={() => openEditModal(item)}
                     >
-                        <Text style={styles.editButtonText}>Edit</Text>
+                        <Lucide name="pencil" size={18} color="#F4B124" />
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={styles.deleteButton}
                         onPress={() => handleDelete(item)}
                     >
-                        <Text style={styles.deleteButtonText}>Delete</Text>
+                        <Lucide name="trash-2" size={18} color="#f44336" />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -195,14 +196,6 @@ export default function FieldManagementScreen() {
 
     return (
         <View style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                <Text style={styles.title}>Field Management</Text>
-                <TouchableOpacity style={styles.addButton} onPress={openAddModal}>
-                    <Text style={styles.addButtonText}>+ Add Field</Text>
-                </TouchableOpacity>
-            </View>
-
             {/* Fields List */}
             {fields.length === 0 ? (
                 <View style={styles.emptyContainer}>
@@ -219,6 +212,12 @@ export default function FieldManagementScreen() {
                     contentContainerStyle={styles.listContainer}
                 />
             )}
+
+            {/* Add Field Button - matching worker button style */}
+            <TouchableOpacity style={styles.addButton} onPress={openAddModal}>
+                <Text style={styles.addButtonIcon}>+</Text>
+                <Text style={styles.addButtonText}>Add New Field</Text>
+            </TouchableOpacity>
 
             {/* Add/Edit Modal */}
             <Modal
@@ -342,14 +341,31 @@ const styles = StyleSheet.create({
         color: '#333',
     },
     addButton: {
-        backgroundColor: '#4CAF50',
+        position: 'absolute',
+        bottom: 16,
+        right: 16,
+        backgroundColor: '#7cb342',
+        borderRadius: 25,
         paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 8,
+        paddingVertical: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 4,
+    },
+    addButtonIcon: {
+        fontSize: 20,
+        color: '#fff',
+        fontWeight: 'bold',
+        marginRight: 6,
     },
     addButtonText: {
         color: '#fff',
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: '600',
     },
     emptyContainer: {
@@ -400,10 +416,8 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     editButton: {
-        backgroundColor: '#2196F3',
-        paddingHorizontal: 12,
+        paddingHorizontal: 10,
         paddingVertical: 6,
-        borderRadius: 6,
     },
     editButtonText: {
         color: '#fff',
@@ -411,10 +425,8 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     deleteButton: {
-        backgroundColor: '#f44336',
-        paddingHorizontal: 12,
+        paddingHorizontal: 10,
         paddingVertical: 6,
-        borderRadius: 6,
     },
     deleteButtonText: {
         color: '#fff',
@@ -505,7 +517,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 12,
         borderRadius: 8,
-        backgroundColor: '#4CAF50',
+        backgroundColor: '#fbc02d',
     },
     saveButtonDisabled: {
         opacity: 0.6,
