@@ -6,6 +6,12 @@ import { weatherService, backendService, syncQueueService, backgroundSyncService
  */
 export const initBackgroundFetch = async () => {
     try {
+        // Initialize weather database first
+        console.log('[BackgroundFetch] Initializing weather database...');
+        const { weatherDatabaseService } = await import('../services');
+        await weatherDatabaseService.initialize();
+        console.log('[BackgroundFetch] Weather database initialized successfully');
+
         // Configure Background Fetch
         await BackgroundFetch.configure(
             {

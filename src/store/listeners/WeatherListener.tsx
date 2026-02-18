@@ -32,11 +32,11 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
       // If backend is connected, sync data to SQLite database
       if (isBackendConnected) {
         try {
-          // First, try to sync any queued data from AsyncStorage
+          // First, try to sync any queued data from SQLite database
           const { backgroundSyncService } = await import('../../services');
           const syncedCount = await backgroundSyncService.syncQueuedData();
           if (syncedCount > 0) {
-            console.log(`[WeatherListener] Synced ${syncedCount} queued items from AsyncStorage`);
+            console.log(`[WeatherListener] Synced ${syncedCount} queued items from database`);
           }
 
           // Then sync current data
@@ -45,7 +45,7 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
         } catch (syncError: any) {
           console.warn('[WeatherListener] Failed to sync to backend:', syncError?.message || syncError);
 
-          // Queue data in AsyncStorage for later sync
+          // Queue data in SQLite database for later sync
           const { syncQueueService } = await import('../../services');
           await syncQueueService.addToQueue(data.current, data.forecast);
         }
