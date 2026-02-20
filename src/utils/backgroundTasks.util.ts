@@ -2,15 +2,65 @@ import BackgroundFetch from 'react-native-background-fetch';
 import { weatherService, backendService, syncQueueService, backgroundSyncService } from '../services';
 
 /**
- * Initialize background fetch to collect weather data even when app is closed
+ * Retry helper with exponential backoff
+ * Used for initialization failures that may be transient
  */
+const retryWithBackoff = async (
+    fn: () => Promise<void>,
+    maxAttempts: number = 3,
+    baseDelayMs: number = 1000
+): Promise<void> => {
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            await fn();
+            return; // Success
+        } catch (error) {
+            lastError = error as Error;
+            if (attempt < maxAttempts) {
+                const delayMs = baseDelayMs * Math.pow(2, attempt - 1); // Exponential backoff
+                console.warn(
+                    `[BackgroundFetch] Attempt ${attempt}/${maxAttempts} failed, retrying in ${delayMs}ms:`,
+                    lastError.message
+                );
+                await new Promise((resolve) => setTimeout(resolve, delayMs));
+            }
+        }
+    }
+
+    throw lastError;
+};
+
+/**
+ * Initialize background fetch to collect weather data even when app is closed
+*/
 export const initBackgroundFetch = async () => {
     try {
-        // Initialize weather database first
-        console.log('[BackgroundFetch] Initializing weather database...');
+        // Initialize weather database with retry logic (non-blocking)
+        // If this fails after retries, the background fetch still configures successfully
+        // and will attempt lazy initialization when tasks run
         const { weatherDatabaseService } = await import('../services');
-        await weatherDatabaseService.initialize();
-        console.log('[BackgroundFetch] Weather database initialized successfully');
+
+        // Fire and forget database initialization with retry
+        // Don't await it to prevent startup delays; tasks will handle lazy init
+        console.log('[BackgroundFetch] Starting database initialization (non-blocking with retries)...');
+        retryWithBackoff(
+            () => weatherDatabaseService.initialize(),
+            3, // max attempts
+            800 // base delay
+        )
+            .then(() => {
+                console.log('[BackgroundFetch] Weather database initialized successfully');
+            })
+            .catch((error) => {
+                console.warn(
+                    '[BackgroundFetch] Database initialization failed after retries. Will retry on first task execution:',
+                    error
+                );
+                // Don't re-throw; background fetch will still work and database will be
+                // lazily initialized when the first task runs
+            });
 
         // Configure Background Fetch
         await BackgroundFetch.configure(
@@ -83,7 +133,12 @@ export const initBackgroundFetch = async () => {
         //   periodic: false,
         // });
     } catch (error) {
-        console.error('[BackgroundFetch] Failed to configure:', error);
+        console.error(
+            '[BackgroundFetch] Failed to configure background fetch:',
+            error,
+            'This is critical - app will not wake to sync data in background'
+        );
+        throw error; // Re-throw so caller knows initialization failed
     }
 };
 
@@ -109,9 +164,12 @@ export const registerHeadlessTask = () => {
                 await syncQueueService.addToQueue(weatherData.current, weatherData.forecast);
             }
 
-            console.log('[BackgroundFetch:Headless] Task completed');
+            console.log('[BackgroundFetch:Headless] Task completed successfully');
         } catch (error) {
-            console.error('[BackgroundFetch:Headless] Error:', error);
+            // Log errors but don't re-throw; must signal completion to OS to prevent task termination
+            // Database initialization happens lazily via ensureInitialized() calls in services
+            // If DB initialization fails here, the error will be logged and data may be queued for retry
+            console.error('[BackgroundFetch:Headless] Error during task execution:', error);
         }
 
         BackgroundFetch.finish(taskId);

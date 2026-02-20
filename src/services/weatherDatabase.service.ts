@@ -10,9 +10,18 @@ class WeatherDatabaseService {
     private readonly DATABASE_NAME = 'weather.db';
     private readonly DATABASE_VERSION = 1;
     private initializationPromise: Promise<void> | null = null;
+    private isClosed = false;
+
+    // Backoff mechanism to prevent thundering herd on initialization failures
+    private lastInitializationAttempt: number = 0;
+    private initializationAttempts: number = 0;
+    private readonly MIN_RETRY_DELAY_MS = 1000; // 1 second
+    private readonly MAX_RETRY_DELAY_MS = 30000; // 30 seconds
+    private lastInitializationError: Error | null = null;
 
     /**
      * Initialize database and create tables
+     * @throws Error if database initialization fails and no retry is scheduled
      */
     async initialize(): Promise<void> {
         // Return existing promise if initialization is in progress
@@ -25,8 +34,32 @@ class WeatherDatabaseService {
             return Promise.resolve();
         }
 
+        // Check if we're still in backoff period from a previous failure
+        const timeSinceLastAttempt = Date.now() - this.lastInitializationAttempt;
+        if (this.lastInitializationError && timeSinceLastAttempt < this.getRetryDelayMs()) {
+            // Still in backoff period, return the last error to prevent retry storm
+            const delayRemaining = this.getRetryDelayMs() - timeSinceLastAttempt;
+            console.warn(
+                `[WeatherDB] In backoff period (${delayRemaining}ms remaining). Previous error:`,
+                this.lastInitializationError.message
+            );
+            return Promise.reject(this.lastInitializationError);
+        }
+
+        // Exit backoff period or first attempt - start new initialization
+        this.initializationAttempts++;
         this.initializationPromise = this._performInitialization();
         return this.initializationPromise;
+    }
+
+    /**
+     * Calculate exponential backoff delay based on number of failed attempts
+     */
+    private getRetryDelayMs(): number {
+        // Exponential backoff with jitter: min * 2^attempts + random
+        const exponentialDelay = this.MIN_RETRY_DELAY_MS * Math.pow(2, Math.max(0, this.initializationAttempts - 1));
+        const delayWithJitter = exponentialDelay + Math.random() * 1000; // Add up to 1s jitter
+        return Math.min(delayWithJitter, this.MAX_RETRY_DELAY_MS);
     }
 
     private async _performInitialization(): Promise<void> {
@@ -39,8 +72,18 @@ class WeatherDatabaseService {
 
             console.log('[WeatherDB] Database opened successfully');
             await this.createTables();
+
+            // Success: reset error tracking
+            this.lastInitializationError = null;
+            this.initializationAttempts = 0;
         } catch (error) {
-            console.error('[WeatherDB] Error initializing database:', error);
+            console.error('[WeatherDB] Error initializing database (attempt ' + this.initializationAttempts + '):', error);
+
+            // Track the error and timestamp for backoff calculation
+            this.lastInitializationError = error as Error;
+            this.lastInitializationAttempt = Date.now();
+
+            // Clear the promise so backoff logic can control next retry
             this.initializationPromise = null;
             throw error;
         }
@@ -89,8 +132,12 @@ class WeatherDatabaseService {
 
     /**
      * Ensure database is initialized before operations
+     * @throws Error if the service has been closed
      */
     private async ensureInitialized(): Promise<void> {
+        if (this.isClosed) {
+            throw new Error('Database service has been closed and cannot be used');
+        }
         if (!this.db) {
             await this.initialize();
         }
@@ -137,6 +184,7 @@ class WeatherDatabaseService {
 
     /**
      * Get all items in the queue
+     * @throws Error if database operation fails
      */
     async getQueue(): Promise<QueuedWeatherData[]> {
         await this.ensureInitialized();
@@ -167,12 +215,13 @@ class WeatherDatabaseService {
             return queue;
         } catch (error) {
             console.error('[WeatherDB] Error reading queue:', error);
-            return [];
+            throw error;
         }
     }
 
     /**
      * Get all unsynced items
+     * @throws Error if database operation fails
      */
     async getUnsyncedItems(): Promise<QueuedWeatherData[]> {
         await this.ensureInitialized();
@@ -203,7 +252,7 @@ class WeatherDatabaseService {
             return unsyncedItems;
         } catch (error) {
             console.error('[WeatherDB] Error getting unsynced items:', error);
-            return [];
+            throw error;
         }
     }
 
@@ -257,6 +306,7 @@ class WeatherDatabaseService {
 
     /**
      * Remove synced items older than X days
+     * @throws Error if database operation fails
      */
     async cleanupSyncedItems(daysOld: number = 7): Promise<number> {
         await this.ensureInitialized();
@@ -281,12 +331,13 @@ class WeatherDatabaseService {
             return rowsAffected;
         } catch (error) {
             console.error('[WeatherDB] Error cleaning up:', error);
-            return 0;
+            throw error;
         }
     }
 
     /**
      * Get queue statistics
+     * @throws Error if database operation fails
      */
     async getStats(): Promise<{
         total: number;
@@ -317,7 +368,7 @@ class WeatherDatabaseService {
             };
         } catch (error) {
             console.error('[WeatherDB] Error getting stats:', error);
-            return { total: 0, synced: 0, unsynced: 0 };
+            throw error;
         }
     }
 
@@ -341,14 +392,21 @@ class WeatherDatabaseService {
     }
 
     /**
-     * Close database connection
+     * Close database connection and prevent further operations
      */
     async close(): Promise<void> {
         if (this.db) {
             await this.db.close();
             this.db = null;
             this.initializationPromise = null;
-            console.log('[WeatherDB] Database closed');
+            this.isClosed = true;
+
+            // Reset backoff state so service can be reinitialized if needed
+            this.lastInitializationAttempt = 0;
+            this.initializationAttempts = 0;
+            this.lastInitializationError = null;
+
+            console.log('[WeatherDB] Database closed and service marked as unavailable');
         }
     }
 }

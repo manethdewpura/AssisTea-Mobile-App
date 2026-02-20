@@ -7,8 +7,14 @@ import { activityLogsSyncService } from './activityLogsSync.service';
  * Runs periodically to upload unsynced data when backend is available
  */
 export const backgroundSyncService = {
+    // Maximum sync attempts per item before marking as dead letter
+    MAX_SYNC_ATTEMPTS: 5,
+    // Batch size for concurrent sync operations
+    BATCH_SIZE: 10,
+
     /**
      * Attempt to sync all queued data to backend
+     * Uses batch processing with retry limits to prevent indefinite retries
      * Returns number of successfully synced items
      */
     async syncQueuedData(): Promise<number> {
@@ -31,31 +37,77 @@ export const backgroundSyncService = {
 
             console.log(`[BackgroundSync] Syncing ${unsyncedItems.length} items...`);
 
+            // Separate items by retry status
+            const retriable = unsyncedItems.filter(
+                (item) => (item.sync_attempts ?? 0) < this.MAX_SYNC_ATTEMPTS
+            );
+            const deadLetters = unsyncedItems.filter(
+                (item) => (item.sync_attempts ?? 0) >= this.MAX_SYNC_ATTEMPTS
+            );
+
+            if (deadLetters.length > 0) {
+                console.warn(
+                    `[BackgroundSync] ${deadLetters.length} items exceeded max retry limit (${this.MAX_SYNC_ATTEMPTS}). Manual intervention may be required.`,
+                    deadLetters.map((item) => ({
+                        id: item.id,
+                        attempts: item.sync_attempts,
+                        lastAttempt: item.last_sync_attempt,
+                    }))
+                );
+            }
+
             let successCount = 0;
 
-            // Sync each item
-            for (const item of unsyncedItems) {
-                try {
-                    await backendService.syncAllWeatherData(item.current, item.forecast);
-                    await syncQueueService.markAsSynced(item.id);
-                    successCount++;
+            // Process retriable items in batches for better performance
+            for (let i = 0; i < retriable.length; i += this.BATCH_SIZE) {
+                const batch = retriable.slice(i, i + this.BATCH_SIZE);
 
-                    console.log(`[BackgroundSync] Synced item ${item.id}`);
-                } catch (error) {
-                    console.error(`[BackgroundSync] Failed to sync item ${item.id}:`, error);
-                    // Continue with next item even if this one fails
-                }
+                // Use Promise.allSettled for batch processing
+                // This allows all items in batch to attempt sync, even if some fail
+                const results = await Promise.allSettled(
+                    batch.map((item) =>
+                        backendService
+                            .syncAllWeatherData(item.current, item.forecast)
+                            .then(async () => {
+                                await syncQueueService.markAsSynced(item.id);
+                                console.log(`[BackgroundSync] Synced item ${item.id}`);
+                                return { id: item.id, success: true };
+                            })
+                            .catch(async (error) => {
+                                // Track failed attempt
+                                await syncQueueService.incrementSyncAttempt(item.id);
+                                const attempts = (item.sync_attempts ?? 0) + 1;
+                                console.error(
+                                    `[BackgroundSync] Failed to sync item ${item.id} (attempt ${attempts}/${this.MAX_SYNC_ATTEMPTS}):`,
+                                    error
+                                );
+                                return { id: item.id, success: false, attempts };
+                            })
+                    )
+                );
+
+                // Count successful syncs
+                results.forEach((result) => {
+                    if (result.status === 'fulfilled' && result.value.success) {
+                        successCount++;
+                    }
+                });
             }
 
             // Cleanup old synced items
             await syncQueueService.cleanupSyncedItems(7);
 
-            console.log(`[BackgroundSync] Successfully synced ${successCount}/${unsyncedItems.length} items`);
+            console.log(
+                `[BackgroundSync] Successfully synced ${successCount}/${unsyncedItems.length} items ` +
+                `(${deadLetters.length} dead letter items)`
+            );
 
             // Also sync activity logs to Firebase
             try {
                 const activityLogsResult = await activityLogsSyncService.syncPendingLogs();
-                console.log(`[BackgroundSync] Activity logs sync: ${activityLogsResult.synced} synced, ${activityLogsResult.failed} failed`);
+                console.log(
+                    `[BackgroundSync] Activity logs sync: ${activityLogsResult.synced} synced, ${activityLogsResult.failed} failed`
+                );
             } catch (activityLogsError) {
                 console.warn('[BackgroundSync] Failed to sync activity logs:', activityLogsError);
             }

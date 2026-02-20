@@ -24,7 +24,7 @@ export const syncQueueService = {
         forecast: WeatherForecast,
     ): Promise<void> {
         try {
-            const queueId = await weatherDatabaseService.addToQueue(current, forecast);
+            await weatherDatabaseService.addToQueue(current, forecast);
 
             // Get current stats for logging
             const stats = await weatherDatabaseService.getStats();
@@ -36,6 +36,7 @@ export const syncQueueService = {
 
     /**
      * Get all items in the sync queue
+     * Returns empty array on error to allow UI to function with cached data
      */
     async getQueue(): Promise<QueuedWeatherData[]> {
         try {
@@ -47,7 +48,8 @@ export const syncQueueService = {
     },
 
     /**
-     * Get all unsynced items
+     * Get all unsynced items from the queue
+     * Returns empty array on error to allow sync service to continue gracefully
      */
     async getUnsyncedItems(): Promise<QueuedWeatherData[]> {
         try {
@@ -71,7 +73,20 @@ export const syncQueueService = {
     },
 
     /**
-     * Remove synced items older than 7 days
+     * Increment sync attempt counter for an item
+     * Used to track failed sync attempts and prevent infinite retries
+     */
+    async incrementSyncAttempt(itemId: string): Promise<void> {
+        try {
+            await weatherDatabaseService.incrementSyncAttempt(itemId);
+        } catch (error) {
+            console.error('[SyncQueue] Error incrementing sync attempt for', itemId, ':', error);
+        }
+    },
+
+    /**
+     * Remove synced items older than specified days
+     * Returns 0 on error; errors are logged for visibility
      */
     async cleanupSyncedItems(daysOld: number = 7): Promise<void> {
         try {
@@ -81,11 +96,13 @@ export const syncQueueService = {
             }
         } catch (error) {
             console.error('[SyncQueue] Error cleaning up:', error);
+            // Cleanup failures are not critical; sync will still work
         }
     },
 
     /**
      * Get queue statistics
+     * Returns empty stats on error to allow UI to display gracefully
      */
     async getStats(): Promise<{
         total: number;
