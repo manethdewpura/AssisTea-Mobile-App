@@ -1,7 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CurrentWeather, WeatherForecast } from '../common/interfaces';
-
-const SYNC_QUEUE_KEY = '@weather_sync_queue';
+import { weatherDatabaseService } from './weatherDatabase.service';
 
 export interface QueuedWeatherData {
     id: string;
@@ -9,11 +7,13 @@ export interface QueuedWeatherData {
     current: CurrentWeather;
     forecast: WeatherForecast;
     synced: boolean;
+    sync_attempts?: number;
+    last_sync_attempt?: number;
 }
 
 /**
  * Service for managing offline weather data queue
- * Stores weather data when backend is unavailable and syncs when connected
+ * Stores weather data in SQLite when backend is unavailable and syncs when connected
  */
 export const syncQueueService = {
     /**
@@ -24,20 +24,11 @@ export const syncQueueService = {
         forecast: WeatherForecast,
     ): Promise<void> {
         try {
-            const queue = await this.getQueue();
+            await weatherDatabaseService.addToQueue(current, forecast);
 
-            const queueItem: QueuedWeatherData = {
-                id: `weather_${Date.now()}`,
-                timestamp: Date.now(),
-                current,
-                forecast,
-                synced: false,
-            };
-
-            queue.push(queueItem);
-            await AsyncStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue));
-
-            console.log(`[SyncQueue] Added to queue. Total items: ${queue.length}`);
+            // Get current stats for logging
+            const stats = await weatherDatabaseService.getStats();
+            console.log(`[SyncQueue] Added to queue. Total items: ${stats.total}`);
         } catch (error) {
             console.error('[SyncQueue] Error adding to queue:', error);
         }
@@ -45,11 +36,11 @@ export const syncQueueService = {
 
     /**
      * Get all items in the sync queue
+     * Returns empty array on error to allow UI to function with cached data
      */
     async getQueue(): Promise<QueuedWeatherData[]> {
         try {
-            const queueJson = await AsyncStorage.getItem(SYNC_QUEUE_KEY);
-            return queueJson ? JSON.parse(queueJson) : [];
+            return await weatherDatabaseService.getQueue();
         } catch (error) {
             console.error('[SyncQueue] Error reading queue:', error);
             return [];
@@ -57,11 +48,16 @@ export const syncQueueService = {
     },
 
     /**
-     * Get all unsynced items
+     * Get all unsynced items from the queue
+     * Returns empty array on error to allow sync service to continue gracefully
      */
     async getUnsyncedItems(): Promise<QueuedWeatherData[]> {
-        const queue = await this.getQueue();
-        return queue.filter(item => !item.synced);
+        try {
+            return await weatherDatabaseService.getUnsyncedItems();
+        } catch (error) {
+            console.error('[SyncQueue] Error getting unsynced items:', error);
+            return [];
+        }
     },
 
     /**
@@ -69,12 +65,7 @@ export const syncQueueService = {
      */
     async markAsSynced(itemId: string): Promise<void> {
         try {
-            const queue = await this.getQueue();
-            const updatedQueue = queue.map(item =>
-                item.id === itemId ? { ...item, synced: true } : item
-            );
-
-            await AsyncStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(updatedQueue));
+            await weatherDatabaseService.markAsSynced(itemId);
             console.log(`[SyncQueue] Marked ${itemId} as synced`);
         } catch (error) {
             console.error('[SyncQueue] Error marking as synced:', error);
@@ -82,44 +73,48 @@ export const syncQueueService = {
     },
 
     /**
-     * Remove synced items older than X days (cleanup)
+     * Increment sync attempt counter for an item
+     * Used to track failed sync attempts and prevent infinite retries
+     */
+    async incrementSyncAttempt(itemId: string): Promise<void> {
+        try {
+            await weatherDatabaseService.incrementSyncAttempt(itemId);
+        } catch (error) {
+            console.error('[SyncQueue] Error incrementing sync attempt for', itemId, ':', error);
+        }
+    },
+
+    /**
+     * Remove synced items older than specified days
+     * Returns 0 on error; errors are logged for visibility
      */
     async cleanupSyncedItems(daysOld: number = 7): Promise<void> {
         try {
-            const queue = await this.getQueue();
-            const cutoffTime = Date.now() - (daysOld * 24 * 60 * 60 * 1000);
-
-            const cleanedQueue = queue.filter(
-                item => !item.synced || item.timestamp > cutoffTime
-            );
-
-            await AsyncStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(cleanedQueue));
-
-            const removed = queue.length - cleanedQueue.length;
-            if (removed > 0) {
-                console.log(`[SyncQueue] Cleaned up ${removed} old synced items`);
+            const removedCount = await weatherDatabaseService.cleanupSyncedItems(daysOld);
+            if (removedCount > 0) {
+                console.log(`[SyncQueue] Cleaned up ${removedCount} old synced items`);
             }
         } catch (error) {
             console.error('[SyncQueue] Error cleaning up:', error);
+            // Cleanup failures are not critical; sync will still work
         }
     },
 
     /**
      * Get queue statistics
+     * Returns empty stats on error to allow UI to display gracefully
      */
     async getStats(): Promise<{
         total: number;
         synced: number;
         unsynced: number;
     }> {
-        const queue = await this.getQueue();
-        const synced = queue.filter(item => item.synced).length;
-
-        return {
-            total: queue.length,
-            synced,
-            unsynced: queue.length - synced,
-        };
+        try {
+            return await weatherDatabaseService.getStats();
+        } catch (error) {
+            console.error('[SyncQueue] Error getting stats:', error);
+            return { total: 0, synced: 0, unsynced: 0 };
+        }
     },
 
     /**
@@ -127,7 +122,7 @@ export const syncQueueService = {
      */
     async clearQueue(): Promise<void> {
         try {
-            await AsyncStorage.removeItem(SYNC_QUEUE_KEY);
+            await weatherDatabaseService.clearQueue();
             console.log('[SyncQueue] Queue cleared');
         } catch (error) {
             console.error('[SyncQueue] Error clearing queue:', error);
