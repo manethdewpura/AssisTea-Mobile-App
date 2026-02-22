@@ -1,4 +1,3 @@
-import { ensureNetworkConnection } from '../utils';
 import { CurrentWeather, WeatherForecast, MLPrediction } from '../common/interfaces';
 import { NetworkError } from '../utils/network.util';
 import { configService } from './config.service';
@@ -131,8 +130,6 @@ export const backendService = {
     weatherData: CurrentWeather,
   ): Promise<BackendSyncResponse> {
     try {
-      await ensureNetworkConnection();
-
       const baseUrl = await getBaseUrl();
       const response = await fetch(`${baseUrl}/api/weather/current`, {
         method: 'POST',
@@ -168,8 +165,6 @@ export const backendService = {
     forecastData: WeatherForecast,
   ): Promise<BackendSyncResponse> {
     try {
-      await ensureNetworkConnection();
-
       const baseUrl = await getBaseUrl();
       const response = await fetch(`${baseUrl}/api/weather/forecast`, {
         method: 'POST',
@@ -206,8 +201,6 @@ export const backendService = {
     forecast: WeatherForecast,
   ): Promise<BackendSyncResponse> {
     try {
-      await ensureNetworkConnection();
-
       const baseUrl = await getBaseUrl();
       const response = await fetch(`${baseUrl}/api/weather/sync`, {
         method: 'POST',

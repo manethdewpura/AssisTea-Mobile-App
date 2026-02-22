@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '../../hooks';
-import { selectWeather, selectNetwork } from '../selectors';
+import { selectWeather } from '../selectors';
 import {
   setFetching,
   setWeatherData,
@@ -22,7 +22,6 @@ interface WeatherListenerProps {
 const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
   const dispatch = useAppDispatch();
   const { location, isBackendConnected } = useAppSelector(selectWeather);
-  const { isOnline } = useAppSelector(selectNetwork);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const backendCheckIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const predictionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -49,10 +48,12 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
         );
       } else {
         console.log('[WeatherListener] No ML predictions available from backend');
+        dispatch(clearPredictions());
         dispatch(setError('Weather API unavailable and no ML predictions available'));
       }
     } catch (error: any) {
       console.warn('[WeatherListener] Failed to fetch ML predictions:', error?.message || error);
+      dispatch(clearPredictions());
       dispatch(setError('Weather API and backend both unreachable'));
     }
   }, [dispatch]);
