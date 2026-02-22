@@ -1,7 +1,9 @@
+/* eslint-disable react-native/no-inline-styles */
 import React from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
@@ -17,7 +19,7 @@ interface WeatherScreenProps {
 }
 
 const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
-  const { current, forecast, isFetching, error, lastUpdated, isBackendConnected } =
+  const { current, forecast, isFetching, error, lastUpdated, isBackendConnected, predictions, isPredictionMode } =
     useAppSelector(selectWeather);
   const { colors } = useAppSelector(selectTheme);
 
@@ -29,24 +31,30 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
     });
   };
 
-  const formatDate = (timestamp: number): string => {
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const formatDateTime = (dateString: string): string => {
-    const date = new Date(dateString);
+  /** Format a date (string or UTC ms) to LK timezone display */
+  const formatDateTime = (input: string | number): string => {
+    const date = new Date(input);
     return date.toLocaleString('en-US', {
+      timeZone: 'Asia/Colombo',
       weekday: 'short',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      hour12: true,
     });
+  };
+
+  /** Get confidence level label and color */
+  const getConfidenceInfo = (score: number): { label: string; color: string } => {
+    const percentage = Math.round(score * 100);
+    if (score >= 0.8) {
+      return { label: `${percentage}% confidence`, color: '#4CAF50' };
+    } else if (score >= 0.6) {
+      return { label: `${percentage}% confidence`, color: '#FF9800' };
+    } else {
+      return { label: `${percentage}% confidence`, color: '#F44336' };
+    }
   };
 
   const getWeatherIcon = (iconCode: string): string => {
@@ -66,7 +74,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
     );
   }
 
-  if (error && !current) {
+  if (error && !current && !isPredictionMode) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.errorContainer}>
@@ -105,31 +113,69 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
         }
       >
         {/* Connection Status */}
-        <View
-          style={[
-            styles.statusBar,
-            {
-              backgroundColor: isBackendConnected
-                ? colors.success
-                : colors.warning,
-            },
-          ]}
-        >
-          <Text style={styles.statusText}>
-            {isBackendConnected
-              ? '✓ Backend Connected - Data Syncing'
-              : '⚠ Backend Disconnected - Local Mode'}
-          </Text>
-        </View>
+        {isPredictionMode ? (
+          <View
+            style={[
+              styles.statusBar,
+              { backgroundColor: '#FF9800' },
+            ]}
+          >
+            <Text style={styles.statusText}>
+              ML Predicted Data — No Internet Connection
+            </Text>
+          </View>
+        ) : (
+          <View
+            style={[
+              styles.statusBar,
+              {
+                backgroundColor: isBackendConnected
+                  ? colors.success
+                  : colors.warning,
+              },
+            ]}
+          >
+            <Text style={styles.statusText}>
+              {isBackendConnected
+                ? '✓ Backend Connected - Data Syncing'
+                : '⚠ Backend Disconnected - Local Mode'}
+            </Text>
+          </View>
+        )}
 
         {/* Current Weather */}
         {current && (
           <View
             style={[
               styles.currentWeatherCard,
-              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+              {
+                backgroundColor: colors.cardBackground,
+                borderColor: isPredictionMode ? '#FF9800' : colors.border,
+                borderWidth: isPredictionMode ? 2 : 1,
+              },
             ]}
           >
+            {/* ML Prediction Badge */}
+            {isPredictionMode && predictions.length > 0 && (
+              <View style={styles.predictionBadge}>
+                <Lucide
+                  name="droplets"
+                  size={14}
+                  color="#E65100"
+                  style={styles.predictionBadgeIcon}
+                />
+                <Text style={styles.predictionBadgeText}>
+                  ML Prediction · {getConfidenceInfo(predictions[0].confidence_score).label}
+                </Text>
+                <View
+                  style={[
+                    styles.confidenceDot,
+                    { backgroundColor: getConfidenceInfo(predictions[0].confidence_score).color },
+                  ]}
+                />
+              </View>
+            )}
+
             <View style={styles.currentWeatherHeader}>
               <View>
                 <Text style={[styles.locationText, { color: colors.text }]}>
@@ -143,11 +189,13 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
               </View>
               {current.weather[0] && (
                 <View style={styles.weatherIconContainer}>
-                  <Text style={styles.weatherIcon}>
-                    {current.weather[0].icon && (
-                      <Text>🌤️</Text>
-                    )}
-                  </Text>
+                  {current.weather[0].icon && (
+                    <Image
+                      source={{ uri: getWeatherIcon(current.weather[0].icon) }}
+                      style={styles.weatherImage}
+                      resizeMode="contain"
+                    />
+                  )}
                 </View>
               )}
             </View>
@@ -177,7 +225,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
                   Humidity
                 </Text>
                 <Text style={[styles.detailValue, { color: colors.text }]}>
-                  {current.main.humidity}%
+                  {Number(current.main.humidity).toFixed(2)}%
                 </Text>
               </View>
               <View style={styles.detailItem}>
@@ -185,7 +233,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
                   Pressure
                 </Text>
                 <Text style={[styles.detailValue, { color: colors.text }]}>
-                  {current.main.pressure} hPa
+                  {Number(current.main.pressure).toFixed(2)} hPa
                 </Text>
               </View>
               <View style={styles.detailItem}>
@@ -193,7 +241,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
                   Wind Speed
                 </Text>
                 <Text style={[styles.detailValue, { color: colors.text }]}>
-                  {current.wind.speed} m/s
+                  {Number(current.wind.speed).toFixed(2)} m/s
                 </Text>
               </View>
               <View style={styles.detailItem}>
@@ -206,26 +254,41 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
               </View>
             </View>
 
-            <View style={styles.sunTimes}>
-              <View style={styles.sunTimeItem}>
-                <Text style={[styles.sunTimeLabel, { color: colors.textSecondary }]}>
-                  Sunrise
-                </Text>
-                <Text style={[styles.sunTimeValue, { color: colors.text }]}>
-                  {formatTime(current.sys.sunrise)}
-                </Text>
+            {/* Sun times - only show for real API data (predictions don't have valid sunrise/sunset) */}
+            {!isPredictionMode && (
+              <View style={styles.sunTimes}>
+                <View style={styles.sunTimeItem}>
+                  <Text style={[styles.sunTimeLabel, { color: colors.textSecondary }]}>
+                    Sunrise
+                  </Text>
+                  <Text style={[styles.sunTimeValue, { color: colors.text }]}>
+                    {formatTime(current.sys.sunrise)}
+                  </Text>
+                </View>
+                <View style={styles.sunTimeItem}>
+                  <Text style={[styles.sunTimeLabel, { color: colors.textSecondary }]}>
+                    Sunset
+                  </Text>
+                  <Text style={[styles.sunTimeValue, { color: colors.text }]}>
+                    {formatTime(current.sys.sunset)}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.sunTimeItem}>
-                <Text style={[styles.sunTimeLabel, { color: colors.textSecondary }]}>
-                  Sunset
-                </Text>
-                <Text style={[styles.sunTimeValue, { color: colors.text }]}>
-                  {formatTime(current.sys.sunset)}
-                </Text>
-              </View>
-            </View>
+            )}
 
-            {lastUpdated && (
+            {/* Prediction timestamp info */}
+            {isPredictionMode && predictions.length > 0 && (
+              <View style={styles.predictionTimestamp}>
+                <Text style={[styles.predictionTimestampText, { color: colors.textSecondary }]}>
+                  Predicted for: {formatDateTime(predictions[0].measured_at)} (LK Time)
+                </Text>
+                <Text style={[styles.predictionTimestampText, { color: colors.textSecondary }]}>
+                  Generated at: {formatDateTime(predictions[0].predicted_at)}
+                </Text>
+              </View>
+            )}
+
+            {lastUpdated && !isPredictionMode && (
               <Text
                 style={[styles.lastUpdatedText, { color: colors.textSecondary }]}
               >
@@ -235,8 +298,87 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
           </View>
         )}
 
-        {/* Forecast */}
-        {forecast && forecast.list && (
+        {/* Other ML Predictions (when in prediction mode and multiple predictions exist) */}
+        {isPredictionMode && predictions.length > 1 && (
+          <View
+            style={[
+              styles.forecastCard,
+              {
+                backgroundColor: colors.cardBackground,
+                borderColor: '#FF9800',
+                borderWidth: 1,
+              },
+            ]}
+          >
+            <Text style={[styles.forecastTitle, { color: colors.text }]}>
+              Other ML Predictions
+            </Text>
+            {predictions.slice(1).map((prediction, index) => {
+              const confidenceInfo = getConfidenceInfo(prediction.confidence_score);
+              return (
+                <View
+                  key={index}
+                  style={[
+                    styles.forecastItem,
+                    index < predictions.length - 2 && {
+                      borderBottomWidth: 1,
+                      borderBottomColor: colors.border,
+                    },
+                  ]}
+                >
+                  <View style={styles.forecastItemLeft}>
+                    <Text style={[styles.forecastDate, { color: colors.text }]}>
+                      {formatDateTime(prediction.measured_at)}
+                    </Text>
+                    <View style={styles.confidenceRow}>
+                      <View
+                        style={[
+                          styles.confidenceDotSmall,
+                          { backgroundColor: confidenceInfo.color },
+                        ]}
+                      />
+                      <Text
+                        style={[
+                          styles.forecastDescription,
+                          { color: confidenceInfo.color },
+                        ]}
+                      >
+                        {confidenceInfo.label}
+                      </Text>
+                    </View>
+                    {prediction.data.weather[0] && (
+                      <Text
+                        style={[
+                          styles.forecastDescription,
+                          { color: colors.textSecondary },
+                        ]}
+                      >
+                        {prediction.data.weather[0].description.charAt(0).toUpperCase() +
+                          prediction.data.weather[0].description.slice(1)}
+                      </Text>
+                    )}
+                  </View>
+                  <View style={styles.forecastItemRight}>
+                    <Text style={[styles.forecastTemp, { color: colors.text }]}>
+                      {Math.round(prediction.data.main.temp)}°
+                    </Text>
+                    <Text
+                      style={[
+                        styles.forecastTempRange,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      💧 {Math.round(prediction.data.main.humidity)}%
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {/* Forecast (only show when NOT in prediction mode) */}
+        {!isPredictionMode && forecast && forecast.list && (
           <View
             style={[
               styles.forecastCard,
@@ -380,6 +522,10 @@ const styles = StyleSheet.create({
   weatherIcon: {
     fontSize: 48,
   },
+  weatherImage: {
+    width: 48,
+    height: 48,
+  },
   currentWeatherMain: {
     alignItems: 'center',
     marginVertical: 20,
@@ -458,7 +604,7 @@ const styles = StyleSheet.create({
   forecastTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 15,
+    marginBottom: 5,
   },
   forecastItem: {
     flexDirection: 'row',
@@ -508,7 +654,59 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
+  // ML Prediction styles
+  predictionBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3E0',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+    marginBottom: 12,
+  },
+  predictionBadgeIcon: {
+    fontSize: 14,
+    marginRight: 6,
+  },
+  predictionBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#E65100',
+  },
+  confidenceDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginLeft: 6,
+  },
+  confidenceDotSmall: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 4,
+  },
+  confidenceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  predictionTimestamp: {
+    marginTop: 15,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    alignItems: 'center',
+  },
+  predictionTimestampText: {
+    fontSize: 10,
+    fontStyle: 'italic',
+    marginBottom: 2,
+  },
+  predictionSubtitle: {
+    fontSize: 12,
+    marginBottom: 10,
+  },
 });
 
 export default WeatherScreen;
-

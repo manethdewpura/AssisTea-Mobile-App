@@ -6,6 +6,10 @@ import {
   setWeatherData,
   setError,
   setBackendConnected,
+  setPredictions,
+  setPredictionMode,
+  clearPredictions,
+  setCurrentWeather,
 } from '../slices/weather.slice';
 import { weatherService, backendService } from '../../services';
 import { WEATHER_API_CONFIG } from '../../common/constants';
@@ -21,53 +25,96 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
   const { isOnline } = useAppSelector(selectNetwork);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const backendCheckIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const predictionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Fetch weather data
+  // Fetch ML predictions from backend (reachable on LAN even without internet)
+  const fetchPredictions = useCallback(async () => {
+    try {
+      console.log('[WeatherListener] API unavailable - fetching ML predictions from backend LAN...');
+      const result = await backendService.fetchMLPredictions();
+
+      if (result.success && result.predictions.length > 0) {
+        dispatch(setPredictions(result.predictions));
+        dispatch(setPredictionMode(true));
+
+        // Also set the best prediction as current weather for the main display
+        if (result.current) {
+          dispatch(setCurrentWeather(result.current));
+        }
+
+        dispatch(setError(null));
+        console.log(
+          `[WeatherListener] Loaded ${result.prediction_count} ML predictions ` +
+          `(best confidence: ${(result.best_confidence * 100).toFixed(0)}%)`
+        );
+      } else {
+        console.log('[WeatherListener] No ML predictions available from backend');
+        dispatch(setError('Weather API unavailable and no ML predictions available'));
+      }
+    } catch (error: any) {
+      console.warn('[WeatherListener] Failed to fetch ML predictions:', error?.message || error);
+      dispatch(setError('Weather API and backend both unreachable'));
+    }
+  }, [dispatch]);
+
+  // Fetch weather data from API - falls back to ML predictions if API fails
   const fetchWeatherData = useCallback(async () => {
     try {
       dispatch(setFetching(true));
       const data = await weatherService.fetchAllWeatherData(location);
       dispatch(setWeatherData(data));
 
-      // If backend is connected, sync data to SQLite database
+      // API succeeded - clear prediction mode since we have live data
+      dispatch(clearPredictions());
+
+      // Clear any prediction polling interval since API is working
+      if (predictionIntervalRef.current) {
+        clearInterval(predictionIntervalRef.current);
+        predictionIntervalRef.current = null;
+      }
+
+      // If backend is connected, sync data
       if (isBackendConnected) {
         try {
-          // First, try to sync any queued data from SQLite database
           const { backgroundSyncService } = await import('../../services');
           const syncedCount = await backgroundSyncService.syncQueuedData();
           if (syncedCount > 0) {
             console.log(`[WeatherListener] Synced ${syncedCount} queued items from database`);
           }
-
-          // Then sync current data
           const syncResult = await backendService.syncAllWeatherData(data.current, data.forecast);
           console.log('[WeatherListener] Current weather data synced to backend:', syncResult);
         } catch (syncError: any) {
           console.warn('[WeatherListener] Failed to sync to backend:', syncError?.message || syncError);
-
-          // Queue data in SQLite database for later sync
           const { syncQueueService } = await import('../../services');
           await syncQueueService.addToQueue(data.current, data.forecast);
         }
       } else {
-        // Backend not connected - queue data for later sync
         const { syncQueueService } = await import('../../services');
         await syncQueueService.addToQueue(data.current, data.forecast);
-
-        // Log queue stats
         const stats = await syncQueueService.getStats();
         console.log(`[WeatherListener] Queue stats - Total: ${stats.total}, Unsynced: ${stats.unsynced}`);
       }
     } catch (error: any) {
-      dispatch(setError(error.message || 'Failed to fetch weather data'));
+      console.warn('[WeatherListener] Weather API fetch failed:', error?.message || error);
+
+      // API failed - fall back to ML predictions from backend (reachable on LAN)
+      await fetchPredictions();
+
+      // Set up periodic prediction polling (every 15 min) while API is down
+      if (!predictionIntervalRef.current) {
+        predictionIntervalRef.current = setInterval(() => {
+          fetchPredictions();
+        }, 15 * 60 * 1000);
+      }
     } finally {
       dispatch(setFetching(false));
     }
-  }, [dispatch, location, isBackendConnected]);
+  }, [dispatch, location, isBackendConnected, fetchPredictions]);
 
-  // Check backend connection
+  // Check backend connection (always runs - backend is on LAN, not internet)
   const checkBackendConnection = useCallback(async () => {
     try {
+      // Directly try to reach the backend on LAN, skip ensureNetworkConnection
       const isConnected = await backendService.checkBackendConnection();
       dispatch(setBackendConnected(isConnected));
     } catch (error) {
@@ -76,21 +123,12 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
     }
   }, [dispatch]);
 
-  // Set up periodic fetching
+  // Set up periodic weather fetching
   useEffect(() => {
-    if (!isOnline) {
-      // Clear interval if offline
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      return;
-    }
-
     // Initial fetch
     fetchWeatherData();
 
-    // Set up interval for periodic fetching
+    // Set up interval for periodic fetching (tries API first, falls back to predictions)
     intervalRef.current = setInterval(() => {
       fetchWeatherData();
     }, WEATHER_API_CONFIG.FETCH_INTERVAL);
@@ -100,20 +138,15 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-    };
-  }, [fetchWeatherData, isOnline]);
-
-  // Set up backend connection checking
-  useEffect(() => {
-    if (!isOnline) {
-      dispatch(setBackendConnected(false));
-      if (backendCheckIntervalRef.current) {
-        clearInterval(backendCheckIntervalRef.current);
-        backendCheckIntervalRef.current = null;
+      if (predictionIntervalRef.current) {
+        clearInterval(predictionIntervalRef.current);
+        predictionIntervalRef.current = null;
       }
-      return;
-    }
+    };
+  }, [fetchWeatherData]);
 
+  // Set up backend connection checking (always runs, independent of internet)
+  useEffect(() => {
     // Initial backend check
     checkBackendConnection();
 
@@ -128,25 +161,30 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
         backendCheckIntervalRef.current = null;
       }
     };
-  }, [checkBackendConnection, isOnline, dispatch]);
+  }, [checkBackendConnection]);
 
-  // Listen to network changes
+  // Listen to network changes - retry API immediately when network status changes
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
       const connected = state.isConnected ?? false;
+      const internetReachable = state.isInternetReachable ?? false;
 
-      if (connected && isOnline) {
-        // Network came back online, fetch data immediately
+      if (connected && internetReachable) {
+        // Internet came back - try API immediately
+        console.log('[WeatherListener] Internet reachable - retrying weather API');
         fetchWeatherData();
+      }
+
+      // Always check backend regardless of internet (it's on LAN)
+      if (connected) {
         checkBackendConnection();
       }
     });
 
     return () => unsubscribe();
-  }, [isOnline, fetchWeatherData, checkBackendConnection]);
+  }, [fetchWeatherData, checkBackendConnection]);
 
   return <>{children}</>;
 };
 
 export default WeatherListener;
-
