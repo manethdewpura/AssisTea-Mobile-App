@@ -114,7 +114,11 @@ export interface WeatherLocation {
   lon: number;
 }
 
-
-
-
+export interface MLPrediction {
+  data: CurrentWeather;
+  confidence_score: number;
+  data_source: string;
+  measured_at: number;
+  predicted_at: number;
+}
 

@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { CurrentWeather, WeatherForecast, WeatherLocation } from '../../common/interfaces';
+import { CurrentWeather, WeatherForecast, WeatherLocation, MLPrediction } from '../../common/interfaces';
 
 interface WeatherState {
   current: CurrentWeather | null;
@@ -10,6 +10,8 @@ interface WeatherState {
   error: string | null;
   fetchInterval: number | null;
   isBackendConnected: boolean;
+  predictions: MLPrediction[];
+  isPredictionMode: boolean;
 }
 
 const initialState: WeatherState = {
@@ -24,6 +26,8 @@ const initialState: WeatherState = {
   error: null,
   fetchInterval: null,
   isBackendConnected: false,
+  predictions: [],
+  isPredictionMode: false,
 };
 
 const weatherSlice = createSlice({
@@ -67,12 +71,24 @@ const weatherSlice = createSlice({
     setBackendConnected(state, action: PayloadAction<boolean>) {
       state.isBackendConnected = action.payload;
     },
+    setPredictions(state, action: PayloadAction<MLPrediction[]>) {
+      state.predictions = action.payload;
+    },
+    setPredictionMode(state, action: PayloadAction<boolean>) {
+      state.isPredictionMode = action.payload;
+    },
+    clearPredictions(state) {
+      state.predictions = [];
+      state.isPredictionMode = false;
+    },
     resetWeather(state) {
       state.current = null;
       state.forecast = null;
       state.lastUpdated = null;
       state.error = null;
       state.isFetching = false;
+      state.predictions = [];
+      state.isPredictionMode = false;
     },
   },
 });
@@ -86,12 +102,12 @@ export const {
   setError,
   setFetchInterval,
   setBackendConnected,
+  setPredictions,
+  setPredictionMode,
+  clearPredictions,
   resetWeather,
 } = weatherSlice.actions;
 
 export default weatherSlice.reducer;
-
-
-
 
 
