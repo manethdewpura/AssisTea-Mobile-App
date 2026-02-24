@@ -6,8 +6,8 @@ import { dailyDataSQLiteService } from './sqlite/dailyDataSQLite.service';
 import { MLInput, WorkerAssignment, AssignmentSchedule, WorkerHistoricalStats } from '../models/MLPrediction';
 import { Worker } from '../models/Worker';
 
-const SLOPE_WINDOW = 5.0;
-const RECENT_N = 5;
+const SLOPE_WINDOW = 5.0; // ±degrees around target slope for slope-specific efficiency lookup
+const RECENT_N = 5;       // number of most recent work sessions for calculating recent efficiency trends
 
 interface Field {
     id: string;
@@ -21,6 +21,8 @@ interface DailyRecord {
     teaPluckedKg: number;
     timeSpentHours: number;
     fieldSlope?: number;
+    fieldArea?: string;  // field name used for slope lookup
+    date?: string;       // ISO date string used for chronological sort
 }
 
 class AssignmentService {
@@ -40,8 +42,8 @@ class AssignmentService {
             .filter(r => r.workerId === workerId && r.timeSpentHours > 0)
             .sort((a, b) => {
                 // Sort chronologically so slice(-N) always gives the most recent sessions
-                const dateA = (a as any).date ?? '';
-                const dateB = (b as any).date ?? '';
+                const dateA = a.date ?? '';
+                const dateB = b.date ?? '';
                 return dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
             });
 
@@ -99,12 +101,14 @@ class AssignmentService {
 
             // Cache to SQLite in background so next offline attempt works
             Promise.all([
-                dailyDataSQLiteService.insertOrReplaceBatch(firebaseDailyData as any),
+                dailyDataSQLiteService.insertOrReplaceBatch(dailyRecords as any),
+                workerSQLiteService.insertOrReplaceBatch(firebaseWorkers),
             ]).catch(err => console.warn('⚠️ Background SQLite cache failed:', err));
 
             console.log(`🌐 Online: ${workers.length} workers, ${dailyRecords.length} daily records`);
-        } catch {
+        } catch (error) {
             // ── Fall back to SQLite (offline) ─────────────────
+            console.warn('Failed to fetch from Firebase, falling back to SQLite:', error);
             console.log('📴 Offline mode — reading from SQLite cache...');
 
             const [sqliteWorkers, sqliteDailyData] = await Promise.all([
@@ -113,7 +117,7 @@ class AssignmentService {
             ]);
 
             workers = sqliteWorkers;
-            dailyRecords = sqliteDailyData as DailyRecord[];
+            dailyRecords = sqliteDailyData;
 
             console.log(`📦 SQLite: ${workers.length} workers, ${dailyRecords.length} daily records`);
         }
@@ -153,20 +157,22 @@ class AssignmentService {
             const fieldSlopeMap = new Map<string, number>();
             fields.forEach(f => {
                 fieldSlopeMap.set(f.name, f.slope);
-                fieldSlopeMap.set(f.id, f.slope); // support fieldArea stored as ID too
+                // Also map by field.id — daily records from Firestore store the field
+                // reference as the field name, while SQLite cache may store the field ID.
+                // Both keys map to the same slope value, ensuring lookup works in either case.
+                fieldSlopeMap.set(f.id, f.slope);
             });
 
             // Annotate each daily record with the real slope it was worked on,
             // so slopeSpecificEfficiency uses accurate historical slope data.
             const annotatedRecords: DailyRecord[] = dailyRecords.map(r => {
-                const rawRecord = r as any;
-                const resolvedSlope = fieldSlopeMap.get(rawRecord.fieldArea);
+                const resolvedSlope = r.fieldArea ? fieldSlopeMap.get(r.fieldArea) : undefined;
                 return resolvedSlope !== undefined
                     ? { ...r, fieldSlope: resolvedSlope }
                     : r; // no match → fieldSlope stays undefined → falls back to target slope
             });
 
-            console.log(`🗺️ Slope map built for ${fieldSlopeMap.size / 2} fields. Annotated ${annotatedRecords.filter(r => r.fieldSlope !== undefined).length}/${annotatedRecords.length} records with real slopes.`);
+            console.log(`🗺️ Slope map built for ${fields.length} fields. Annotated ${annotatedRecords.filter(r => r.fieldSlope !== undefined).length}/${annotatedRecords.length} records with real slopes.`);
 
             // Build all worker × field ML inputs from in-memory data
             const combinations: Array<{ worker: Worker; field: Field; input: MLInput }> = [];
@@ -175,12 +181,17 @@ class AssignmentService {
                 for (const field of fields) {
                     const stats = this.calculateHistoricalStats(worker.id, field.slope, annotatedRecords);
 
+                    const gender: MLInput['gender'] =
+                        worker.gender === 'Male' || worker.gender === 'Female'
+                            ? worker.gender
+                            : 'Male'; // fallback for 'Other' — not in model training set
+
                     combinations.push({
                         worker,
                         field,
                         input: {
                             age: worker.age,
-                            gender: worker.gender as 'Male' | 'Female',
+                            gender,
                             yearsOfExperience: parseInt(worker.experience) || 0,
                             fieldSlope: field.slope,
                             avgEfficiencyHistorical: stats.avgEfficiency,
@@ -212,8 +223,9 @@ class AssignmentService {
 
             const assignments = this.optimizeAssignments(results, fields);
 
-            const avgEfficiency =
-                assignments.reduce((sum, a) => sum + a.predictedEfficiency, 0) / assignments.length;
+            const avgEfficiency = assignments.length > 0
+                ? assignments.reduce((sum, a) => sum + a.predictedEfficiency, 0) / assignments.length
+                : 0;
 
             const schedule: AssignmentSchedule = {
                 id: `schedule_${Date.now()}`,
@@ -269,7 +281,11 @@ class AssignmentService {
         for (const result of results) {
             if (assignedWorkers.has(result.workerId)) continue;
 
-            const capacity = fieldCapacity.get(result.fieldId) ?? 0;
+            const capacity = fieldCapacity.get(result.fieldId);
+            if (capacity === undefined) {
+                console.warn(`optimizeAssignments: result references unknown fieldId "${result.fieldId}".`);
+                continue;
+            }
             const used = fieldWorkerCount.get(result.fieldId) ?? 0;
             if (used >= capacity) continue; // field is full — skip this pair
 
