@@ -17,8 +17,6 @@ class TFLiteModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
     private var scalerMean: FloatArray? = null
     private var scalerScale: FloatArray? = null
     private var genderMapping: Map<String, Int>? = null
-    // Fallback default efficiency when a worker has no history yet
-    private var globalAvgEfficiency: Float = 3.5f
 
     override fun getName(): String {
         return "TFLiteModule"
@@ -49,10 +47,6 @@ class TFLiteModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
             
             genderMapping = jsonToMap(mappingObj.getJSONObject("gender_mapping"))
 
-            // Load global average efficiency for cold-start default
-            if (mappingObj.has("global_avg_efficiency")) {
-                globalAvgEfficiency = mappingObj.getDouble("global_avg_efficiency").toFloat()
-            }
             
             promise.resolve("ML Model initialized successfully")
         } catch (e: Exception) {
