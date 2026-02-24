@@ -12,6 +12,7 @@ import {
   writeBatch,
 } from '@react-native-firebase/firestore';
 import type { CreateDailyDataInput, DailyData } from '../models/DailyData';
+import { dailyDataSQLiteService } from './sqlite/dailyDataSQLite.service';
 
 class DailyDataService {
   private readonly db = getFirestore();
@@ -228,6 +229,23 @@ class DailyDataService {
       await deleteDoc(docRef);
     } catch (error) {
       throw error;
+    }
+  }
+
+  /**
+   * Sync all Firebase daily data for a plantation into SQLite.
+   * Call this when internet is available so offline schedule generation works.
+   */
+  async syncToSQLite(plantationId: string): Promise<void> {
+    try {
+      const records = await this.getDailyDataByPlantation(plantationId);
+      if (records.length > 0) {
+        await dailyDataSQLiteService.insertOrReplaceBatch(records);
+        console.log(`✅ Synced ${records.length} daily records to SQLite`);
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not sync daily data to SQLite:', error);
+      // Non-fatal — offline mode will use whatever is already cached
     }
   }
 }
