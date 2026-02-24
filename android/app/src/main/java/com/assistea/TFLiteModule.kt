@@ -17,8 +17,8 @@ class TFLiteModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
     private var scalerMean: FloatArray? = null
     private var scalerScale: FloatArray? = null
     private var genderMapping: Map<String, Int>? = null
-    private var fieldMapping: Map<String, Int>? = null
-    private var qualityMapping: Map<String, Int>? = null
+    // Fallback default efficiency when a worker has no history yet
+    private var globalAvgEfficiency: Float = 3.5f
 
     override fun getName(): String {
         return "TFLiteModule"
@@ -34,7 +34,7 @@ class TFLiteModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
             val modelBuffer = loadModelFile(reactApplicationContext.assets, "labour_assignment_ml_model/tea_assignment_model.tflite")
             interpreter = Interpreter(modelBuffer)
             
-            // Load scaler parameters
+            // Load scaler parameters (7 features)
             val scalerJson = loadJSONFromAsset(reactApplicationContext, "labour_assignment_ml_model/scaler_params.json")
             val scalerObj = JSONObject(scalerJson)
             val meanArray = scalerObj.getJSONArray("mean")
@@ -43,13 +43,16 @@ class TFLiteModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
             scalerMean = FloatArray(meanArray.length()) { i -> meanArray.getDouble(i).toFloat() }
             scalerScale = FloatArray(scaleArray.length()) { i -> scaleArray.getDouble(i).toFloat() }
             
-            // Load label mappings
+            // Load label mappings (gender only + global average)
             val mappingJson = loadJSONFromAsset(reactApplicationContext, "labour_assignment_ml_model/label_mappings.json")
             val mappingObj = JSONObject(mappingJson)
             
             genderMapping = jsonToMap(mappingObj.getJSONObject("gender_mapping"))
-            fieldMapping = jsonToMap(mappingObj.getJSONObject("field_mapping"))
-            qualityMapping = jsonToMap(mappingObj.getJSONObject("quality_mapping"))
+
+            // Load global average efficiency for cold-start default
+            if (mappingObj.has("global_avg_efficiency")) {
+                globalAvgEfficiency = mappingObj.getDouble("global_avg_efficiency").toFloat()
+            }
             
             promise.resolve("ML Model initialized successfully")
         } catch (e: Exception) {
@@ -58,7 +61,8 @@ class TFLiteModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
     }
 
     /**
-     * Predict efficiency for a worker-field combination
+     * Predict efficiency for a worker-field combination using 7 generalizable features.
+     * No field ID or quality — only universal physical/demographic properties + historical performance.
      */
     @ReactMethod
     fun predictEfficiency(
@@ -66,8 +70,9 @@ class TFLiteModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
         gender: String,
         yearsOfExperience: Double,
         fieldSlope: Double,
-        quality: String,
-        field: String,
+        avgEfficiencyHistorical: Double,
+        recentEfficiencyHistorical: Double,
+        slopeSpecificEfficiencyHistorical: Double,
         promise: Promise
     ) {
         try {
@@ -76,43 +81,48 @@ class TFLiteModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
                 return
             }
 
-            // Encode categorical variables
+            // Encode gender: Male=0, Female=1
             val genderEncoded = (genderMapping?.get(gender) ?: 0).toFloat()
-            val fieldEncoded = (fieldMapping?.get(field) ?: 0).toFloat()
-            val qualityEncoded = (qualityMapping?.get(quality) ?: 0).toFloat()
 
-            // Create feature array
+            // Build 7-feature input array
+            // Order MUST match training script feature order:
+            // Age, Gender_encoded, Years_Of_Experience, Field_slope,
+            // Avg_Efficiency_Hist, Recent_Efficiency_Hist, Slope_Specific_Efficiency_Hist
             val features = floatArrayOf(
                 age.toFloat(),
                 genderEncoded,
                 yearsOfExperience.toFloat(),
                 fieldSlope.toFloat(),
-                qualityEncoded,
-                fieldEncoded
+                avgEfficiencyHistorical.toFloat(),
+                recentEfficiencyHistorical.toFloat(),
+                slopeSpecificEfficiencyHistorical.toFloat()
             )
 
-            // Normalize features
+            // Normalize features using scaler params from training
             val normalizedFeatures = FloatArray(features.size) { i ->
                 (features[i] - scalerMean!![i]) / scalerScale!![i]
             }
 
-            // Prepare input tensor
-            val inputBuffer = ByteBuffer.allocateDirect(6 * 4)  // 6 features * 4 bytes (float)
+            // Prepare input tensor (7 features × 4 bytes per float)
+            val inputBuffer = ByteBuffer.allocateDirect(7 * 4)
             inputBuffer.order(ByteOrder.nativeOrder())
             normalizedFeatures.forEach { inputBuffer.putFloat(it) }
 
-            // Prepare output tensor
-            val outputBuffer = ByteBuffer.allocateDirect(1 * 4)  // 1 output * 4 bytes
+            // Prepare output tensor (1 output × 4 bytes)
+            val outputBuffer = ByteBuffer.allocateDirect(1 * 4)
             outputBuffer.order(ByteOrder.nativeOrder())
 
             // Run inference
             interpreter?.run(inputBuffer, outputBuffer)
 
             // Get result
-           outputBuffer.rewind()
+            outputBuffer.rewind()
             val efficiency = outputBuffer.float
 
-            promise.resolve(efficiency.toDouble())
+            // Clamp to reasonable range (model output should not be negative)
+            val clampedEfficiency = efficiency.coerceAtLeast(0.5f)
+
+            promise.resolve(clampedEfficiency.toDouble())
         } catch (e: Exception) {
             promise.reject("PREDICTION_ERROR", "Prediction failed: ${e.message}", e)
         }
@@ -138,7 +148,7 @@ class TFLiteModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
     }
 
     /**
-     * Convert JSONObject to Map
+     * Convert JSONObject to Map<String, Int>
      */
     private fun jsonToMap(json: JSONObject): Map<String, Int> {
         val map = mutableMapOf<String, Int>()

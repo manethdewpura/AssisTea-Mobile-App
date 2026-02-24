@@ -1,6 +1,10 @@
 import { MLInput } from '../models/MLPrediction';
 import TFLiteModule from '../native/TFLiteModule';
 
+// Global default efficiency used when a worker has no history yet
+// This matches the global_avg_efficiency from label_mappings.json
+const COLD_START_DEFAULT = 3.5;
+
 class MLPredictionService {
     private isInitialized: boolean = false;
 
@@ -24,7 +28,8 @@ class MLPredictionService {
     }
 
     /**
-     * Predict efficiency using the REAL trained TFLite model
+     * Predict efficiency using the trained TFLite model.
+     * Sends 7 generalizable features — no Field ID, no Quality.
      */
     async predictEfficiency(input: MLInput): Promise<number> {
         try {
@@ -32,14 +37,14 @@ class MLPredictionService {
                 await this.initialize();
             }
 
-            // Call native module with REAL trained model
             const efficiency = await TFLiteModule.predictEfficiency(
                 input.age,
                 input.gender,
                 input.yearsOfExperience,
                 input.fieldSlope,
-                input.quality,
-                input.field
+                input.avgEfficiencyHistorical,
+                input.recentEfficiencyHistorical,
+                input.slopeSpecificEfficiencyHistorical
             );
 
             return efficiency;
@@ -50,7 +55,7 @@ class MLPredictionService {
     }
 
     /**
-     * Batch prediction
+     * Batch prediction — predicts efficiency for multiple worker-field inputs
      */
     async predictBatch(inputs: MLInput[]): Promise<number[]> {
         const predictions: number[] = [];
@@ -62,15 +67,19 @@ class MLPredictionService {
     }
 
     /**
-     * Check if ready
+     * Check if model is ready
      */
     isReady(): boolean {
         return this.isInitialized;
     }
 
-    // Dummy methods for compatibility
-    getFieldMappings() { return {}; }
-    getQualityMappings() { return {}; }
+    /**
+     * Returns the cold-start default efficiency value.
+     * Used when a worker has no historical data yet.
+     */
+    getColdStartDefault(): number {
+        return COLD_START_DEFAULT;
+    }
 }
 
 export const mlPredictionService = new MLPredictionService();

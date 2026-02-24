@@ -9,8 +9,9 @@ interface TFLiteModuleInterface {
         gender: string,
         yearsOfExperience: number,
         fieldSlope: number,
-        quality: string,
-        field: string
+        avgEfficiencyHistorical: number,
+        recentEfficiencyHistorical: number,
+        slopeSpecificEfficiencyHistorical: number
     ): Promise<number>;
 }
 
