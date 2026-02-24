@@ -18,20 +18,30 @@ class DailyDataSQLiteService {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?)
         `;
 
-        for (const record of records) {
-            await databaseService.executeSql(query, [
-                record.id,
-                record.workerId,
-                (record as any).fieldId ?? null,
-                record.plantationId,
-                (record as any).date ?? null,
-                record.teaPluckedKg,
-                record.timeSpentHours,
-                (record as any).fieldSlope ?? null,
-                record.createdAt,
-                record.updatedAt,
-            ]);
-        }
+        const queries = records.map(record => {
+            const enrichedRecord = record as DailyData & {
+                fieldId?: string | null;
+                date?: string | null;
+                fieldSlope?: number | null;
+            };
+            return {
+                query,
+                params: [
+                    record.id,
+                    record.workerId,
+                    enrichedRecord.fieldId ?? null,
+                    record.plantationId,
+                    enrichedRecord.date ?? null,
+                    record.teaPluckedKg,
+                    record.timeSpentHours,
+                    enrichedRecord.fieldSlope ?? null,
+                    record.createdAt,
+                    record.updatedAt,
+                ],
+            };
+        });
+
+        await databaseService.executeTransaction(queries);
     }
 
     /**
@@ -48,23 +58,26 @@ class DailyDataSQLiteService {
         const records: DailyData[] = [];
 
         for (let i = 0; i < result.rows.length; i++) {
-            const row = result.rows.item(i);
-            records.push({
-                id: row.id,
-                workerId: row.workerId,
-                plantationId: row.plantationId,
-                teaPluckedKg: row.teaPluckedKg,
-                timeSpentHours: row.timeSpentHours,
-                createdAt: row.createdAt,
-                updatedAt: row.updatedAt,
-                // extra fields used for historical stats
-                ...(row.fieldId ? { fieldId: row.fieldId } : {}),
-                ...(row.date ? { date: row.date } : {}),
-                ...(row.fieldSlope !== null ? { fieldSlope: row.fieldSlope } : {}),
-            } as DailyData);
+            records.push(this.mapRowToDailyData(result.rows.item(i)));
         }
 
         return records;
+    }
+
+    private mapRowToDailyData(row: any): DailyData {
+        return {
+            id: row.id,
+            workerId: row.workerId,
+            plantationId: row.plantationId,
+            teaPluckedKg: row.teaPluckedKg,
+            timeSpentHours: row.timeSpentHours,
+            createdAt: row.createdAt,
+            updatedAt: row.updatedAt,
+            // extra fields used for ML historical stats (not in Firestore DailyData)
+            ...(row.fieldId ? { fieldId: row.fieldId } : {}),
+            ...(row.date ? { date: row.date } : {}),
+            ...(row.fieldSlope !== null ? { fieldSlope: row.fieldSlope } : {}),
+        } as DailyData;
     }
 
     /**
