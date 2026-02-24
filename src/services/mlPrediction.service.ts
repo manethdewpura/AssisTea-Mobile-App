@@ -3,7 +3,7 @@ import TFLiteModule from '../native/TFLiteModule';
 
 // Global default efficiency used when a worker has no history yet
 // This matches the global_avg_efficiency from label_mappings.json
-const COLD_START_DEFAULT = 3.5;
+const COLD_START_DEFAULT = 3.5015;
 
 class MLPredictionService {
     private isInitialized: boolean = false;
