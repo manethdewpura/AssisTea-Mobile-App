@@ -31,6 +31,38 @@ class WorkerSQLiteService {
     }
 
     /**
+     * Bulk insert or replace workers from Firebase sync.
+     */
+    async insertOrReplaceBatch(workers: Worker[]): Promise<void> {
+        if (workers.length === 0) return;
+
+        const query = `
+            INSERT OR REPLACE INTO workers (
+                id, name, workerId, birthDate, age, experience, gender,
+                plantationId, createdAt, updatedAt, syncStatus
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced')
+        `;
+
+        const queries = workers.map(worker => ({
+            query,
+            params: [
+                worker.id,
+                worker.name,
+                worker.workerId,
+                worker.birthDate,
+                worker.age,
+                worker.experience,
+                worker.gender,
+                worker.plantationId,
+                worker.createdAt,
+                worker.updatedAt,
+            ],
+        }));
+
+        await databaseService.executeTransaction(queries);
+    }
+
+    /**
      * Get all workers for a plantation
      */
     async getAllWorkers(plantationId: string): Promise<Worker[]> {
