@@ -6,7 +6,6 @@ export interface DailyData {
   teaPluckedKg: number;
   timeSpentHours: number;
   fieldArea: string;
-  teaLeafQuality: string;
   createdAt: number;
   updatedAt: number;
 }
@@ -17,7 +16,6 @@ export interface CreateDailyDataInput {
   teaPluckedKg: number;
   timeSpentHours: number;
   fieldArea: string;
-  teaLeafQuality: string;
 }
 
 export interface ExcelDailyDataRow {
@@ -26,7 +24,6 @@ export interface ExcelDailyDataRow {
   teaPluckedKg: number | string;
   timeSpentHours: number | string;
   fieldArea: string;
-  teaLeafQuality: string;
 }
 
 export interface CSVDailyDataRow {
@@ -34,7 +31,6 @@ export interface CSVDailyDataRow {
   teaPluckedKg: number | string;
   timeSpentHours: number | string;
   fieldArea: string;
-  teaLeafQuality: string;
 }
 
 export interface CSVValidationError {
@@ -43,6 +39,3 @@ export interface CSVValidationError {
   value: any;
   message: string;
 }
-
-
-

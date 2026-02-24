@@ -30,10 +30,7 @@ type Props = NativeStackScreenProps<
   'DailyDataView'
 >;
 
-type FilterType = 'all' | 'date' | 'dateRange' | 'worker' | 'field' | 'quality';
-
-// Predefined quality levels - always show these three options
-const QUALITY_LEVELS = ['Low', 'Medium', 'High'];
+type FilterType = 'all' | 'date' | 'dateRange' | 'worker' | 'field';
 
 const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
   const { colors } = useAppSelector(selectTheme);
@@ -48,13 +45,11 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [selectedWorkerId, setSelectedWorkerId] = useState<string>('');
   const [selectedField, setSelectedField] = useState<string>('');
-  const [selectedQuality, setSelectedQuality] = useState<string>('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showDateRangeModal, setShowDateRangeModal] = useState(false);
   const [activeDatePicker, setActiveDatePicker] = useState<'start' | 'end' | null>(null);
   const [showWorkerDropdown, setShowWorkerDropdown] = useState(false);
   const [showFieldDropdown, setShowFieldDropdown] = useState(false);
-  const [showQualityDropdown, setShowQualityDropdown] = useState(false);
   const [dateFilter, setDateFilter] = useState<string>('');
   const [startDateFilter, setStartDateFilter] = useState<string>('');
   const [endDateFilter, setEndDateFilter] = useState<string>('');
@@ -73,7 +68,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
     if (userProfile?.plantationId) {
       loadDailyData();
     }
-  }, [filterType, dateFilter, startDateFilter, endDateFilter, selectedWorkerId, selectedField, selectedQuality, userProfile?.plantationId]);
+  }, [filterType, dateFilter, startDateFilter, endDateFilter, selectedWorkerId, selectedField, userProfile?.plantationId]);
 
   useEffect(() => {
     loadWorkers();
@@ -157,11 +152,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           endDateFilter || undefined,
         );
       } else if (filterType === 'field' && selectedField) {
-        // Client-side filtering for field
         data = allData.filter(d => d.fieldArea === selectedField);
-      } else if (filterType === 'quality' && selectedQuality) {
-        // Client-side filtering for quality
-        data = allData.filter(d => d.teaLeafQuality === selectedQuality);
       } else {
         // Show all data
         data = allData;
@@ -218,7 +209,6 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
       setEndDate(null);
       setSelectedWorkerId('');
       setSelectedField('');
-      setSelectedQuality('');
     }
 
     if (Platform.OS === 'android') {
@@ -238,7 +228,6 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
     setStartDate(null);
     setEndDate(null);
     setSelectedField('');
-    setSelectedQuality('');
   };
 
   const getWorkerName = (workerId: string) => {
@@ -284,7 +273,6 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
     setEndDate(null);
     setSelectedWorkerId('');
     setSelectedField('');
-    setSelectedQuality('');
   };
 
   const handleStartDateChange = (event: any, date: Date | undefined) => {
@@ -298,7 +286,6 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
       setDateFilter('');
       setSelectedWorkerId('');
       setSelectedField('');
-      setSelectedQuality('');
     }
     if (Platform.OS === 'android') {
       setActiveDatePicker(null);
@@ -399,10 +386,8 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               filterType === 'worker' && styles.filterButtonActive,
             ]}
             onPress={() => {
-              // Always open worker dropdown and close others
               setShowWorkerDropdown(!showWorkerDropdown);
               setShowFieldDropdown(false);
-              setShowQualityDropdown(false);
             }}
           >
             <Text
@@ -424,10 +409,8 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               filterType === 'field' && styles.filterButtonActive,
             ]}
             onPress={() => {
-              // Always open field dropdown and close others
               setShowFieldDropdown(!showFieldDropdown);
               setShowWorkerDropdown(false);
-              setShowQualityDropdown(false);
             }}
           >
             <Text
@@ -441,28 +424,6 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.filterButton,
-              filterType === 'quality' && styles.filterButtonActive,
-            ]}
-            onPress={() => {
-              // Always open quality dropdown and close others
-              setShowQualityDropdown(!showQualityDropdown);
-              setShowWorkerDropdown(false);
-              setShowFieldDropdown(false);
-            }}
-          >
-            <Text
-              style={[
-                styles.filterButtonText,
-                filterType === 'quality' && styles.filterButtonTextActive,
-              ]}
-            >
-              ⭐{' '}
-              {selectedQuality || 'Select Quality'}
-            </Text>
-          </TouchableOpacity>
         </ScrollView>
 
         {showWorkerDropdown && (
@@ -502,39 +463,9 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                     setStartDate(null);
                     setEndDate(null);
                     setSelectedWorkerId('');
-                    setSelectedQuality('');
                   }}
                 >
                   <Text style={styles.workerDropdownText}>{field.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {showQualityDropdown && (
-          <View style={styles.workerDropdown}>
-            <ScrollView style={styles.workerDropdownList}>
-              {QUALITY_LEVELS.map((quality: string) => (
-                <TouchableOpacity
-                  key={quality}
-                  style={styles.workerDropdownItem}
-                  onPress={() => {
-                    setSelectedQuality(quality);
-                    setFilterType('quality');
-                    setShowQualityDropdown(false);
-
-                    // Clear other filters
-                    setDateFilter('');
-                    setStartDateFilter('');
-                    setEndDateFilter('');
-                    setStartDate(null);
-                    setEndDate(null);
-                    setSelectedWorkerId('');
-                    setSelectedField('');
-                  }}
-                >
-                  <Text style={styles.workerDropdownText}>{quality}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -792,14 +723,6 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                   </Text>
                 </View>
 
-                <View style={styles.dataRow}>
-                  <Text style={[styles.dataLabel, { color: colors.text }]}>
-                    Quality:
-                  </Text>
-                  <Text style={[styles.dataValue, { color: colors.text }]}>
-                    {data.teaLeafQuality}
-                  </Text>
-                </View>
               </View>
             </View>
           ))

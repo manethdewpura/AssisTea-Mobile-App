@@ -26,9 +26,9 @@ export default function FieldManagementScreen() {
 
     // Form state
     const [fieldName, setFieldName] = useState('');
-    const [slope, setSlope] = useState(15);
+    const [slope, setSlope] = useState(45);
     const [maxWorkers, setMaxWorkers] = useState(5);
-    const [location, setLocation] = useState('');
+
     const [saving, setSaving] = useState(false);
 
     // Load fields on mount
@@ -56,9 +56,9 @@ export default function FieldManagementScreen() {
     const openAddModal = () => {
         setEditingField(null);
         setFieldName('');
-        setSlope(15);
+        setSlope(45);
         setMaxWorkers(5);
-        setLocation('');
+
         setModalVisible(true);
     };
 
@@ -67,7 +67,7 @@ export default function FieldManagementScreen() {
         setFieldName(field.name);
         setSlope(field.slope);
         setMaxWorkers(field.maxWorkers);
-        setLocation(field.location || '');
+
         setModalVisible(true);
     };
 
@@ -82,8 +82,8 @@ export default function FieldManagementScreen() {
             return;
         }
 
-        if (slope < 5 || slope > 25) {
-            Alert.alert('Error', 'Slope must be between 5° and 25°');
+        if (slope < 5 || slope > 70) {
+            Alert.alert('Error', 'Slope must be between 5° and 70°');
             return;
         }
 
@@ -99,7 +99,6 @@ export default function FieldManagementScreen() {
                 name: fieldName.trim(),
                 slope,
                 maxWorkers,
-                location: location.trim() || undefined,
             };
 
             if (editingField) {
@@ -247,7 +246,7 @@ export default function FieldManagementScreen() {
                         <Slider
                             style={styles.slider}
                             minimumValue={5}
-                            maximumValue={25}
+                            maximumValue={70}
                             step={1}
                             value={slope}
                             onValueChange={setSlope}
@@ -255,8 +254,8 @@ export default function FieldManagementScreen() {
                             maximumTrackTintColor="#ddd"
                         />
                         <View style={styles.sliderLabels}>
-                            <Text style={styles.sliderLabel}>5° (Easy)</Text>
-                            <Text style={styles.sliderLabel}>25° (Steep)</Text>
+                            <Text style={styles.sliderLabel}>5° (Gentle)</Text>
+                            <Text style={styles.sliderLabel}>70° (Very Steep)</Text>
                         </View>
 
                         {/* Max Workers */}
@@ -270,15 +269,7 @@ export default function FieldManagementScreen() {
                             placeholderTextColor="#999"
                         />
 
-                        {/* Location (Optional) */}
-                        <Text style={styles.inputLabel}>Location (Optional)</Text>
-                        <TextInput
-                            style={styles.input}
-                            value={location}
-                            onChangeText={setLocation}
-                            placeholder="e.g., North section near well"
-                            placeholderTextColor="#999"
-                        />
+
 
                         {/* Buttons */}
                         <View style={styles.modalButtons}>
