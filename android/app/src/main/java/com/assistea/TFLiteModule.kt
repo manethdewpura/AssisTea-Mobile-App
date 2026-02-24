@@ -82,7 +82,12 @@ class TFLiteModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
             }
 
             // Encode gender: Male=0, Female=1
-            val genderEncoded = (genderMapping?.get(gender) ?: 0).toFloat()
+            val genderValue = genderMapping?.get(gender)
+            if (genderValue == null) {
+                promise.reject("INVALID_INPUT", "Unknown gender value: $gender")
+                return
+            }
+            val genderEncoded = genderValue.toFloat()
 
             // Build 7-feature input array
             // Order MUST match training script feature order:
