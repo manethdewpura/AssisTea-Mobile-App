@@ -116,6 +116,33 @@ class DatabaseService {
         );
       `);
 
+            // Daily data table — used for offline schedule generation (historical efficiency stats)
+            await this.db.executeSql(`
+        CREATE TABLE IF NOT EXISTS daily_data (
+          id TEXT PRIMARY KEY,
+          workerId TEXT NOT NULL,
+          fieldId TEXT,
+          plantationId TEXT NOT NULL,
+          date TEXT,
+          teaPluckedKg REAL NOT NULL,
+          timeSpentHours REAL NOT NULL,
+          fieldSlope REAL,
+          syncStatus TEXT DEFAULT 'synced',
+          createdAt INTEGER NOT NULL,
+          updatedAt INTEGER NOT NULL
+        );
+      `);
+
+            await this.db.executeSql(`
+        CREATE INDEX IF NOT EXISTS idx_daily_data_worker
+        ON daily_data(workerId);
+      `);
+
+            await this.db.executeSql(`
+        CREATE INDEX IF NOT EXISTS idx_daily_data_plantation
+        ON daily_data(plantationId);
+      `);
+
             // Activity logs table
             await this.db.executeSql(`
         CREATE TABLE IF NOT EXISTS activity_logs (

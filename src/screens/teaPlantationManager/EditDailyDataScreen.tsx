@@ -55,7 +55,6 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
     teaPluckedKg: '',
     timeSpentHours: '',
     fieldArea: '',
-    teaLeafQuality: '',
   });
 
   const [showWorkerDropdown, setShowWorkerDropdown] = useState(false);
@@ -108,7 +107,6 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
         teaPluckedKg: data.teaPluckedKg.toString(),
         timeSpentHours: data.timeSpentHours.toString(),
         fieldArea: data.fieldArea,
-        teaLeafQuality: data.teaLeafQuality,
       });
     } catch (error: any) {
       const appError = handleFirebaseError(error);
@@ -147,8 +145,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
       !formData.workerId ||
       !formData.teaPluckedKg ||
       !formData.timeSpentHours ||
-      !formData.fieldArea ||
-      !formData.teaLeafQuality
+      !formData.fieldArea
     ) {
       Alert.alert('Validation', 'Please fill in all fields');
       return;
@@ -162,7 +159,6 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
         teaPluckedKg: parseFloat(formData.teaPluckedKg),
         timeSpentHours: parseFloat(formData.timeSpentHours),
         fieldArea: formData.fieldArea,
-        teaLeafQuality: formData.teaLeafQuality,
       });
 
       Alert.alert('Success', 'Daily data updated successfully', [
@@ -376,28 +372,6 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
               )}
             </View>
 
-            {/* Tea Leaf Quality */}
-            <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>
-                Tea Leaf Quality
-              </Text>
-              <View
-                style={[
-                  styles.inputBox,
-                  { backgroundColor: colors.background },
-                ]}
-              >
-                <TextInput
-                  style={[styles.textInput, { color: colors.text }]}
-                  placeholder="Enter quality (e.g., High, Medium, Low)"
-                  placeholderTextColor="#999"
-                  value={formData.teaLeafQuality}
-                  onChangeText={text =>
-                    setFormData({ ...formData, teaLeafQuality: text })
-                  }
-                />
-              </View>
-            </View>
 
             {/* Save Button */}
             <TouchableOpacity

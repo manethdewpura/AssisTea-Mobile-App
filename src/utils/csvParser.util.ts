@@ -13,13 +13,35 @@ interface ParseResult {
 }
 
 /**
- * Parse and validate CSV file content for daily data upload
+ * Parse a date string in either ISO (2024-02-01) or Excel US format (2/1/2024 or 2/1/24).
+ * Always returns YYYY-MM-DD or null if unrecognised.
+ */
+const parseRowDate = (raw: string): string | null => {
+    if (!raw) return null;
+    // Already ISO: 2024-02-01
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+    // Excel US format: M/D/YYYY or M/D/YY
+    const usMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (usMatch) {
+        const month = usMatch[1].padStart(2, '0');
+        const day = usMatch[2].padStart(2, '0');
+        const year = usMatch[3].length === 2 ? `20${usMatch[3]}` : usMatch[3];
+        return `${year}-${month}-${day}`;
+    }
+    return null; 
+};
+
+/**
+ * Parse and validate CSV file content for daily data upload.
+ * If a row includes a `date` column (YYYY-MM-DD), that date is used for that row.
+ * Otherwise, falls back to the date selected in the UI date picker.
+ * This allows uploading multi-day data in a single CSV.
  * @param fileContent - The CSV file content as string
- * @param date - The date to use for all records (from UI date picker)
+ * @param fallbackDate - Date from the UI date picker, used when a row has no date column
  */
 export const parseCSVFile = async (
     fileContent: string,
-    date: string,
+    fallbackDate: string,
 ): Promise<ParseResult> => {
     try {
         // Parse CSV using PapaParse
@@ -56,14 +78,16 @@ export const parseCSVFile = async (
             if (rowErrors.length > 0) {
                 validationErrors.push(...rowErrors);
             } else {
-                // Transform to CreateDailyDataInput with date from UI
+                const rawRecord = row as any;
+                const rowDate = rawRecord.date ? String(rawRecord.date).trim() : '';
+                const resolvedDate = parseRowDate(rowDate) ?? fallbackDate;
+
                 validData.push({
                     workerId: row.workerId.trim(),
-                    date: date, // Use date from UI date picker
+                    date: resolvedDate,
                     teaPluckedKg: parseFloat(String(row.teaPluckedKg)),
                     timeSpentHours: parseFloat(String(row.timeSpentHours)),
                     fieldArea: row.fieldArea.trim(),
-                    teaLeafQuality: row.teaLeafQuality.trim(),
                 });
             }
         });
@@ -103,7 +127,6 @@ const validateCSVRow = (
         'teaPluckedKg',
         'timeSpentHours',
         'fieldArea',
-        'teaLeafQuality',
     ];
 
     // Check for missing required fields
@@ -186,15 +209,6 @@ const validateCSVRow = (
         });
     }
 
-    // Validate teaLeafQuality (should not be empty)
-    if (row.teaLeafQuality.trim().length === 0) {
-        errors.push({
-            row: rowNumber,
-            field: 'teaLeafQuality',
-            value: row.teaLeafQuality,
-            message: 'Tea leaf quality cannot be empty',
-        });
-    }
 
     return errors;
 };
