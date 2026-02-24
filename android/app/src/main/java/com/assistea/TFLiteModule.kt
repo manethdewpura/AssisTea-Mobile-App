@@ -18,6 +18,10 @@ class TFLiteModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
     private var scalerScale: FloatArray? = null
     private var genderMapping: Map<String, Int>? = null
 
+    // Minimum efficiency floor: the model is trained on outputs of 2–7 kg/hr.
+    // 0.5 is a safety clamp to prevent physically impossible negative predictions.
+    private val MIN_EFFICIENCY_KG_PER_HR = 0.5f
+
     override fun getName(): String {
         return "TFLiteModule"
     }
@@ -38,9 +42,18 @@ class TFLiteModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
             val meanArray = scalerObj.getJSONArray("mean")
             val scaleArray = scalerObj.getJSONArray("scale")
             
-            scalerMean = FloatArray(meanArray.length()) { i -> meanArray.getDouble(i).toFloat() }
+            scalerMean  = FloatArray(meanArray.length())  { i -> meanArray.getDouble(i).toFloat() }
             scalerScale = FloatArray(scaleArray.length()) { i -> scaleArray.getDouble(i).toFloat() }
-            
+
+            // Guard: scaler must have exactly 7 elements (one per feature)
+            val expectedFeatureCount = 7
+            if (scalerMean!!.size != expectedFeatureCount || scalerScale!!.size != expectedFeatureCount) {
+                throw IllegalStateException(
+                    "Invalid scaler parameter size: expected $expectedFeatureCount elements, " +
+                    "but got mean=${scalerMean!!.size}, scale=${scalerScale!!.size}"
+                )
+            }
+
             // Load label mappings (gender only + global average)
             val mappingJson = loadJSONFromAsset(reactApplicationContext, "labour_assignment_ml_model/label_mappings.json")
             val mappingObj = JSONObject(mappingJson)
@@ -83,6 +96,21 @@ class TFLiteModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
             }
             val genderEncoded = genderValue.toFloat()
 
+            // Validate historical efficiency inputs — must be non-negative and finite.
+            // TypeScript always supplies cold-start defaults so NaN should never occur,
+            // but explicit validation surfaces upstream bugs clearly.
+            val historicalInputs = mapOf(
+                "avgEfficiencyHistorical"           to avgEfficiencyHistorical,
+                "recentEfficiencyHistorical"        to recentEfficiencyHistorical,
+                "slopeSpecificEfficiencyHistorical" to slopeSpecificEfficiencyHistorical
+            )
+            for ((name, value) in historicalInputs) {
+                if (value.isNaN() || value < 0.0) {
+                    promise.reject("INVALID_INPUT", "$name must be a non-negative number, got: $value")
+                    return
+                }
+            }
+
             // Build 7-feature input array
             // Order MUST match training script feature order:
             // Age, Gender_encoded, Years_Of_Experience, Field_slope,
@@ -99,13 +127,18 @@ class TFLiteModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
 
             // Normalize features using scaler params from training
             val normalizedFeatures = FloatArray(features.size) { i ->
-                (features[i] - scalerMean!![i]) / scalerScale!![i]
+                val scale = scalerScale!![i]
+                if (scale == 0f) throw IllegalStateException(
+                    "Scaler scale value at index $i is zero; cannot normalize feature."
+                )
+                (features[i] - scalerMean!![i]) / scale
             }
 
             // Prepare input tensor (7 features × 4 bytes per float)
             val inputBuffer = ByteBuffer.allocateDirect(7 * 4)
             inputBuffer.order(ByteOrder.nativeOrder())
             normalizedFeatures.forEach { inputBuffer.putFloat(it) }
+            inputBuffer.rewind() // Reset position to 0 so TFLite reads from the start
 
             // Prepare output tensor (1 output × 4 bytes)
             val outputBuffer = ByteBuffer.allocateDirect(1 * 4)
@@ -119,7 +152,7 @@ class TFLiteModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
             val efficiency = outputBuffer.float
 
             // Clamp to reasonable range (model output should not be negative)
-            val clampedEfficiency = efficiency.coerceAtLeast(0.5f)
+            val clampedEfficiency = efficiency.coerceAtLeast(MIN_EFFICIENCY_KG_PER_HR)
 
             promise.resolve(clampedEfficiency.toDouble())
         } catch (e: Exception) {
