@@ -9,7 +9,7 @@ import { useAppSelector, useAppDispatch } from '../../hooks';
 import { selectTheme, selectConfig } from '../../store/selectors';
 import Button from '../../components/atoms/Button';
 import { configService, schedulesService, IrrigationSchedule, FertigationSchedule, CreateScheduleData } from '../../services';
-import { validateUrl, normalizeUrl, SystemConfig, ZoneInfo } from '../../services/config.service';
+import { validateUrl, normalizeUrl, ZoneInfo, SystemConfig } from '../../services/config.service';
 import { saveBackendUrl, loadBackendUrl } from '../../store/slices/config.slice';
 import { showToast } from '../../store/slices/notification.slice';
 import type { IrrigationStackParamList } from '../../navigation/IrrigationNavigator';
@@ -18,6 +18,10 @@ type IrrigationSetupNavigationProp = NativeStackNavigationProp<
   IrrigationStackParamList,
   'IrrigationSetup'
 >;
+
+type SystemConfigInputs = {
+  [K in keyof SystemConfig]: string;
+};
 
 const IrrigationAndFertilizerSetupScreen: React.FC = () => {
   const navigation = useNavigation<IrrigationSetupNavigationProp>();
@@ -32,16 +36,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
   const [loadingSchedules, setLoadingSchedules] = useState(false);
   const [zoneInfo, setZoneInfo] = useState<ZoneInfo | null>(null);
   const [loadingZoneInfo, setLoadingZoneInfo] = useState(false);
-
-  const [systemConfig, setSystemConfig] = useState<SystemConfig | null>(null);
-  const [systemConfigInputs, setSystemConfigInputs] = useState<{
-    zone_slope_degrees: string;
-    zone_area_m2: string;
-    zone_base_pressure_kpa: string;
-    pipe_length_m: string;
-    pipe_diameter_m: string;
-    estimated_flow_rate_m3_per_s: string;
-  }>({
+  const [systemConfigInputs, setSystemConfigInputs] = useState<SystemConfigInputs>({
     zone_slope_degrees: '',
     zone_area_m2: '',
     zone_base_pressure_kpa: '',
@@ -117,7 +112,6 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
       setLoadingSystemConfig(true);
       const cfg = await configService.getSystemConfig().catch(() => null);
       if (cfg) {
-        setSystemConfig(cfg);
         setSystemConfigInputs({
           zone_slope_degrees: cfg.zone_slope_degrees?.toString() ?? '',
           zone_area_m2: cfg.zone_area_m2?.toString() ?? '',
@@ -126,12 +120,9 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
           pipe_diameter_m: cfg.pipe_diameter_m?.toString() ?? '',
           estimated_flow_rate_m3_per_s: cfg.estimated_flow_rate_m3_per_s?.toString() ?? '',
         });
-      } else {
-        setSystemConfig(null);
       }
     } catch (error: any) {
       console.warn('Failed to load system configuration:', error);
-      setSystemConfig(null);
     } finally {
       setLoadingSystemConfig(false);
     }
@@ -177,7 +168,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
     }
   };
 
-  const handleChangeSystemConfigInput = (key: keyof typeof systemConfigInputs, value: string) => {
+  const handleChangeSystemConfigInput = (key: keyof SystemConfigInputs, value: string) => {
     setSystemConfigInputs(prev => ({
       ...prev,
       [key]: value,
@@ -193,7 +184,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
       return;
     }
 
-    const parseNumberField = (fieldKey: keyof typeof systemConfigInputs, label: string): number | null => {
+    const parseNumberField = (fieldKey: keyof SystemConfigInputs, label: string): number | null => {
       const raw = systemConfigInputs[fieldKey]?.trim();
       if (!raw) {
         dispatch(showToast({
@@ -212,8 +203,9 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
       }
 
       // Enforce strictly positive values for physical quantities
-      const mustBePositiveKeys: (keyof typeof systemConfigInputs)[] = [
+      const mustBePositiveKeys: (keyof SystemConfigInputs)[] = [
         'zone_area_m2',
+        'zone_base_pressure_kpa',
         'pipe_length_m',
         'pipe_diameter_m',
         'estimated_flow_rate_m3_per_s',
@@ -258,7 +250,6 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
         estimated_flow_rate_m3_per_s: flowRate,
       });
 
-      setSystemConfig(updated);
       setSystemConfigInputs({
         zone_slope_degrees: updated.zone_slope_degrees?.toString() ?? '',
         zone_area_m2: updated.zone_area_m2?.toString() ?? '',
