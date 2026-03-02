@@ -257,7 +257,17 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
         pipe_diameter_m: pipeDiameter,
         estimated_flow_rate_m3_per_s: flowRate,
       });
+
       setSystemConfig(updated);
+      setSystemConfigInputs({
+        zone_slope_degrees: updated.zone_slope_degrees?.toString() ?? '',
+        zone_area_m2: updated.zone_area_m2?.toString() ?? '',
+        zone_base_pressure_kpa: updated.zone_base_pressure_kpa?.toString() ?? '',
+        pipe_length_m: updated.pipe_length_m?.toString() ?? '',
+        pipe_diameter_m: updated.pipe_diameter_m?.toString() ?? '',
+        estimated_flow_rate_m3_per_s: updated.estimated_flow_rate_m3_per_s?.toString() ?? '',
+      });
+
       dispatch(showToast({
         message: 'System configuration saved successfully',
         type: 'success',
