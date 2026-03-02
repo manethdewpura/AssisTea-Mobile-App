@@ -8,6 +8,24 @@ const KEYCHAIN_OPTIONS = {
   service: BACKEND_URL_SERVICE,
 };
 
+export interface ZoneInfo {
+  zone_id: number;
+  valve_gpio_pin: number;
+  soil_moisture_sensor_channel: number;
+  slope: number;
+  area: number;
+  base_pressure: number;
+}
+
+export interface SystemConfig {
+  zone_slope_degrees: number;
+  zone_area_m2: number;
+  zone_base_pressure_kpa: number;
+  pipe_length_m: number;
+  pipe_diameter_m: number;
+  estimated_flow_rate_m3_per_s: number;
+}
+
 /**
  * Validates if a URL is properly formatted
  */
@@ -120,36 +138,79 @@ export const configService = {
   /**
    * Get zone configuration information (read-only)
    */
-  async getZoneInfo(): Promise<{
-    zone_id: number;
-    valve_gpio_pin: number;
-    soil_moisture_sensor_channel: number;
-    altitude: number;
-    slope: number;
-    area: number;
-    base_pressure: number;
-  }> {
+  async getZoneInfo(): Promise<ZoneInfo> {
     try {
       const response = await apiClient.get<{
-        zone: {
-          zone_id: number;
-          valve_gpio_pin: number;
-          soil_moisture_sensor_channel: number;
-          altitude: number;
-          slope: number;
-          area: number;
-          base_pressure: number;
-        };
+        zone: ZoneInfo;
       }>('/system/zone-info');
 
       if (!response.success) {
         throw new Error(response.error || 'Failed to get zone information');
       }
 
-      return response.zone || response.data?.zone;
+      // Backend returns { success, zone: { ... } }
+      const zone = response.zone || response.data?.zone;
+      if (!zone) {
+        throw new Error('No zone information returned from server');
+      }
+
+      return zone;
     } catch (error) {
       const appError = handleFirebaseError(error);
       logError(appError, 'configService - getZoneInfo');
+      throw appError;
+    }
+  },
+
+  /**
+   * Get system-wide hydraulic and zone configuration (single-zone system).
+   */
+  async getSystemConfig(): Promise<SystemConfig> {
+    try {
+      const response = await apiClient.get<{ config: SystemConfig }>('/system/config');
+
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to get system configuration');
+      }
+
+      const config = response.config || response.data?.config;
+      if (!config) {
+        throw new Error('No system configuration returned from server');
+      }
+
+      return config;
+    } catch (error) {
+      const appError = handleFirebaseError(error);
+      logError(appError, 'configService - getSystemConfig');
+      throw appError;
+    }
+  },
+
+  /**
+   * Update system-wide hydraulic and zone configuration.
+   */
+  async updateSystemConfig(
+    updates: Partial<SystemConfig>,
+  ): Promise<SystemConfig> {
+    try {
+      const response = await apiClient.put<{ config: SystemConfig }>(
+        '/system/config',
+        updates,
+      );
+
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to update system configuration');
+      }
+
+      const config = response.config || response.data?.config;
+      if (!config) {
+        throw new Error('No system configuration returned from server');
+      }
+
+      return config;
+    } catch (error) {
+      const appError = handleFirebaseError(error);
+      logError(appError, 'configService - updateSystemConfig');
       throw appError;
     }
   },

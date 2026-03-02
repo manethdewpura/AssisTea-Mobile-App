@@ -9,7 +9,7 @@ import { useAppSelector, useAppDispatch } from '../../hooks';
 import { selectTheme, selectConfig } from '../../store/selectors';
 import Button from '../../components/atoms/Button';
 import { configService, schedulesService, IrrigationSchedule, FertigationSchedule, CreateScheduleData } from '../../services';
-import { validateUrl, normalizeUrl } from '../../services/config.service';
+import { validateUrl, normalizeUrl, ZoneInfo, SystemConfig } from '../../services/config.service';
 import { saveBackendUrl, loadBackendUrl } from '../../store/slices/config.slice';
 import { showToast } from '../../store/slices/notification.slice';
 import type { IrrigationStackParamList } from '../../navigation/IrrigationNavigator';
@@ -18,6 +18,10 @@ type IrrigationSetupNavigationProp = NativeStackNavigationProp<
   IrrigationStackParamList,
   'IrrigationSetup'
 >;
+
+type SystemConfigInputs = {
+  [K in keyof SystemConfig]: string;
+};
 
 const IrrigationAndFertilizerSetupScreen: React.FC = () => {
   const navigation = useNavigation<IrrigationSetupNavigationProp>();
@@ -30,16 +34,18 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
   const [irrigationSchedules, setIrrigationSchedules] = useState<IrrigationSchedule[]>([]);
   const [fertigationSchedules, setFertigationSchedules] = useState<FertigationSchedule[]>([]);
   const [loadingSchedules, setLoadingSchedules] = useState(false);
-  const [zoneInfo, setZoneInfo] = useState<{
-    zone_id: number;
-    valve_gpio_pin: number;
-    soil_moisture_sensor_channel: number;
-    altitude: number;
-    slope: number;
-    area: number;
-    base_pressure: number;
-  } | null>(null);
+  const [zoneInfo, setZoneInfo] = useState<ZoneInfo | null>(null);
   const [loadingZoneInfo, setLoadingZoneInfo] = useState(false);
+  const [systemConfigInputs, setSystemConfigInputs] = useState<SystemConfigInputs>({
+    zone_slope_degrees: '',
+    zone_area_m2: '',
+    zone_base_pressure_kpa: '',
+    pipe_length_m: '',
+    pipe_diameter_m: '',
+    estimated_flow_rate_m3_per_s: '',
+  });
+  const [loadingSystemConfig, setLoadingSystemConfig] = useState(false);
+  const [savingSystemConfig, setSavingSystemConfig] = useState(false);
   
   // Schedule creation modals
   const [showIrrigationModal, setShowIrrigationModal] = useState(false);
@@ -99,13 +105,37 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
     }
   }, [backendUrl]);
 
+  const loadSystemConfig = useCallback(async () => {
+    if (!backendUrl) return;
+
+    try {
+      setLoadingSystemConfig(true);
+      const cfg = await configService.getSystemConfig().catch(() => null);
+      if (cfg) {
+        setSystemConfigInputs({
+          zone_slope_degrees: cfg.zone_slope_degrees?.toString() ?? '',
+          zone_area_m2: cfg.zone_area_m2?.toString() ?? '',
+          zone_base_pressure_kpa: cfg.zone_base_pressure_kpa?.toString() ?? '',
+          pipe_length_m: cfg.pipe_length_m?.toString() ?? '',
+          pipe_diameter_m: cfg.pipe_diameter_m?.toString() ?? '',
+          estimated_flow_rate_m3_per_s: cfg.estimated_flow_rate_m3_per_s?.toString() ?? '',
+        });
+      }
+    } catch (error: any) {
+      console.warn('Failed to load system configuration:', error);
+    } finally {
+      setLoadingSystemConfig(false);
+    }
+  }, [backendUrl]);
+
   useEffect(() => {
     if (backendUrl) {
       setBackendUrlInput(backendUrl);
       loadSchedules();
       loadZoneInfo();
+      loadSystemConfig();
     }
-  }, [backendUrl, loadSchedules, loadZoneInfo]);
+  }, [backendUrl, loadSchedules, loadZoneInfo, loadSystemConfig]);
 
   const handleSaveBackendUrl = async () => {
     if (!backendUrlInput.trim()) {
@@ -127,6 +157,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
       );
       await loadSchedules();
       await loadZoneInfo();
+      await loadSystemConfig();
     } catch (error: any) {
       dispatch(showToast({
         message: error.userMessage || error.message || 'Failed to save backend URL',
@@ -134,6 +165,111 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
       }));
     } finally {
       setSavingUrl(false);
+    }
+  };
+
+  const handleChangeSystemConfigInput = (key: keyof SystemConfigInputs, value: string) => {
+    setSystemConfigInputs(prev => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const handleSaveSystemConfig = async () => {
+    if (!backendUrl) {
+      dispatch(showToast({
+        message: 'Backend URL not configured',
+        type: 'error',
+      }));
+      return;
+    }
+
+    const parseNumberField = (fieldKey: keyof SystemConfigInputs, label: string): number | null => {
+      const raw = systemConfigInputs[fieldKey]?.trim();
+      if (!raw) {
+        dispatch(showToast({
+          message: `${label} is required`,
+          type: 'error',
+        }));
+        return null;
+      }
+      const value = Number(raw);
+      if (Number.isNaN(value)) {
+        dispatch(showToast({
+          message: `${label} must be a valid number`,
+          type: 'error',
+        }));
+        return null;
+      }
+
+      // Enforce strictly positive values for physical quantities
+      const mustBePositiveKeys: (keyof SystemConfigInputs)[] = [
+        'zone_area_m2',
+        'zone_base_pressure_kpa',
+        'pipe_length_m',
+        'pipe_diameter_m',
+        'estimated_flow_rate_m3_per_s',
+      ];
+      if (mustBePositiveKeys.includes(fieldKey) && value <= 0) {
+        dispatch(showToast({
+          message: `${label} must be greater than zero`,
+          type: 'error',
+        }));
+        return null;
+      }
+
+      return value;
+    };
+
+    const zoneSlope = parseNumberField('zone_slope_degrees', 'Slope');
+    if (zoneSlope === null) return;
+
+    const zoneArea = parseNumberField('zone_area_m2', 'Area');
+    if (zoneArea === null) return;
+
+    const basePressure = parseNumberField('zone_base_pressure_kpa', 'Base pressure');
+    if (basePressure === null) return;
+
+    const pipeLength = parseNumberField('pipe_length_m', 'Pipe length');
+    if (pipeLength === null) return;
+
+    const pipeDiameter = parseNumberField('pipe_diameter_m', 'Pipe diameter');
+    if (pipeDiameter === null) return;
+
+    const flowRate = parseNumberField('estimated_flow_rate_m3_per_s', 'Estimated flow rate');
+    if (flowRate === null) return;
+
+    try {
+      setSavingSystemConfig(true);
+      const updated = await configService.updateSystemConfig({
+        zone_slope_degrees: zoneSlope,
+        zone_area_m2: zoneArea,
+        zone_base_pressure_kpa: basePressure,
+        pipe_length_m: pipeLength,
+        pipe_diameter_m: pipeDiameter,
+        estimated_flow_rate_m3_per_s: flowRate,
+      });
+
+      setSystemConfigInputs({
+        zone_slope_degrees: updated.zone_slope_degrees?.toString() ?? '',
+        zone_area_m2: updated.zone_area_m2?.toString() ?? '',
+        zone_base_pressure_kpa: updated.zone_base_pressure_kpa?.toString() ?? '',
+        pipe_length_m: updated.pipe_length_m?.toString() ?? '',
+        pipe_diameter_m: updated.pipe_diameter_m?.toString() ?? '',
+        estimated_flow_rate_m3_per_s: updated.estimated_flow_rate_m3_per_s?.toString() ?? '',
+      });
+
+      dispatch(showToast({
+        message: 'System configuration saved successfully',
+        type: 'success',
+      }));
+    } catch (error: any) {
+      dispatch(showToast({
+        message: error.userMessage || error.message || 'Failed to save system configuration',
+        type: 'error',
+      }));
+    } finally {
+      setSavingSystemConfig(false);
     }
   };
 
@@ -536,10 +672,6 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
                   <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.zone_id}</Text>
                 </View>
                 <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Altitude:</Text>
-                  <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.altitude} m</Text>
-                </View>
-                <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
                   <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Slope:</Text>
                   <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.slope}°</Text>
                 </View>
@@ -567,6 +699,101 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
                   Zone information not available
                 </Text>
               </View>
+            )}
+          </View>
+        )}
+
+        {/* System Hydraulic Configuration */}
+        {backendUrl && (
+          <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionHeaderText}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                  System Configuration
+                </Text>
+                <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
+                  Configure slope, area, and pipe geometry used for pressure calculations.
+                </Text>
+              </View>
+            </View>
+
+            {loadingSystemConfig ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+                  Loading system configuration...
+                </Text>
+              </View>
+            ) : (
+              <>
+                <View style={styles.formGroup}>
+                  <Text style={[styles.label, { color: colors.text }]}>Slope (degrees)</Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                    value={systemConfigInputs.zone_slope_degrees}
+                    onChangeText={(text) => handleChangeSystemConfigInput('zone_slope_degrees', text)}
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={[styles.label, { color: colors.text }]}>Area (m²)</Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                    value={systemConfigInputs.zone_area_m2}
+                    onChangeText={(text) => handleChangeSystemConfigInput('zone_area_m2', text)}
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={[styles.label, { color: colors.text }]}>Base Pressure (kPa)</Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                    value={systemConfigInputs.zone_base_pressure_kpa}
+                    onChangeText={(text) => handleChangeSystemConfigInput('zone_base_pressure_kpa', text)}
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={[styles.label, { color: colors.text }]}>Pipe Length (m)</Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                    value={systemConfigInputs.pipe_length_m}
+                    onChangeText={(text) => handleChangeSystemConfigInput('pipe_length_m', text)}
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={[styles.label, { color: colors.text }]}>Pipe Diameter (m)</Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                    value={systemConfigInputs.pipe_diameter_m}
+                    onChangeText={(text) => handleChangeSystemConfigInput('pipe_diameter_m', text)}
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={[styles.label, { color: colors.text }]}>Estimated Flow Rate (m³/s)</Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                    value={systemConfigInputs.estimated_flow_rate_m3_per_s}
+                    onChangeText={(text) => handleChangeSystemConfigInput('estimated_flow_rate_m3_per_s', text)}
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <Button
+                  title="Save Configuration"
+                  onPress={handleSaveSystemConfig}
+                  loading={savingSystemConfig}
+                  disabled={savingSystemConfig}
+                  style={styles.button}
+                />
+              </>
             )}
           </View>
         )}
