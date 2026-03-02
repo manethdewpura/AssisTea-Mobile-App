@@ -149,7 +149,12 @@ export const configService = {
       }
 
       // Backend returns { success, zone: { ... } }
-      return (response as any).zone || response.data?.zone;
+      const zone = response.zone || response.data?.zone;
+      if (!zone) {
+        throw new Error('No zone information returned from server');
+      }
+
+      return zone;
     } catch (error) {
       const appError = handleFirebaseError(error);
       logError(appError, 'configService - getZoneInfo');
@@ -168,7 +173,12 @@ export const configService = {
         throw new Error(response.error || 'Failed to get system configuration');
       }
 
-      return (response as any).config || response.data?.config;
+      const config = response.config || response.data?.config;
+      if (!config) {
+        throw new Error('No system configuration returned from server');
+      }
+
+      return config;
     } catch (error) {
       const appError = handleFirebaseError(error);
       logError(appError, 'configService - getSystemConfig');
@@ -192,7 +202,12 @@ export const configService = {
         throw new Error(response.error || 'Failed to update system configuration');
       }
 
-      return (response as any).config || response.data?.config;
+      const config = response.config || response.data?.config;
+      if (!config) {
+        throw new Error('No system configuration returned from server');
+      }
+
+      return config;
     } catch (error) {
       const appError = handleFirebaseError(error);
       logError(appError, 'configService - updateSystemConfig');

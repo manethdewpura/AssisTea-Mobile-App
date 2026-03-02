@@ -9,7 +9,7 @@ import { useAppSelector, useAppDispatch } from '../../hooks';
 import { selectTheme, selectConfig } from '../../store/selectors';
 import Button from '../../components/atoms/Button';
 import { configService, schedulesService, IrrigationSchedule, FertigationSchedule, CreateScheduleData } from '../../services';
-import { validateUrl, normalizeUrl } from '../../services/config.service';
+import { validateUrl, normalizeUrl, SystemConfig, ZoneInfo } from '../../services/config.service';
 import { saveBackendUrl, loadBackendUrl } from '../../store/slices/config.slice';
 import { showToast } from '../../store/slices/notification.slice';
 import type { IrrigationStackParamList } from '../../navigation/IrrigationNavigator';
@@ -30,24 +30,10 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
   const [irrigationSchedules, setIrrigationSchedules] = useState<IrrigationSchedule[]>([]);
   const [fertigationSchedules, setFertigationSchedules] = useState<FertigationSchedule[]>([]);
   const [loadingSchedules, setLoadingSchedules] = useState(false);
-  const [zoneInfo, setZoneInfo] = useState<{
-    zone_id: number;
-    valve_gpio_pin: number;
-    soil_moisture_sensor_channel: number;
-    slope: number;
-    area: number;
-    base_pressure: number;
-  } | null>(null);
+  const [zoneInfo, setZoneInfo] = useState<ZoneInfo | null>(null);
   const [loadingZoneInfo, setLoadingZoneInfo] = useState(false);
 
-  const [systemConfig, setSystemConfig] = useState<{
-    zone_slope_degrees: number;
-    zone_area_m2: number;
-    zone_base_pressure_kpa: number;
-    pipe_length_m: number;
-    pipe_diameter_m: number;
-    estimated_flow_rate_m3_per_s: number;
-  } | null>(null);
+  const [systemConfig, setSystemConfig] = useState<SystemConfig | null>(null);
   const [systemConfigInputs, setSystemConfigInputs] = useState<{
     zone_slope_degrees: string;
     zone_area_m2: string;
@@ -224,26 +210,42 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
         }));
         return null;
       }
+
+      // Enforce strictly positive values for physical quantities
+      const mustBePositiveKeys: (keyof typeof systemConfigInputs)[] = [
+        'zone_area_m2',
+        'pipe_length_m',
+        'pipe_diameter_m',
+        'estimated_flow_rate_m3_per_s',
+      ];
+      if (mustBePositiveKeys.includes(fieldKey) && value <= 0) {
+        dispatch(showToast({
+          message: `${label} must be greater than zero`,
+          type: 'error',
+        }));
+        return null;
+      }
+
       return value;
     };
 
     const zoneSlope = parseNumberField('zone_slope_degrees', 'Slope');
-    const zoneArea = parseNumberField('zone_area_m2', 'Area');
-    const basePressure = parseNumberField('zone_base_pressure_kpa', 'Base pressure');
-    const pipeLength = parseNumberField('pipe_length_m', 'Pipe length');
-    const pipeDiameter = parseNumberField('pipe_diameter_m', 'Pipe diameter');
-    const flowRate = parseNumberField('estimated_flow_rate_m3_per_s', 'Estimated flow rate');
+    if (zoneSlope === null) return;
 
-    if (
-      zoneSlope === null ||
-      zoneArea === null ||
-      basePressure === null ||
-      pipeLength === null ||
-      pipeDiameter === null ||
-      flowRate === null
-    ) {
-      return;
-    }
+    const zoneArea = parseNumberField('zone_area_m2', 'Area');
+    if (zoneArea === null) return;
+
+    const basePressure = parseNumberField('zone_base_pressure_kpa', 'Base pressure');
+    if (basePressure === null) return;
+
+    const pipeLength = parseNumberField('pipe_length_m', 'Pipe length');
+    if (pipeLength === null) return;
+
+    const pipeDiameter = parseNumberField('pipe_diameter_m', 'Pipe diameter');
+    if (pipeDiameter === null) return;
+
+    const flowRate = parseNumberField('estimated_flow_rate_m3_per_s', 'Estimated flow rate');
+    if (flowRate === null) return;
 
     try {
       setSavingSystemConfig(true);
