@@ -215,9 +215,28 @@ export const backendService = {
       });
 
       if (!response.ok) {
-        throw new NetworkError(
-          `Failed to sync weather data: ${response.status} ${response.statusText}`,
+        let errorBody = '';
+        try {
+          const errorData = await response.json();
+          errorBody = JSON.stringify(errorData);
+          console.warn(
+            `[Backend] syncAllWeatherData failed - Status: ${response.status}, Body:`,
+            errorData,
+          );
+        } catch {
+          console.warn(
+            `[Backend] syncAllWeatherData failed - Status: ${response.status} ${response.statusText}`,
+          );
+        }
+
+        // Include status code in error message
+        // 4xx = client error (non-retriable), 5xx = server error (maybe retriable)
+        const error = new NetworkError(
+          `Failed to sync weather data: ${response.status} ${response.statusText}` +
+          (errorBody ? ` - ${errorBody}` : ''),
         );
+        (error as any).statusCode = response.status;
+        throw error;
       }
 
       const result: BackendSyncResponse = await response.json();
@@ -226,7 +245,11 @@ export const backendService = {
       if (error instanceof NetworkError) {
         throw error;
       }
-      throw new NetworkError('Failed to sync weather data to backend');
+      // True network failure (fetch itself threw — no response at all)
+      console.error('[Backend] syncAllWeatherData network failure:', error);
+      const networkError = new NetworkError('Failed to sync weather data to backend (network unreachable)');
+      (networkError as any).isNetworkFailure = true;
+      throw networkError;
     }
   },
 };

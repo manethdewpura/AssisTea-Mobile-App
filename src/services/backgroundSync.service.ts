@@ -74,12 +74,28 @@ export const backgroundSyncService = {
                                 return { id: item.id, success: true };
                             })
                             .catch(async (error) => {
-                                // Track failed attempt
+                                const statusCode = (error as any)?.statusCode;
+                                const isNetworkFailure = (error as any)?.isNetworkFailure === true;
+
+                                if (statusCode && statusCode >= 400 && statusCode < 500) {
+                                    // 4xx = Client error
+                                    // Non-retriable: mark as synced to stop retrying
+                                    await syncQueueService.markAsSynced(item.id);
+                                    console.warn(
+                                        `[BackgroundSync] Item ${item.id} rejected by server (${statusCode}), marking as synced:`,
+                                        error?.message?.substring(0, 200),
+                                    );
+                                    return { id: item.id, success: true }; // Count as handled
+                                }
+
+                                // 5xx or network failure = potentially transient, retry
                                 await syncQueueService.incrementSyncAttempt(item.id);
                                 const attempts = (item.sync_attempts ?? 0) + 1;
                                 console.error(
-                                    `[BackgroundSync] Failed to sync item ${item.id} (attempt ${attempts}/${this.MAX_SYNC_ATTEMPTS}):`,
-                                    error
+                                    `[BackgroundSync] Failed to sync item ${item.id} (attempt ${attempts}/${this.MAX_SYNC_ATTEMPTS})` +
+                                    `${statusCode ? ` [HTTP ${statusCode}]` : ''}` +
+                                    `${isNetworkFailure ? ' [NETWORK]' : ''}:`,
+                                    error?.message?.substring(0, 200),
                                 );
                                 return { id: item.id, success: false, attempts };
                             })
