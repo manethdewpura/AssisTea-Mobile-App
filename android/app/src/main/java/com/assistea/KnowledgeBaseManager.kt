@@ -288,6 +288,122 @@ class KnowledgeBaseManager(private val context: Context) {
     }
     
     /**
+     * Find top K matching entries for online LLM context (similarity >= minSimilarity).
+     * Uses semantic similarity first, then keyword fallback.
+     */
+    fun findTopMatches(
+        queryEmbedding: FloatArray,
+        knowledgeBase: List<KnowledgeEntry>,
+        queryText: String? = null,
+        topK: Int = 5,
+        minSimilarity: Double = 0.5
+    ): List<MatchResult> {
+        if (knowledgeBase.isEmpty()) return emptyList()
+
+        // Fallback to keyword search if embeddings are not available
+        if (queryEmbedding.isEmpty() && queryText != null) {
+            return findTopMatchesByKeywords(queryText, knowledgeBase, topK, minSimilarity)
+        }
+
+        val candidates = mutableListOf<MatchResult>()
+
+        for (entry in knowledgeBase) {
+            // Skip entries without a precomputed embedding to avoid
+            // generating embeddings on the hot query path.
+            val entryEmbedding = entry.embedding ?: continue
+            val similarity = offlineNLPEngine.cosineSimilarity(queryEmbedding, entryEmbedding).toDouble()
+            if (similarity >= minSimilarity) {
+                candidates.add(
+                    MatchResult(
+                        question = entry.question,
+                        answer = entry.answer,
+                        similarity = similarity
+                    )
+                )
+            }
+        }
+
+        val semanticResults = candidates.sortedByDescending { it.similarity }.take(topK)
+        if (semanticResults.isNotEmpty()) return semanticResults
+
+        // Fallback to keyword matching if no semantic matches meet threshold
+        if (queryText != null) {
+            return findTopMatchesByKeywords(queryText, knowledgeBase, topK, minSimilarity)
+        }
+        return emptyList()
+    }
+
+    /**
+     * Find top K matches using keyword matching (fallback for findTopMatches)
+     */
+    private fun findTopMatchesByKeywords(
+        query: String,
+        knowledgeBase: List<KnowledgeEntry>,
+        topK: Int,
+        minSimilarity: Double
+    ): List<MatchResult> {
+        val queryLower = query.lowercase().trim()
+        val stopWords = setOf("the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "how", "what", "when", "where", "why", "do", "does", "is", "are", "was", "were")
+        val queryWords = queryLower.split(Regex("\\s+"))
+            .filter { it.length > 2 && it !in stopWords }
+            .map { it.trim().removeSuffix("s").removeSuffix("ing").removeSuffix("ed") }
+
+        if (queryWords.isEmpty()) return emptyList()
+
+        val scoredEntries = mutableListOf<MatchResult>()
+        for (entry in knowledgeBase) {
+            var score = 0.0
+            val entryKeywordsLower = entry.keywords.map { it.lowercase().trim() }
+            val questionLower = entry.question.lowercase()
+            val questionWords = questionLower.split(Regex("\\s+"))
+                .filter { it.length > 2 && it !in stopWords }
+                .map { it.trim().removeSuffix("s").removeSuffix("ing").removeSuffix("ed") }
+
+            val keywordMatches = entryKeywordsLower.count { keyword ->
+                val keywordStemmed = keyword.removeSuffix("s").removeSuffix("ing").removeSuffix("ed")
+                queryWords.any { word ->
+                    keywordStemmed == word || word == keywordStemmed ||
+                    keywordStemmed.contains(word) || word.contains(keywordStemmed) ||
+                    keywordStemmed.split(Regex("\\s+")).any { kw ->
+                        kw == word || word == kw || kw.contains(word) || word.contains(kw)
+                    }
+                }
+            }
+
+            val questionWordMatches = queryWords.count { word ->
+                questionWords.any { qw ->
+                    qw == word || qw.contains(word) || word.contains(qw) ||
+                    qw.startsWith(word) || word.startsWith(qw)
+                }
+            }
+
+            score = (keywordMatches * 3.0) + questionWordMatches
+            val wordOverlapRatio = questionWordMatches.toDouble() / queryWords.size
+            if (wordOverlapRatio > 0.5) score += 3.0 * wordOverlapRatio
+
+            val keyPhrases = listOf("pest", "control", "disease", "fertilizer", "harvest", "pruning", "soil", "water", "tea")
+            val phraseMatches = keyPhrases.count { phrase ->
+                queryLower.contains(phrase) && (questionLower.contains(phrase) || entryKeywordsLower.any { it.contains(phrase) })
+            }
+            score += phraseMatches * 2.0
+
+            val maxPossibleScore = (entry.keywords.size * 3.0) + questionWords.size + 5.0
+            val normalizedScore = (score / maxPossibleScore).coerceIn(0.0, 1.0)
+
+            if (normalizedScore >= minSimilarity) {
+                scoredEntries.add(
+                    MatchResult(
+                        question = entry.question,
+                        answer = entry.answer,
+                        similarity = normalizedScore
+                    )
+                )
+            }
+        }
+        return scoredEntries.sortedByDescending { it.similarity }.take(topK)
+    }
+
+    /**
      * Search by keywords (fallback method)
      */
     fun searchByKeywords(query: String): List<KnowledgeEntry> {
