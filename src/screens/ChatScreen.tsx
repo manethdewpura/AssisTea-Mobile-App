@@ -95,7 +95,14 @@ const ChatScreen: React.FC = () => {
   }, [dispatch, initializing]);
 
   // Load chat history from SQLite when language changes
+  // Only load if there are no messages yet for the current language.
   useEffect(() => {
+    // If we already have messages in Redux, don't reload from SQLite.
+    // This prevents chat history from visually "reloading" on every remount.
+    if (messages.length > 0) {
+      return;
+    }
+
     const currentRequestId = ++historyRequestIdRef.current;
     let isCurrent = true;
 
@@ -118,7 +125,7 @@ const ChatScreen: React.FC = () => {
     return () => {
       isCurrent = false;
     };
-  }, [dispatch, language]);
+  }, [dispatch, language, messages.length]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
