@@ -7,6 +7,7 @@ import { store } from './src/store';
 import { selectAuth, selectTheme } from './src/store/selectors';
 import { useAppSelector } from './src/hooks/redux.hooks';
 import AuthListener from './src/store/listeners/AuthListener';
+import NetworkListener from './src/store/listeners/NetworkListener';
 import ThemeListener from './src/store/listeners/ThemeListener';
 import NotificationListener from './src/store/listeners/NotificationListener';
 import WeatherListener from './src/store/listeners/WeatherListener';
@@ -36,6 +37,7 @@ function App() {
   return (
     <SafeAreaProvider>
       <Provider store={store}>
+        <NetworkListener>
         <ThemeListener>
           <ConfigListener>
             <NotificationListener>
@@ -49,6 +51,7 @@ function App() {
             </NotificationListener>
           </ConfigListener>
         </ThemeListener>
+        </NetworkListener>
       </Provider>
     </SafeAreaProvider>
   );

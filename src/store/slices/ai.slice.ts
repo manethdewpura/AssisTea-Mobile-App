@@ -47,6 +47,10 @@ const aiSlice = createSlice({
       state.loading = true;
       state.error = null;
     },
+    setMessages: (state, action: PayloadAction<ChatMessage[]>) => {
+      state.messages = action.payload;
+      state.error = null;
+    },
     receiveMessage: (
       state,
       action: PayloadAction<{
@@ -113,6 +117,7 @@ export const {
   setAILoading,
   setAIError,
   setModelLoaded,
+  setMessages,
 } = aiSlice.actions;
 
 export default aiSlice.reducer;

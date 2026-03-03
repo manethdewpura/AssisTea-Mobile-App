@@ -177,6 +177,24 @@ class DatabaseService {
         ON activity_logs(syncStatus);
       `);
 
+            // Chat messages table (per-language chat history for AI assistant)
+            await this.db.executeSql(`
+        CREATE TABLE IF NOT EXISTS chat_messages (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          question TEXT NOT NULL,
+          answer TEXT NOT NULL,
+          source TEXT NOT NULL,
+          confidence REAL,
+          timestamp INTEGER NOT NULL,
+          language TEXT NOT NULL
+        );
+      `);
+
+            await this.db.executeSql(`
+        CREATE INDEX IF NOT EXISTS idx_chat_messages_language_timestamp
+        ON chat_messages(language, timestamp DESC);
+      `);
+
             console.log('✅ All tables created successfully');
         } catch (error) {
             console.error('❌ Error creating tables:', error);

@@ -10,40 +10,59 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppSelector, useAppDispatch } from '../hooks';
-import { selectTheme, selectAI } from '../store/selectors';
+import { selectTheme, selectAI, selectNetwork } from '../store/selectors';
 import {
   sendMessage,
   receiveMessage,
   setAIError,
   setModelLoaded,
   setAILoading,
+  setMessages,
 } from '../store/slices/ai.slice';
 import { aiService } from '../services';
+import { chatHistorySQLiteService } from '../services/sqlite/chatHistorySQLite.service';
 import MessageBubble from '../components/molecule/MessageBubble';
 import LanguageSelector from '../components/molecule/LanguageSelector';
 import ChatInput from '../components/molecule/ChatInput';
+import type { Language } from '../store/slices/ai.slice';
+
+const getEmptyTexts = (lang: Language) => {
+  switch (lang) {
+    case 'si':
+      return {
+        title:
+          'තේ වගාව පිළිබඳ ප්‍රශ්නයක් ඇසීමෙන් සංවාදය ආරම්භ කරන්න',
+        subtitle:
+          'රෝග, පොහොර, අස්වනු කප්පාදු, කපන කටයුතු වැනි දේවල් පිළිබඳව ප්‍රශ්න කරන්න උත්සාහ කරන්න',
+      };
+    case 'ta':
+      return {
+        title:
+          'தேயிலை விவசாயத்தைப் பற்றி ஒரு கேள்வி கேட்டு உரையாடலைத் தொடங்குங்கள்',
+        subtitle:
+          'நோய்கள், உரங்கள், அறுவடை அல்லது வெட்டுதல் பற்றி கேட்டு முயற்சிக்கவும்',
+      };
+    case 'en':
+    default:
+      return {
+        title:
+          'Start a conversation by asking a question about tea farming',
+        subtitle:
+          'Try asking about diseases, fertilizers, harvesting, or pruning',
+      };
+  }
+};
 
 const ChatScreen: React.FC = () => {
   const { colors } = useAppSelector(selectTheme);
   const { messages, loading, language, modelLoaded, error } =
     useAppSelector(selectAI);
+  const { isOnline } = useAppSelector(selectNetwork);
   const dispatch = useAppDispatch();
   const scrollViewRef = useRef<ScrollView>(null);
   const [inputText, setInputText] = useState('');
-  const [isOnline] = useState(false);
   const [initializing, setInitializing] = useState(false);
   const pendingQuestionRef = useRef<string | null>(null);
-
-  // Check network status
-  // useEffect(() => {
-  //   const unsubscribeNetInfo = NetInfo.addEventListener(state => {
-  //     setIsOnline(state.isConnected ?? false);
-  //   });
-
-  //   return () => {
-  //     unsubscribeNetInfo();
-  //   };
-  // }, []);
 
   // Initialize model on mount
   useEffect(() => {
@@ -73,6 +92,22 @@ const ChatScreen: React.FC = () => {
 
     initializeModel();
   }, [dispatch, initializing]);
+
+  // Load chat history from SQLite when language changes
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const history = await chatHistorySQLiteService.getMessagesByLanguage(
+          language,
+        );
+        dispatch(setMessages(history));
+      } catch (err) {
+        console.error('[ChatScreen] Failed to load chat history:', err);
+      }
+    };
+
+    loadHistory();
+  }, [dispatch, language]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -115,9 +150,9 @@ const ChatScreen: React.FC = () => {
       dispatch(setAILoading(true));
       dispatch(setAIError(null));
 
-      // Query offline AI
-      console.log('[ChatScreen] Calling aiService.queryOffline with:', { question, language });
-      const response = await aiService.queryOffline(question, language);
+      const response = isOnline
+        ? await aiService.queryOnline(question, language)
+        : await aiService.queryOffline(question, language);
       console.log('[ChatScreen] Received response from aiService:', {
         hasAnswer: !!response.answer,
         answer: response.answer?.substring(0, 100),
@@ -156,6 +191,22 @@ const ChatScreen: React.FC = () => {
       dispatch(receiveMessage(receiveMessagePayload));
       console.log('[ChatScreen] receiveMessage dispatched successfully');
       pendingQuestionRef.current = null;
+
+      // Persist this Q/A pair in per-language chat history
+      try {
+        await chatHistorySQLiteService.saveMessagePair({
+          question,
+          answer: response.answer,
+          source: response.source,
+          confidence: response.confidence,
+          language,
+        });
+      } catch (persistError) {
+        console.error(
+          '[ChatScreen] Failed to persist chat history:',
+          persistError,
+        );
+      }
     } catch (err) {
       console.error('[ChatScreen] Error in handleSendMessage:', err);
       const errorMessage =
@@ -183,7 +234,7 @@ const ChatScreen: React.FC = () => {
         answer: isLanguageMismatch 
           ? errorMessage 
           : `Sorry, I encountered an error: ${errorMessage}. Please try again.`,
-        source: 'offline' as const,
+        source: (isOnline ? 'online' : 'offline') as const,
         confidence: 0,
       };
       console.log('[ChatScreen] Dispatching error receiveMessage with:', errorPayload);
@@ -198,7 +249,7 @@ const ChatScreen: React.FC = () => {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
-      edges={['top']}
+      edges={['top', 'bottom']}
     >
       {/* Status Indicator */}
       <View style={styles.statusContainer}>
@@ -244,7 +295,7 @@ const ChatScreen: React.FC = () => {
       <KeyboardAvoidingView
         style={styles.chatContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 80}
       >
         <ScrollView
           ref={scrollViewRef}
@@ -253,6 +304,30 @@ const ChatScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
         >
           {messages.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              {(() => {
+                const { title, subtitle } = getEmptyTexts(language);
+                return (
+                  <>
+                    <Text
+                      style={[styles.emptyText, { color: colors.textSecondary }]}
+                    >
+                      {title}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.emptySubtext,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      {subtitle}
+                    </Text>
+                  </>
+                );
+              })()}
+            </View>
+          ) : (
+            /*
             <View style={styles.emptyContainer}>
               <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                 Start a conversation by asking a question about tea farming
@@ -267,6 +342,7 @@ const ChatScreen: React.FC = () => {
               </Text>
             </View>
           ) : (
+          */
             messages.map((message, index) => {
               console.log(`[ChatScreen] Rendering message ${index}:`, {
                 id: message.id,

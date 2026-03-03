@@ -39,12 +39,15 @@ const LanguageSelector: React.FC = () => {
           <Text
             style={[
               styles.languageText,
+              language === 'en' && styles.languageTextActive,
               {
                 color:
                   language === 'en' ? colors.textInverse : colors.textSecondary,
-                fontWeight: language === 'en' ? '600' : '400',
               },
             ]}
+            allowFontScaling={false}
+            numberOfLines={1}
+            ellipsizeMode="clip"
           >
             English
           </Text>
@@ -63,12 +66,15 @@ const LanguageSelector: React.FC = () => {
           <Text
             style={[
               styles.languageText,
+              language === 'si' && styles.languageTextActive,
               {
                 color:
                   language === 'si' ? colors.textInverse : colors.textSecondary,
-                fontWeight: language === 'si' ? '600' : '400',
               },
             ]}
+            allowFontScaling={false}
+            numberOfLines={1}
+            ellipsizeMode="clip"
           >
             සිංහල
           </Text>
@@ -87,12 +93,15 @@ const LanguageSelector: React.FC = () => {
           <Text
             style={[
               styles.languageText,
+              language === 'ta' && styles.languageTextActive,
               {
                 color:
                   language === 'ta' ? colors.textInverse : colors.textSecondary,
-                fontWeight: language === 'ta' ? '600' : '400',
               },
             ]}
+            allowFontScaling={false}
+            numberOfLines={1}
+            ellipsizeMode="clip"
           >
             தமிழ்
           </Text>
@@ -117,7 +126,7 @@ const styles = StyleSheet.create({
   languageButton: {
     flex: 1,
     paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
@@ -127,10 +136,12 @@ const styles = StyleSheet.create({
     // Active state styling handled inline
   },
   languageText: {
-    fontSize: 14,
-    lineHeight: 20,
-    includeFontPadding: true,
+    fontSize: 13,
+    includeFontPadding: false,
     textAlign: 'center',
+  },
+  languageTextActive: {
+    fontSize: 12,
   },
 });
 

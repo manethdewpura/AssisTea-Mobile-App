@@ -82,6 +82,56 @@ class AgronomistAIModule(reactContext: ReactApplicationContext) : ReactContextBa
     }
     
     /**
+     * Retrieve top 3-5 relevant entries from the knowledge base (similarity >= 50%).
+     * Used by the online flow to build context for Gemini.
+     */
+    @ReactMethod
+    fun retrieveRelevantEntries(query: String, language: String, promise: Promise) {
+        try {
+            if (query.isBlank()) {
+                promise.resolve(Arguments.createArray())
+                return
+            }
+
+            // Detect the language of the query (same logic as offline)
+            val detectedLanguage = LanguageDetector.detectLanguage(query)
+
+            // If we are confident about detection and it doesn't match the selected language,
+            // return the same LANGUAGE_MISMATCH error used in offline mode.
+            if (detectedLanguage != null && detectedLanguage != language) {
+                val errorMessage = LanguageDetector.getLanguageMismatchMessage(detectedLanguage, language)
+                promise.reject("LANGUAGE_MISMATCH", errorMessage)
+                return
+            }
+            
+            val knowledgeBase = knowledgeBaseManager.loadKnowledgeBase(language)
+            if (knowledgeBase.isEmpty()) {
+                promise.resolve(Arguments.createArray())
+                return
+            }
+            
+            val queryEmbedding = offlineNLPEngine.generateEmbedding(query)
+            val matches = if (queryEmbedding != null) {
+                knowledgeBaseManager.findTopMatches(queryEmbedding, knowledgeBase, query, topK = 5, minSimilarity = 0.5)
+            } else {
+                knowledgeBaseManager.findTopMatches(FloatArray(0), knowledgeBase, query, topK = 5, minSimilarity = 0.5)
+            }
+            
+            val array = Arguments.createArray()
+            for (match in matches) {
+                val obj = Arguments.createMap()
+                obj.putString("question", match.question)
+                obj.putString("answer", match.answer)
+                obj.putDouble("similarity", match.similarity)
+                array.pushMap(obj)
+            }
+            promise.resolve(array)
+        } catch (e: Exception) {
+            promise.reject("RETRIEVE_ERROR", "Error retrieving relevant entries: ${e.message}", e)
+        }
+    }
+    
+    /**
      * Query OpenAI GPT-4.1 API for online responses
      * TODO: Implement when LLMService is ready
      * @param query The user's question

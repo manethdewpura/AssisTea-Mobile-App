@@ -20,3 +20,4 @@ export * from './sensors.service';
 export * from './solenoid.service';
 export * from './activityLogsSync.service';
 export * from './sqlite/activityLogsSQLite.service';
+export * from './sqlite/chatHistorySQLite.service';

@@ -72,7 +72,9 @@ object LanguageDetector {
     }
     
     /**
-     * Get language-specific error message
+     * Get language-specific error message.
+     * The warning is shown in the language the user typed in (detectedLang),
+     * while still mentioning the selected language by name.
      */
     fun getLanguageMismatchMessage(detectedLang: String, selectedLang: String): String {
         val languageNames = mapOf(
@@ -80,15 +82,19 @@ object LanguageDetector {
             "si" to "Sinhala",
             "ta" to "Tamil"
         )
-        
+
         val detectedName = languageNames[detectedLang] ?: detectedLang
         val selectedName = languageNames[selectedLang] ?: selectedLang
-        
-        return when (selectedLang) {
-            "en" -> "Your query appears to be in $detectedName. Please change the language selector to $detectedName to get the best results."
-            "si" -> "ඔබගේ ප්‍රශ්නය $detectedName භාෂාවෙන් පෙනේ. හොඳම ප්‍රතිඵල ලබා ගැනීම සඳහා භාෂාව $detectedName වෙත වෙනස් කරන්න."
-            "ta" -> "உங்கள் வினா $detectedName மொழியில் தோன்றுகிறது. சிறந்த முடிவுகளைப் பெற மொழி தேர்வியை $detectedName க்கு மாற்றவும்."
-            else -> "Your query appears to be in $detectedName. Please change the language selector to $detectedName."
+
+        return when (detectedLang) {
+            // User typed in English
+            "en" -> "Your query appears to be in $detectedName, but the selected language is $selectedName. Please change the language selector to $detectedName to get the best results."
+            // User typed in Sinhala
+            "si" -> "ඔබගේ ප්‍රශ්නය $detectedName භාෂාවෙන් පෙනේ, නමුත් තෝරා ඇති භාෂාව $selectedName වේ. හොඳම ප්‍රතිඵල සඳහා භාෂාව $detectedName වෙත වෙනස් කරන්න."
+            // User typed in Tamil
+            "ta" -> "உங்கள் வினா $detectedName மொழியில் தோன்றுகிறது, ஆனால் தேர்ந்தெடுக்கப்பட்ட மொழி $selectedName ஆகும். சிறந்த முடிவுகளுக்காக மொழி தேர்வியை $detectedName க்கு மாற்றவும்."
+            // Fallback to English if detection is something else
+            else -> "Your query appears to be in $detectedName, but the selected language is $selectedName. Please change the language selector to $detectedName to get the best results."
         }
     }
 }

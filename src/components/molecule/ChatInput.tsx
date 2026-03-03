@@ -52,10 +52,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
           placeholderTextColor={colors.textSecondary}
           value={value}
           onChangeText={onChangeText}
-          multiline={false}
+          multiline
           editable={!loading && !disabled}
           onSubmitEditing={handleSend}
           returnKeyType="send"
+          scrollEnabled
         />
       </View>
       <TouchableOpacity
@@ -83,7 +84,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     paddingHorizontal: 16,
     paddingVertical: 12,
     paddingBottom: 16,
@@ -102,6 +103,8 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     paddingVertical: 0,
+    textAlignVertical: 'top',
+    maxHeight: 120,
   },
   sendButton: {
     width: 48,
