@@ -224,6 +224,803 @@
       "microclimate",
       "temperature regulation"
     ]
+  },
+  {
+    "question": "What are the most important factors that determine land suitability for tea cultivation?",
+    "answer": "The most important factors determining land suitability are climate, slope, soil depth, surface rockiness, and gravel content.",
+    "keywords": [
+      "climate",
+      "slope",
+      "soil depth",
+      "surface rockiness",
+      "gravel content",
+      "limiting factors"
+    ]
+  },
+  {
+    "question": "How is land classified based on its degree of limitation?",
+    "answer": "Land is classified into four suitability classes based on its degree of limitation:\n* **Class 1 (Highly suitable):** Has no significant limitation.\n* **Class 2 (Suitable):** Has a moderate single limitation.\n* **Class 3 (Moderately suitable):** Has moderate, dual limitations.\n* **Class 4 (Unsuitable):** Has one or more severe limitations, strongly interacting dual limitations, or multiple moderate limitations.",
+    "keywords": [
+      "Suitability Class",
+      "degree of limitation",
+      "Highly suitable",
+      "Unsuitable",
+      "Class 1",
+      "Class 4"
+    ]
+  },
+  {
+    "question": "Why is it inappropriate to use a single set of norms for all tea-growing areas?",
+    "answer": "A single set of norms is not appropriate because it fails to account for regional differences caused by variations in elevation and climate, which exert a strong influence on land suitability.",
+    "keywords": [
+      "norms",
+      "regional differences",
+      "elevation",
+      "climate variations"
+    ]
+  },
+  {
+    "question": "What is the recommended methodology for assessing the limiting factors of land?",
+    "answer": "The limiting factors are assessed using the following methods:\n* **Slope:** Measured using a clinometer. \n* **Surface rockiness:** Estimated by measuring the extent covered by rocks and boulders in the total land area.\n* **Soil depth:** Measured by randomly digging a minimum of 12 pits per hectare to a depth of 1 meter. \n* **Gravel content:** Measured visually or by passing the soil through a 2 mm mesh.",
+    "keywords": [
+      "methodology",
+      "clinometer",
+      "soil depth",
+      "rockiness",
+      "gravel content",
+      "assessment"
+    ]
+  },
+  {
+    "question": "How does land classification assist in managing tea lands?",
+    "answer": "Land classification simplifies management and decision-making regarding new planting, replanting, infilling, diversification, and conservation of tea lands. It also helps in assessing long-term production trends and investment needs for enhanced productivity.",
+    "keywords": [
+      "land classification",
+      "management",
+      "decision-making",
+      "new planting",
+      "productivity",
+      "investment"
+    ]
+  },
+  {
+    "question": "What is the primary basis for categorizing tea fields?",
+    "answer": "Field categorization is based on the performance of each field, which depends on factors like topography, microclimate, soil fertility, and pest or disease incidence. Since the harvested crop is the most reliable indicator of all such factors, the productivity or yield per unit area is used to categorize the fields. To even out variations like weather and worker efficiency, this categorization should be based on the average annual yield achieved over the past two to three pruning cycles.",
+    "keywords": [
+      "field categorization",
+      "performance",
+      "yield per unit area",
+      "pruning cycles"
+    ]
+  },
+  {
+    "question": "How do you calculate the mean cycle yield per unit area for a tea field?",
+    "answer": "The mean cycle yield, measured in kg/ha/year, is calculated using a specific formula. You multiply the total production over the full cycle by 12, and then divide that result by the total number of months in the cycle. ",
+    "keywords": [
+      "mean cycle yield",
+      "yield calculation",
+      "YPH",
+      "total production"
+    ]
+  },
+  {
+    "question": "What are the main features of an 'A' category tea field?",
+    "answer": "'A' Category fields represent the best one-third of the fields on a given plantation and have the best stand of tea. These fields provide the bulk of the crop, meaning the plantation has to depend on them for some years to come. All agricultural inputs should be provided to these fields without restrictions. Vacancies must be infilled after each prune to maintain the tea in good condition, and these lands will not be replanted for a long time. ",
+    "keywords": ["A category", "high yield", "unrestricted inputs", "infilling"]
+  },
+  {
+    "question": "What should be done with fields falling into the 'C' category?",
+    "answer": "'C' Category fields represent the poorest one-third of the tea on the plantation. These fields could be earmarked for diversification if they are poor. Fields where lands are steep and soils are eroded can be diversified away from tea. However, where there are no major limitations, this category could still be replanted or infilled.",
+    "keywords": [
+      "C category",
+      "poorest yield",
+      "diversification",
+      "eroded soils"
+    ]
+  },
+  {
+    "question": "What are the main advantages of categorizing tea fields?",
+    "answer": "The main benefit is the prioritization of funds into productive fields, allowing estates to obtain maximum returns from limited resources. When there are budgetary constraints or fertilizer shortages, estates can optimize inputs in better fields rather than imposing a standard cut all around. Field categorization also helps maintain uniform estate production from year to year, lays down clear priorities for cost-effective worker utilization, and assists in preparing long-term replanting programs.",
+    "keywords": [
+      "advantages",
+      "fund prioritization",
+      "input optimization",
+      "uniform production"
+    ]
+  },
+  {
+    "question": "Why is field categorization considered a dynamic system rather than a one-time exercise?",
+    "answer": "Categorization is a dynamic system because it depends on the development of fields relative to one another within a given estate. When a replanted field comes into bearing, it enters the 'A' category, which pushes the lowest 'A' category field into the 'B' category, and the lowest 'B' category field into the 'C' category. As a result, marginal tea lands pushed low down in the 'C' category might be considered for diversification. Because of these shifts, categorization is not a once-and-for-all exercise and must be reviewed and revised periodically. ",
+    "keywords": [
+      "dynamic system",
+      "periodic review",
+      "replanted fields",
+      "shifting categories"
+    ]
+  },
+  {
+    "question": "What is the primary concern with the current genetic base of tea clones in Sri Lanka?",
+    "answer": "Currently, over 55% of Sri Lanka's tea extent is planted with clones. The majority of these clones are TRI 2023, 2024, 2025, 2026, and 2027, which has led to a narrowing of the genetic base. This narrow genetic base makes the tea plantations vulnerable to pests, diseases, drought, and other hazards. Furthermore, more than 90% of the TRI clones are derived from a single plant designated as ASM 4/10.",
+    "keywords": [
+      "genetic base",
+      "vulnerability",
+      "pests",
+      "diseases",
+      "TRI clones",
+      "ASM 4/10"
+    ]
+  },
+  {
+    "question": "What are the recommended practices for selecting planting material to avoid vulnerabilities?",
+    "answer": "To mitigate vulnerabilities, the following practices are recommended:\n* Select at least 5-6 clones based on their suitability for the specific location and extent.\n* Ensure that no more than 10% of the estate is planted under a single clone.\n* Test clonal suitability by small-scale planting, utilizing at least 200 bushes.",
+    "keywords": [
+      "planting material",
+      "clonal selection",
+      "small-scale planting",
+      "diversity"
+    ]
+  },
+  {
+    "question": "Which specific TRI 4000 series clones are recommended for the Up-Country region?",
+    "answer": "For the Up-Country region, the recommended TRI 4000 series clones include 4006, 4034, 4052, 4053, 4067, 4071, 4078, 4079, and 4085.",
+    "keywords": ["TRI 4000 series", "Up-Country", "recommended clones"]
+  },
+  {
+    "question": "Which estate clones exhibit high tolerance to drought?",
+    "answer": "According to the tolerance ratings, the estate clones DT 1, N2, NAY 3, KEN 16/3, and PK 2 exhibit high tolerance to drought.",
+    "keywords": ["estate clones", "drought tolerance", "high tolerance"]
+  },
+  {
+    "question": "What is indicated by the asterisks (***) for clones like 3020, 3072, and 3073 in the Up-Country region?",
+    "answer": "The asterisks (***) next to clones 3020, 3072, and 3073 denote that they are suitable for closer planting.",
+    "keywords": ["closer planting", "asterisks", "TRI 3000 series"]
+  },
+  {
+    "question": "Which clones from the TRI 3000 series show high resistance to the Pratylenchus loosi nematode?",
+    "answer": "The TRI 3000 series clones that show high resistance to the Pratylenchus loosi nematode are 3014, 3016, 3017, 3019, 3020, 3069, and 3072.",
+    "keywords": ["TRI 3000 series", "Pratylenchus loosi", "nematode resistance"]
+  },
+  {
+    "question": "What is the primary objective of tea nursery management?",
+    "answer": "The primary objective of nursery management is to raise healthy, vigorous, and uniform plants from suitable cultivars with minimum casualties. This should be achieved over an appropriate period of time and at a minimum cost.",
+    "keywords": [
+      "nursery management",
+      "primary objective",
+      "healthy plants",
+      "minimum cost"
+    ]
+  },
+  {
+    "question": "What characteristics indicate that a nursery plant is suitable for field planting?",
+    "answer": "A plant is considered suitable for planting when it reaches about 30 cm in height. It should have approximately 15 leaves, 2-3 side shoots, and a well-developed root system.",
+    "keywords": [
+      "suitable plant",
+      "plant height",
+      "leaves",
+      "side shoots",
+      "root system"
+    ]
+  },
+  {
+    "question": "What are the ideal dimensions and orientation for preparing nursery beds?",
+    "answer": "The ideal size of a nursery bed is about 1.0 m wide (3.5 ft) and can be of any convenient length, such as 20 m (65 ft). A pathway of 60 cm (2 ft) should be left on either side for carrying out operations. Beds should be built in a north-south direction so they receive sunlight throughout the day. Additionally, beds should be raised to about 15 cm (6 inches) to help with drainage and avoid nematode contamination through running water.",
+    "keywords": [
+      "nursery beds",
+      "dimensions",
+      "north-south direction",
+      "drainage"
+    ]
+  },
+  {
+    "question": "What type of soil texture and pH level are suitable for tea nurseries?",
+    "answer": "The growth of nursery plants depends heavily on the soil's texture. Loamy soils are suitable because they contain sufficient fine particles (clay and silt) to hold water, along with enough sand to allow excess water to drain out. The soil pH should be within a range of 4.5 and 5.5, and preferably around 5, for successful rooting and growth.",
+    "keywords": ["soil texture", "loamy soils", "pH level", "rooting"]
+  },
+  {
+    "question": "How should single node cuttings be prepared from a shoot?",
+    "answer": "Cuttings should be taken from the semi-hard wood middle portion of the shoot, discarding the apical tender portion and the basal mature portion. The upper cut should slope upwards just above the axillary bud without damaging it. The second cut should be made 2.5-3.8 cm below the node, in a downward slope. Cuttings with axillary flower buds, overgrown shoots, or damaged mother leaves should be discarded. ",
+    "keywords": [
+      "single node cuttings",
+      "preparation",
+      "axillary bud",
+      "sloping cut"
+    ]
+  },
+  {
+    "question": "What operations can be done to encourage the early spread and lateral branching of nursery plants?",
+    "answer": "To encourage early spread, two main operations can be performed:\n* **Disbudding:** The terminal bud should be removed at the four to five leaf stage to induce effective lateral branching. This process should be repeated on the axillary shoots as they grow.\n* **Thumb-nailing:** At about the seventh to eighth leaf stage, after the root system is well developed, the terminal bud and the two leaves immediately below it should be pinched off.",
+    "keywords": [
+      "early spread",
+      "lateral branching",
+      "disbudding",
+      "thumb-nailing"
+    ]
+  },
+  {
+    "question": "What are the two recommended fertilizer mixtures for nursery tea?",
+    "answer": "The two recommended nursery mixtures are T65 MAP (containing mono-ammonium phosphate) and T65 DAP (containing di-ammonium phosphate)[cite: 867]. [cite_start]When both are available, T65 MAP is preferred because it dissolves faster and is easier to handle[cite: 869]. ",
+    "keywords": [
+      "T65 MAP",
+      "T65 DAP",
+      "fertilizer mixtures",
+      "mono-ammonium phosphate"
+    ]
+  },
+  {
+    "question": "What is the composition of the T65 MAP fertilizer mixture?",
+    "answer": "The T65 MAP mixture consists of 15 parts Sulphate of ammonia (20.6% N), 20 parts Mono-ammonium phosphate (20% N and 35% $P_{2}O_{5}$), 15 parts Sulphate of potash (48% $K_{2}O$), and 15 parts Epsom salt (16% MgO)[cite: 874]. [cite_start]This mixture yields approximately 10.9% N, 10.8% $P_{2}O_{5}$, 11.1% $K_{2}O$, and 3.7% MgO[cite: 875].",
+    "keywords": ["composition", "T65 MAP", "Sulphate of ammonia", "Epsom salt"]
+  },
+  {
+    "question": "How should the T65 fertilizer mixtures be prepared and applied to nursery tea plants?",
+    "answer": "The fertilizer mixture should be applied using watering cans[cite: 881]. [cite_start] If using the T65 DAP mixture, it must be well ground and made into a paste before dissolving it in the required quantity of water due to its limited solubility[cite: 882]. [cite_start]Following each application, the foliage must be washed with clean water to avoid scorch of leaves[cite: 888].",
+    "keywords": [
+      "application method",
+      "watering can",
+      "leaf scorch",
+      "T65 DAP preparation"
+    ]
+  },
+  {
+    "question": "What is the recommended dosage and frequency for applying the T65 mixtures?",
+    "answer": "Application should commence from the time of rooting, which is approximately 2 to 3 months after planting of cuttings[cite: 883]. [cite_start]Initially, apply 35 g of T65 MAP or T65 DAP dissolved in 5 liters of water per square meter at fortnightly intervals[cite: 883, 884]. [cite_start]As growth progresses, which is approximately 5 to 6 months after planting, the dosage should be increased to 70 g in 5 liters of water per square meter at fortnightly intervals[cite: 886, 887].",
+    "keywords": [
+      "dosage",
+      "frequency",
+      "rooting stage",
+      "fortnightly intervals"
+    ]
+  },
+  {
+    "question": "How much T65 fertilizer is required to raise 10,000 tea plants in different regions?",
+    "answer": "The estimated requirement for 10,000 plants depends on the length of the nursery period in different regions[cite: 892]. [cite_start]For the low country and mid-country regions, where the nursery period is 8 to 10 months, approximately 60 to 80 kg of the mixture is needed[cite: 894, 895, 896, 897, 900, 901, 902]. [cite_start]For the up country region, which has a nursery period of 10 to 12 months, about 80 to 90 kg is required[cite: 894, 898, 900, 903].",
+    "keywords": [
+      "estimation",
+      "10,000 plants",
+      "low country",
+      "up country",
+      "mid-country"
+    ]
+  },
+  {
+    "question": "Why is the foliar application of zinc sulphate recommended, and how should it be applied?",
+    "answer": "Foliar application of zinc sulphate is recommended to induce bud break and activate the growth of nursery plants[cite: 904]. [cite_start]About a week after the first application of T65, 14 g of zinc sulphate dissolved in 4.5 liters of water should be sprayed to wet approximately 4500 plants using knapsack sprayers[cite: 906]. [cite_start] This application should be repeated at 4 to 6 weeks intervals, up to a maximum of 4 applications[cite: 907].",
+    "keywords": [
+      "zinc sulphate",
+      "foliar application",
+      "bud break",
+      "knapsack sprayer"
+    ]
+  },
+  {
+    "question": "What are the primary fertilizer mixtures recommended for immature tea plants?",
+    "answer": "Fertilizer mixture T200 is recommended from field planting to the commencement of plucking. A separate mixture, T750, which has a higher proportion of nitrogen, is recommended from the commencement of plucking until the first prune.",
+    "keywords": ["T200", "T750", "immature tea", "fertilizer mixtures"]
+  },
+  {
+    "question": "How should soil pH be managed for immature tea from field planting to the commencement of plucking?",
+    "answer": "The soil pH should be maintained between 4.5 and 5.5 for optimal growth. If the pH is below 4.5 at the time of planting, 500 kg of dolomitic limestone per hectare should be applied in both the 1st and 2nd years, preferably during wet weather conditions. A strict interval of 4 to 6 weeks must be maintained between the ground fertilizer application and the dolomite application.",
+    "keywords": [
+      "soil pH",
+      "dolomitic limestone",
+      "pH correction",
+      "application interval"
+    ]
+  },
+  {
+    "question": "What is the composition and nutrient value of the T200 fertilizer mixture?",
+    "answer": "The T200 mixture consists of 100 parts Sulphate of ammonia, 50 parts Eppawela rock phosphate, 25 parts Muriate of potash, and 25 parts Kieserite, totaling 200 parts. This formulation provides approximately 10.3% N, 6.9% P2O5, 7.5% K2O, and 3.0% MgO.",
+    "keywords": [
+      "T200 composition",
+      "Sulphate of ammonia",
+      "Eppawela rock phosphate",
+      "Kieserite"
+    ]
+  },
+  {
+    "question": "How should the T200 ground fertilizer be physically applied to the young tea plants?",
+    "answer": "In the early stages, the fertilizer should be applied in a ring around the plant at a radius of 15 to 20 cm (6 to 8 inches).  Care must be taken not to apply it too close to the base to prevent bark scorch. On steep slopes, it should be applied in a semi-circle on the upper side, and it must be dibbled into the soil to a depth not exceeding 7.5 cm (3 inches).",
+    "keywords": [
+      "method of application",
+      "ring application",
+      "bark scorch",
+      "dibbling"
+    ]
+  },
+  {
+    "question": "What foliar application is recommended to mitigate the effects of drought on immature tea?",
+    "answer": "A 2% solution of sulphate of potash is recommended at fortnightly intervals, applied at least a month prior to the onset of the dry period.  Urea (2%) can be included in the spray solution to enhance potassium absorption, but Zinc sulphate should never be mixed with sulphate of potash. No benefits will be gained if this spray is applied after the dry weather has already set in.",
+    "keywords": [
+      "drought mitigation",
+      "sulphate of potash",
+      "foliar application",
+      "potassium absorption"
+    ]
+  },
+  {
+    "question": "What is the recommended dosage and application method for the T750 mixture once plucking commences?",
+    "answer": "From the 3rd year onwards until the first prune, the T750 mixture should be applied at a rate of 1,750 kg per hectare per year, divided into four or more applications. Because the tea should have formed a good cover by this time, the fertilizer can be safely broadcasted over the area rather than applied in individual rings.",
+    "keywords": ["T750 mixture", "dosage", "broadcasting", "plucking stage"]
+  },
+  {
+    "question": "What is the recommended soil pH for mature tea fields and how is it maintained?",
+    "answer": "The recommended soil pH for mature tea fields is between 4.5 and 5.5. To maintain this level, dolomitic limestone should be applied. The soil pH must be checked prior to every prune, and the appropriate rate of dolomite should be applied, ideally a few weeks before pruning. For example, if the soil pH is below 3.9, 2500 kg/ha of dolomite should be applied, whereas a pH above 4.5 requires only 1000 kg/ha.",
+    "keywords": [
+      "soil pH",
+      "dolomitic limestone",
+      "pruning",
+      "pH correction",
+      "mature tea"
+    ]
+  },
+  {
+    "question": "What are the specifications for the dolomitic limestone used in tea fields?",
+    "answer": "The dolomitic limestone must contain a minimum of 18% MgO. Regarding particle size, approximately 100% of the particles must pass through a 30-mesh screen, and 40 to 60% of the particles must pass through a 100-mesh screen.",
+    "keywords": [
+      "dolomitic limestone",
+      "specifications",
+      "MgO",
+      "mesh size",
+      "particle size"
+    ]
+  },
+  {
+    "question": "How is the 'potential yield' of a mature tea field calculated?",
+    "answer": "The annual potential yield is defined as the highest yield achieved in a particular year of the pruning cycle, based on the immediate past three cycles. To calculate it, you must tabulate the annual yield data of each field (in kg made tea per ha per year) over the previous 3 cycles. If data for three cycles is not available, data from the past two cycles can be used. The highest achieved yield for a given year in the cycle becomes the potential yield for that year.",
+    "keywords": [
+      "potential yield",
+      "yield calculation",
+      "pruning cycle",
+      "made tea per ha"
+    ]
+  },
+  {
+    "question": "What is the composition of the basal mixture recommended for mature VP tea in the low country (VP/LC)?",
+    "answer": "The basal mixture for mature VP tea in the low country, designated as VP/LC, consists of 587 parts Urea (270 N), 126 parts Eppawela Rock Phosphate (ERP) (35 P2O5), and 167 parts Muriate of Potash (MOP) (100 K2O), totaling 880 parts. This mixture provides approximately 30.7% N, 4.1% P2O5, and 11.4% K2O.",
+    "keywords": [
+      "VP/LC",
+      "basal mixture",
+      "Urea",
+      "Eppawela Rock Phosphate",
+      "Muriate of Potash",
+      "low country"
+    ]
+  },
+  {
+    "question": "What should be done if symptoms of manganese deficiency are observed in mature tea?",
+    "answer": "If symptoms of manganese deficiency—such as interveinal chlorosis and reddish-brown necrotic spots on the leaf blade—are observed, the soil pH should be tested first. If the pH is above 5.5, a 2% manganese sulphate solution should be applied, preferably at 3 to 4-week intervals, until the symptoms disappear. Additionally, the scheduled application of dolomite must be withheld.",
+    "keywords": [
+      "manganese deficiency",
+      "soil pH",
+      "manganese sulphate",
+      "chlorosis",
+      "dolomite"
+    ]
+  },
+  {
+    "question": "How can magnesium deficiency be corrected in mature tea fields?",
+    "answer": "When magnesium deficiency symptoms occur, commercial Epsom salt should be sprayed initially at a rate of 48 kg per ha per year, divided into four applications at three-month intervals. After this application, the soil must be tested for its Mg content. If the soil Mg is below the critical level of 60 ppm, kieserite should be applied at a rate of 125 kg per ha per year by mixing it with the basal NPK mixture or with urea in situ.",
+    "keywords": [
+      "magnesium deficiency",
+      "Epsom salt",
+      "soil testing",
+      "kieserite",
+      "Mg content"
+    ]
+  },
+  {
+    "question": "Which fertilizer mixture is recommended for clonal mother bushes?",
+    "answer": "The fertilizer mixture T200 is recommended for clonal mother bushes.",
+    "keywords": ["T200", "clonal mother bushes", "fertilizer recommendation"]
+  },
+  {
+    "question": "What is the exact composition of the T200 fertilizer mixture?",
+    "answer": "The T200 mixture consists of 100 parts Sulphate of ammonia, 50 parts Eppawela rock phosphate, 25 parts Muriate of potash, and 25 parts Kieserite, making a total of 200 parts. This mixture yields approximately 10.3% Nitrogen (N), 6.9% Phosphate (P2O5), 7.5% Potash (K2O), and 3.0% Magnesium Oxide (MgO).",
+    "keywords": [
+      "T200 composition",
+      "Sulphate of ammonia",
+      "Eppawela rock phosphate",
+      "nutrient percentages"
+    ]
+  },
+  {
+    "question": "What is the recommended dosage and frequency for applying the T200 mixture?",
+    "answer": "Applications can commence approximately two months after planting. The fertilizer should be applied four times per year. The recommended dosage per plant for each application is 21 g in the 1st year, 28 g in the 2nd year, 42 g in the 3rd year, and between 56 to 84 g in the 4th year.",
+    "keywords": ["dosage", "frequency", "application rates", "annual schedule"]
+  },
+  {
+    "question": "How and when should zinc sulphate be applied to clonal mother bushes?",
+    "answer": "A 2% solution of zinc sulphate (8 kg in 400 liters of water per hectare) is recommended for foliar application. It should be applied using knapsack sprayers.  This application must be done 2 weeks prior to harvesting the cuttings.",
+    "keywords": [
+      "zinc sulphate",
+      "foliar application",
+      "knapsack sprayer",
+      "harvesting cuttings"
+    ]
+  },
+  {
+    "question": "Which fertilizer mixture is recommended for young tea seed bearers from field planting up to their second year?",
+    "answer": "The mixture T200 is recommended for young tea plants during this stage. Fertilizer applications can commence approximately two months after planting.",
+    "keywords": [
+      "T200",
+      "young tea seed bearers",
+      "first year",
+      "second year",
+      "fertilizer application"
+    ]
+  },
+  {
+    "question": "What is the recommended dosage for the T200 mixture in the first two years?",
+    "answer": "In the 1st year, the T200 mixture should be applied at 15 or 21 g per plant per application, given six or four times respectively. In the 2nd year, the dosage increases to 21 or 32 g per plant per application, also given six or four times respectively.",
+    "keywords": [
+      "T200 dosage",
+      "application frequency",
+      "first year",
+      "second year"
+    ]
+  },
+  {
+    "question": "What is the composition and dosage of the T750 fertilizer mixture for 3rd and 4th-year tea seed bearers?",
+    "answer": "The T750 mixture is composed of 500 parts Sulphate of ammonia, 100 parts Eppawela rock phosphate, 100 parts Muriate of potash, and 50 parts Kieserite. It should be applied four times a year, at a rate of 60 g per plant per application in the 3rd year, and 100 g per plant per application in the 4th year.",
+    "keywords": [
+      "T750",
+      "composition",
+      "dosage",
+      "third year",
+      "fourth year",
+      "tea seed bearers"
+    ]
+  },
+  {
+    "question": "Which fertilizer mixture is recommended for mature tea seed bearers and what does it contain?",
+    "answer": "The U330 mixture is recommended for mature tea seed bearers. It contains 130 parts Urea, 100 parts Eppawela rock phosphate, and 100 parts Muriate of potash, providing approximately 18.1% N, 8.6% P2O5, and 18.2% K2O.",
+    "keywords": [
+      "U330",
+      "mature tea seed bearers",
+      "Urea",
+      "Eppawela rock phosphate",
+      "Muriate of potash"
+    ]
+  },
+  {
+    "question": "What is the recommended application schedule and the important restriction for fertilizing mature tea seed bearers?",
+    "answer": "The U330 mixture should be applied at a rate of 275 g per plant per application, three times each year. However, it is very important to avoid any fertilizer applications in the 3 months prior to flowering. ",
+    "keywords": [
+      "application schedule",
+      "U330 dosage",
+      "flowering restriction",
+      "mature seed bearers"
+    ]
+  },
+  {
+    "question": "What are the recommended rates of dolomite application to correct soil pH before planting rehabilitation grasses?",
+    "answer": "Dolomite is recommended at the rate of 2000 kg per ha for the low country (below 600m), 3000 kg per ha for the mid-country (600-1200m), and 4000 kg per ha for the up country (above 1200m). This quantity should be distributed evenly on the soil surface before planting the grass.",
+    "keywords": [
+      "dolomite",
+      "soil pH",
+      "rehabilitation grasses",
+      "application rates",
+      "elevation"
+    ]
+  },
+  {
+    "question": "Under what condition should dolomite application be avoided when preparing land for rehabilitation grasses?",
+    "answer": "If the soil pH level is already above 5.5, the application of dolomite should be avoided.",
+    "keywords": [
+      "soil pH",
+      "dolomite",
+      "avoid application",
+      "pH threshold"
+    ]
+  },
+  {
+    "question": "What is the specific composition of the U625 fertilizer mixture recommended for rehabilitation grasses?",
+    "answer": "The U625 mixture consists of 225 parts Urea (46% N), 250 parts Eppawela rock phosphate (28.5% P2O5), and 150 parts Muriate of potash (60% K2O), making a total of 625 parts. This formulation provides approximately 16.6% N, 11.4% P2O5, and 14.4% K2O.",
+    "keywords": [
+      "U625",
+      "fertilizer composition",
+      "Urea",
+      "Eppawela rock phosphate",
+      "Muriate of potash",
+      "nutrient percentages"
+    ]
+  },
+  {
+    "question": "What is the recommended application schedule and dosage for the U625 fertilizer mixture?",
+    "answer": "The U625 mixture should be applied at a rate of 160 kg/ha at the time new shoots sprout, 210 kg/ha after the 1st lopping, and 310 kg/ha each after the 2nd and 3rd lopping.",
+    "keywords": [
+      "application schedule",
+      "U625 dosage",
+      "lopping",
+      "new shoots"
+    ]
+  },
+  {
+    "question": "What is the primary purpose of soil analysis in tea cultivation, and when is it compulsory?",
+    "answer": "Soil analysis is used to determine the nutrient status of the soil so that corrective measures can be taken to amend deficiencies[cite: 2709, 2710]. [cite_start]It is compulsory when making Site Specific Fertilizer Recommendations (SSFR), as these recommendations rely heavily on accurate soil nutrient data[cite: 2715].",
+    "keywords": [
+      "soil analysis",
+      "nutrient status",
+      "SSFR",
+      "Site Specific Fertilizer Recommendation"
+    ]
+  },
+  {
+    "question": "What is the ideal timing and soil condition for taking soil samples for nutrient analysis?",
+    "answer": "Sampling should be carried out after a minimum period of 6 weeks following the last ground fertilizer application[cite: 2720]. [cite_start]The soil should be relatively moist, and sampling must be avoided during severe droughts or periods of heavy rainfall[cite: 2721, 2722].",
+    "keywords": [
+      "timing",
+      "soil condition",
+      "fertilizer application gap",
+      "moisture"
+    ]
+  },
+  {
+    "question": "What are the recommended months for obtaining soil samples for SSFR in different monsoon quarters?",
+    "answer": "For the South-West quarter, samples can be obtained during March/April and September/October[cite: 2724]. [cite_start]For the North-East quarter, sampling should be carried out during September/October[cite: 2724].",
+    "keywords": [
+      "SSFR sampling",
+      "South-West quarter",
+      "North-East quarter",
+      "sampling schedule"
+    ]
+  },
+  {
+    "question": "What tools are recommended for soil sampling, and to what depth should a diagnostic sample be taken?",
+    "answer": "The ordinary post-hole auger is considered the best sampling tool, though an alavangoe (normally used for digging planting holes) is also satisfactory[cite: 2726, 2729]. [cite_start]For standard diagnostic purposes, taking samples to a depth of 15 cm (6 inches) is sufficient[cite: 2731]. ",
+    "keywords": [
+      "post-hole auger",
+      "alavangoe",
+      "sampling tools",
+      "diagnostic depth",
+      "15 cm"
+    ]
+  },
+  {
+    "question": "How should a large field be divided and sampled to ensure the soil sample is representative?",
+    "answer": "A large field should be divided into distinct blocks of about 2 hectares (5 acres) based on topography, slope, drainage, and soil type[cite: 2738, 2764]. [cite_start]From each block, 15 to 20 core samples should be collected randomly in a zigzag manner[cite: 2758, 2764]. [cite_start]It is advisable to take these cores from points closer to the plants where root activity is high[cite: 2758]. ",
+    "keywords": [
+      "representative sample",
+      "field division",
+      "zigzag manner",
+      "core samples",
+      "2 hectares"
+    ]
+  },
+  {
+    "question": "What is the correct procedure for preparing and packing a composite soil sample for the laboratory?",
+    "answer": "The collected soil cores from a block should be thoroughly mixed while breaking up any lumps, and then spread into a layer[cite: 2795]. [cite_start]Small portions should be taken at random from this layer to form a sub-sample of about 0.5 kg (1 lb)[cite: 2795]. [cite_start]This sub-sample must be placed into a clean polythene bag, tied immediately, and properly labeled with a waterproof pen giving location and depth details[cite: 2795, 2796].",
+    "keywords": [
+      "composite sample",
+      "soil preparation",
+      "sub-sample",
+      "polythene bag",
+      "labeling"
+    ]
+  },
+  {
+    "question": "Where should the prepared soil samples be sent for analysis, and what is the payment procedure?",
+    "answer": "Samples should be despatched to the Head of the Soils and Plant Nutrition Division at the TRI in Talawakelle, or to the regional laboratories located in Walahanduwa (Galle) or Hantana (Kandy)[cite: 2798, 2799, 2800]. [cite_start]The total cost of the analysis must be paid prior to commencing, either at the cash counter during submission or via cheque, postal, or money order drawn in favor of the \"Tea Research Institute of Sri Lanka\"[cite: 2801, 2802, 2803].",
+    "keywords": [
+      "sample despatch",
+      "regional laboratories",
+      "payment procedure",
+      "Tea Research Institute"
+    ]
+  },
+  {},
+  {
+    "question": "How should mulching be applied in tea fields, and what materials are recommended?",
+    "answer": "Spread slashed Mana, Guatemala, CO3, or other grasses between the tea rows to cover exposed soil[cite: 283]. [cite_start]This practice minimizes soil erosion, preserves soil moisture, prevents the soil from overheating, and helps control weeds[cite: 285].",
+    "keywords": [
+      "mulching",
+      "Mana grass",
+      "Guatemala grass",
+      "soil moisture",
+      "weed control"
+    ]
+  },
+  {
+    "question": "When is soil forking necessary, and when should it be avoided?",
+    "answer": "Forking should be done once every one or two pruning cycles to loosen compacted soil, which improves water infiltration and root aeration[cite: 297, 298, 299, 300]. [cite_start]However, forking is not necessary in fields where pruned branches have already been buried[cite: 301].",
+    "keywords": ["forking", "soil compaction", "aeration", "water infiltration"]
+  },
+  {
+    "question": "What is the proper method for managing pruned tea branches in the field?",
+    "answer": "Instead of leaving pruned branches scattered on the surface, chop them into smaller pieces and bury them in small trenches cut between the tea rows[cite: 327]. [cite_start]This process adds a significant amount of organic matter and recycled nutrients back into the soil[cite: 328].",
+    "keywords": [
+      "pruned branches",
+      "burying prunings",
+      "trenching",
+      "organic matter"
+    ]
+  },
+  {
+    "question": "What is the correct timing and safety gap for applying Dolomite to the soil?",
+    "answer": "Dolomite should generally be applied once per pruning cycle to correct soil acidity[cite: 427]. [cite_start]It is critical to maintain a time gap of 4 to 6 weeks between applying Dolomite and applying chemical fertilizers[cite: 429].",
+    "keywords": [
+      "Dolomite",
+      "soil acidity",
+      "pH balance",
+      "application timing",
+      "fertilizer gap"
+    ]
+  },
+  {
+    "question": "How should Zinc Sulphate foliar spray be prepared and applied to the tea bushes?",
+    "answer": "The total annual requirement of Zinc Sulphate should be divided into 4 separate applications[cite: 393]. [cite_start]Spray it using a knapsack sprayer within 7 to 14 days after applying soil fertilizer, immediately following a plucking round[cite: 393]. [cite_start]Ensure the final spray solution concentration never exceeds 5%[cite: 392].",
+    "keywords": [
+      "Zinc Sulphate",
+      "foliar spray",
+      "knapsack sprayer",
+      "application timing",
+      "concentration limit"
+    ]
+  },
+  {
+    "question": "What is the recommended dosage and method for applying Bio-char to tea bushes?",
+    "answer": "Apply 250 to 400 grams of Bio-char per tea bush[cite: 438]. [cite_start]It should be forked into the soil around the bush for the best results, and it can be applied directly or mixed with other nutrients[cite: 437, 438].",
+    "keywords": ["Bio-char", "dosage", "soil amendment", "application method"]
+  },
+  {
+    "question": "What is the purpose of the Advisory Circular PU1 (2024)?",
+    "answer": "The circular provides a list of pesticides and plant protection products recommended for use in tea lands, replacing all previous versions to ensure updated safety and residue standards.",
+    "keywords": [
+      "pesticides",
+      "plant protection",
+      "Advisory Circular",
+      "regulations"
+    ]
+  },
+  {
+    "question": "What are the Maximum Residue Limits (MRLs) for Hexaconazole in made tea for Japan and the EU?",
+    "answer": "The Maximum Residue Limit (MRL) for Hexaconazole in made tea is 0.01 ppm for Japan and 0.05 ppm for the European Union.",
+    "keywords": [
+      "Hexaconazole",
+      "MRL",
+      "pesticide residue",
+      "Japan",
+      "European Union"
+    ]
+  },
+  {
+    "question": "Which advisory circular should be referred to for the chemical control of weeds using Glyphosate?",
+    "answer": "For information regarding the use of Glyphosate (a weedicide), users should refer to Advisory Circular PU3.",
+    "keywords": ["Glyphosate", "weedicide", "PU3", "weed control"]
+  },
+  {
+    "question": "What is the MRL for Emamectin Benzoate in tea for the European Union?",
+    "answer": "The Maximum Residue Limit (MRL) for Emamectin Benzoate in made tea for the European Union is 0.01 ppm.",
+    "keywords": ["Emamectin Benzoate", "MRL", "European Union", "pesticide"]
+  },
+  {
+    "question": "Which advisory circular provides specific instructions for the chemical control of tea diseases?",
+    "answer": "Advisory Circular PU2 provides the specific guidelines and recommended chemicals for the control of diseases in tea cultivation.",
+    "keywords": ["disease control", "PU2", "fungicides", "tea cultivation"]
+  },
+  {
+    "question": "What are the MRL standards for Fipronil in Japan and the EU?",
+    "answer": "For Fipronil, the Maximum Residue Limit (MRL) is set at 0.002 ppm for Japan and 0.005 ppm for the European Union.",
+    "keywords": ["Fipronil", "MRL", "Japan", "EU residue limits"]
+  },
+  {
+    "question": "What is the recommended MRL for Glufosinate ammonium in the EU market?",
+    "answer": "The Maximum Residue Limit (MRL) for Glufosinate ammonium in made tea for the European Union is 0.10 ppm.",
+    "keywords": ["Glufosinate ammonium", "weedicide", "MRL", "European Union"]
+  },
+  {
+    "question": "What is the recommended approach for disease management in tea cultivation?",
+    "answer": "An integrated approach (Integrated Approach) including agronomic, biological, and chemical methods is recommended for managing diseases in tea cultivation.",
+    "keywords": ["disease management", "integrated approach", "tea cultivation"]
+  },
+  {
+    "question": "What are the two primary categories of fungicides used for disease control in tea?",
+    "answer": "The two primary categories used are Contact Fungicides and Systemic Fungicides.",
+    "keywords": ["fungicides", "contact fungicides", "systemic fungicides"]
+  },
+  {
+    "question": "What is the key difference between contact fungicides and systemic fungicides?",
+    "answer": "Contact fungicides destroy pathogens only through direct contact and are not absorbed by plant tissues, whereas systemic fungicides are absorbed into plant tissues, providing better disease control.",
+    "keywords": ["contact fungicides", "systemic fungicides", "plant tissues"]
+  },
+  {
+    "question": "Which chemical is recommended to control stem decay occurring on pruning surfaces?",
+    "answer": "The active ingredient 'Tar Acids 80 g/L SL', sold under the trade name 'Brunolium Plantarium', is recommended for controlling stem decay.",
+    "keywords": ["stem decay", "Tar Acids", "Brunolium", "pruning surfaces"]
+  },
+  {
+    "question": "What is the recommended dosage and application method for Brunolium Plantarium?",
+    "answer": "Apply as a 15% solution (1.5 liters of Brunolium dissolved in 8.5 liters of water). Then, dissolve 35 liters of this solution in 200 liters of water and apply or spray onto the pruning surfaces.",
+    "keywords": ["Brunolium", "dosage", "application", "recommended amount"]
+  },
+  {
+    "question": "How long is the mandatory resting period for treated tea bushes?",
+    "answer": "Treated tea bushes require a resting period of 8 weeks during which plucking must be suspended.",
+    "keywords": ["resting period", "plucking suspension", "treatment"]
+  },
+  {
+    "question": "What is the specific dosage and application method for Oxyfluorfen in new tea clearings?",
+    "answer": "For fields from pruning to tipping, apply 1.2 liters of 24% Oxyfluorfen (Goal 2E) or 700 ml of 48% Oxyfluorfen (Goal 4F) in 500 liters of water per hectare. It must be applied specifically to moist soil.",
+    "keywords": ["Oxyfluorfen", "Goal 2E", "Goal 4F", "moist soil", "dosage"]
+  },
+  {
+    "question": "What are the calibration settings for a knapsack sprayer used in tea weed control?",
+    "answer": "The sprayer should be set to a pressure of 1-2 bars, with the nozzle maintained at a height of 35-50 cm from the ground. This setup should deliver a spray volume of 450-500 liters per hectare.",
+    "keywords": [
+      "sprayer calibration",
+      "bar pressure",
+      "nozzle height",
+      "spray volume"
+    ]
+  },
+  {
+    "question": "What are the technical specifications for the recommended Poly jet/Flood jet nozzles?",
+    "answer": "Two nozzle types are recommended: the Yellow nozzle (0.5m spray width, 0.6 L/min output) and the Green nozzle (1.0m spray width, 1.2 L/min output).",
+    "keywords": [
+      "Yellow nozzle",
+      "Green nozzle",
+      "spray width",
+      "nozzle output"
+    ]
+  },
+  {
+    "question": "Which herbicide is recommended for mature/plucking tea fields and what is its dosage?",
+    "answer": "For mature tea fields (after first pruning), Diuron (80%) is recommended, though the specific dosage for the 80% concentration should be verified against the official registered label to ensure zero residue.",
+    "keywords": ["Diuron", "mature tea", "plucking fields", "weed control"]
+  },
+  {
+    "question": "What are the mandatory PPE and maintenance steps for herbicide operators?",
+    "answer": "Operators must wear full protective clothing during mixing and spraying. Post-operation, they must clean the tank and nozzles, and wash both themselves and their clothing thoroughly. Empty containers must never be thrown into waterways.",
+    "keywords": [
+      "PPE",
+      "safety maintenance",
+      "decontamination",
+      "environmental safety"
+    ]
+  },
+  {
+    "question": "How is a 'spray guard' used to protect the tea crop?",
+    "answer": "A spray guard must be attached to the sprayer to prevent drift onto peripheral tea branches and green stems, which helps avoid chemical damage to the crop.",
+    "keywords": ["spray guard", "drift prevention", "crop safety"]
+  },
+  {
+    "question": "What is the recommended chemical for soil fumigation in tea nurseries to control nematodes?",
+    "answer": "Methylisothiocyanate (Metam) under the trade name 'Metam Sodium' is recommended. The dosage is 800 ml per cube, which should be sprayed uniformly over the prepared soil heap and mixed immediately.",
+    "keywords": ["Nematodes", "Soil Fumigation", "Metam Sodium", "Tea Nursery"]
+  },
+  {
+    "question": "Which chemical should be used for precautionary measures against nematodes when planting tea saplings?",
+    "answer": "Fluopyram (Velum 400 SC) is recommended. The dosage is 2 liters per hectare in 500 liters of water (or 40 ml of solution per plant), applied after planting so that the soil is well-moistened.",
+    "keywords": ["Fluopyram", "Velum 400 SC", "Nematodes", "Planting"]
+  },
+  {
+    "question": "What is the chemical treatment for nematode control in mature tea fields after pruning?",
+    "answer": "Fluopyram (Velum 400 SC) should be used at a rate of 2.5 liters per hectare in 1000 liters of water (80 ml per bush) during the level pruning stage.",
+    "keywords": ["Mature Tea", "Fluopyram", "Pruning", "Nematodes"]
+  },
+  {
+    "question": "How is Tea Tortrix controlled in tea nursery plants?",
+    "answer": "Emamectin Benzoate (Proclaim 5 SG) is used. A 0.028% solution (2.8g in 10 liters of water) should be applied using a knapsack sprayer for every 1000 plants.",
+    "keywords": [
+      "Tea Tortrix",
+      "Emamectin Benzoate",
+      "Proclaim 5 SG",
+      "Nursery"
+    ]
+  },
+  {
+    "question": "What treatment is recommended for the control of Looper caterpillars (Kambili Panuwan) in immature plants?",
+    "answer": "Chlorantraniliprole 200g/L SC (Trade name: Coragen) is recommended. Mix 1 ml per liter of water and apply 200-400 ml of the solution per immature plant, ensuring the soil is well-moistened.",
+    "keywords": [
+      "Looper Caterpillar",
+      "Chlorantraniliprole",
+      "Coragen",
+      "Immature Tea"
+    ]
+  },
+  {
+    "question": "What is the prescribed Pre-Harvest Interval (PHI) for Chlorantraniliprole when used on tea?",
+    "answer": "The Pre-Harvest Interval (PHI) for Chlorantraniliprole (Coragen) is 1 week.",
+    "keywords": ["PHI", "Chlorantraniliprole", "Harvesting", "Safety"]
   }
 ]
-
