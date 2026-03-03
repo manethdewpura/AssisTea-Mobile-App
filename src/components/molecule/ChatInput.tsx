@@ -52,7 +52,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
           placeholderTextColor={colors.textSecondary}
           value={value}
           onChangeText={onChangeText}
-          multiline
+          multiline={false}
+          blurOnSubmit
           editable={!loading && !disabled}
           onSubmitEditing={handleSend}
           returnKeyType="send"

@@ -45,7 +45,7 @@ const LanguageSelector: React.FC = () => {
                   language === 'en' ? colors.textInverse : colors.textSecondary,
               },
             ]}
-            allowFontScaling={false}
+            maxFontSizeMultiplier={1.5}
             numberOfLines={1}
             ellipsizeMode="clip"
           >
@@ -72,7 +72,7 @@ const LanguageSelector: React.FC = () => {
                   language === 'si' ? colors.textInverse : colors.textSecondary,
               },
             ]}
-            allowFontScaling={false}
+            maxFontSizeMultiplier={1.5}
             numberOfLines={1}
             ellipsizeMode="clip"
           >
@@ -99,7 +99,7 @@ const LanguageSelector: React.FC = () => {
                   language === 'ta' ? colors.textInverse : colors.textSecondary,
               },
             ]}
-            allowFontScaling={false}
+            maxFontSizeMultiplier={1.5}
             numberOfLines={1}
             ellipsizeMode="clip"
           >

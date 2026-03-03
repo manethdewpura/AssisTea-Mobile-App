@@ -308,9 +308,10 @@ class KnowledgeBaseManager(private val context: Context) {
         val candidates = mutableListOf<MatchResult>()
 
         for (entry in knowledgeBase) {
-            val effectiveEmbedding = entry.embedding ?: offlineNLPEngine.generateEmbedding(entry.question)
-            if (effectiveEmbedding == null) continue
-            val similarity = offlineNLPEngine.cosineSimilarity(queryEmbedding, effectiveEmbedding).toDouble()
+            // Skip entries without a precomputed embedding to avoid
+            // generating embeddings on the hot query path.
+            val entryEmbedding = entry.embedding ?: continue
+            val similarity = offlineNLPEngine.cosineSimilarity(queryEmbedding, entryEmbedding).toDouble()
             if (similarity >= minSimilarity) {
                 candidates.add(
                     MatchResult(

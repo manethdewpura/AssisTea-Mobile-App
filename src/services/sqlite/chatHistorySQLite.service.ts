@@ -82,7 +82,7 @@ class ChatHistorySQLiteService {
       SELECT id, question, answer, source, confidence, timestamp, language
       FROM chat_messages
       WHERE language = ?
-      ORDER BY timestamp ASC
+      ORDER BY timestamp ASC, id ASC
     `;
 
     const result = await databaseService.executeSql(query, [language]);

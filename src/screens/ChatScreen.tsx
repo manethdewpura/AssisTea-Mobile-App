@@ -63,6 +63,7 @@ const ChatScreen: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [initializing, setInitializing] = useState(false);
   const pendingQuestionRef = useRef<string | null>(null);
+  const historyRequestIdRef = useRef(0);
 
   // Initialize model on mount
   useEffect(() => {
@@ -95,11 +96,17 @@ const ChatScreen: React.FC = () => {
 
   // Load chat history from SQLite when language changes
   useEffect(() => {
+    const currentRequestId = ++historyRequestIdRef.current;
+    let isCurrent = true;
+
     const loadHistory = async () => {
       try {
         const history = await chatHistorySQLiteService.getMessagesByLanguage(
           language,
         );
+        if (!isCurrent || currentRequestId !== historyRequestIdRef.current) {
+          return;
+        }
         dispatch(setMessages(history));
       } catch (err) {
         console.error('[ChatScreen] Failed to load chat history:', err);
@@ -107,6 +114,10 @@ const ChatScreen: React.FC = () => {
     };
 
     loadHistory();
+
+    return () => {
+      isCurrent = false;
+    };
   }, [dispatch, language]);
 
   // Auto-scroll to bottom when new messages arrive
