@@ -1,6 +1,17 @@
 import { fieldSQLiteService } from './sqlite/fieldSQLite.service';
 import { Field } from '../models/Field';
-import firestore from '@react-native-firebase/firestore';
+import firestore, {
+    getFirestore,
+    collection,
+    doc,
+    query,
+    where,
+    getDocs,
+    setDoc,
+    deleteDoc,
+    Timestamp,
+} from '@react-native-firebase/firestore';
+
 
 /**
  * Unified Field Service - SQLite-First Offline Architecture
@@ -11,25 +22,23 @@ class UnifiedFieldService {
      */
     private generateFirestoreId(): string {
         // Use Firestore's built-in auto-ID generation to avoid weak randomness and collisions
-        return firestore().collection('fields').doc().id;
+        return doc(collection(getFirestore(), 'fields')).id;
     }
 
     /**
      * Sync to Firebase using the SAME ID
      */
     private async syncToFirebase(field: Field): Promise<void> {
-        await firestore()
-            .collection('fields')
-            .doc(field.id)
-            .set({
-                name: field.name,
-                slope: field.slope,
-                maxWorkers: field.maxWorkers,
-                location: field.location || '',
-                plantationId: field.plantationId,
-                createdAt: firestore.Timestamp.fromDate(field.createdAt),
-                updatedAt: firestore.Timestamp.fromDate(field.updatedAt),
-            });
+        const db = getFirestore();
+        await setDoc(doc(db, 'fields', field.id), {
+            name: field.name,
+            slope: field.slope,
+            maxWorkers: field.maxWorkers,
+            location: field.location || '',
+            plantationId: field.plantationId,
+            createdAt: Timestamp.fromDate(field.createdAt),
+            updatedAt: Timestamp.fromDate(field.updatedAt),
+        });
 
         await fieldSQLiteService.markAsSynced(field.id);
         console.log('🔄 Synced to Firebase:', field.name);
@@ -66,10 +75,8 @@ class UnifiedFieldService {
 
     async deleteField(fieldId: string): Promise<void> {
         await fieldSQLiteService.deleteField(fieldId);
-        firestore()
-            .collection('fields')
-            .doc(fieldId)
-            .delete()
+        const db = getFirestore();
+        deleteDoc(doc(db, 'fields', fieldId))
             .catch(error => {
                 console.warn('⚠️ Failed to delete field from Firebase:', fieldId, error);
             });
@@ -85,10 +92,10 @@ class UnifiedFieldService {
 
     async pullFromFirebase(plantationId: string): Promise<void> {
         try {
-            const snapshot = await firestore()
-                .collection('fields')
-                .where('plantationId', '==', plantationId)
-                .get();
+            const db = getFirestore();
+            const snapshot = await getDocs(
+                query(collection(db, 'fields'), where('plantationId', '==', plantationId))
+            );
 
             for (const doc of snapshot.docs) {
                 const data = doc.data();
