@@ -1,4 +1,4 @@
-import { backendService } from './backend.service';
+import { backendService, HttpError } from './backend.service';
 import { syncQueueService } from './syncQueue.service';
 import { activityLogsSyncService } from './activityLogsSync.service';
 
@@ -74,28 +74,34 @@ export const backgroundSyncService = {
                                 return { id: item.id, success: true };
                             })
                             .catch(async (error) => {
-                                const statusCode = (error as any)?.statusCode;
-                                const isNetworkFailure = (error as any)?.isNetworkFailure === true;
+                                let statusCode: number | undefined;
+                                let isNetworkFailure = false;
 
-                                if (statusCode && statusCode >= 400 && statusCode < 500) {
-                                    // 4xx = Client error
-                                    // Non-retriable: mark as synced to stop retrying
-                                    await syncQueueService.markAsSynced(item.id);
-                                    console.warn(
-                                        `[BackgroundSync] Item ${item.id} rejected by server (${statusCode}), marking as synced:`,
-                                        error?.message?.substring(0, 200),
-                                    );
-                                    return { id: item.id, success: true }; // Count as handled
+                                if (error instanceof HttpError) {
+                                    statusCode = error.statusCode;
+                                    isNetworkFailure = error.isNetworkFailure === true;
                                 }
 
-                                // 5xx or network failure = potentially transient, retry
+                                if (statusCode && statusCode >= 400 && statusCode < 500) {
+                                    // Treat as failed so it participates in retry/dead-letter handling
+                                    await syncQueueService.incrementSyncAttempt(item.id);
+                                    const attempts = (item.sync_attempts ?? 0) + 1;
+                                    console.warn(
+                                        `[BackgroundSync] Item ${item.id} rejected by server (${statusCode})` +
+                                        ` (attempt ${attempts}/${this.MAX_SYNC_ATTEMPTS}):`,
+                                        error,
+                                    );
+                                    return { id: item.id, success: false, attempts };
+                                }
+
+                                // 5xx or network failure 
                                 await syncQueueService.incrementSyncAttempt(item.id);
                                 const attempts = (item.sync_attempts ?? 0) + 1;
                                 console.error(
                                     `[BackgroundSync] Failed to sync item ${item.id} (attempt ${attempts}/${this.MAX_SYNC_ATTEMPTS})` +
                                     `${statusCode ? ` [HTTP ${statusCode}]` : ''}` +
                                     `${isNetworkFailure ? ' [NETWORK]' : ''}:`,
-                                    error?.message?.substring(0, 200),
+                                    error,
                                 );
                                 return { id: item.id, success: false, attempts };
                             })
