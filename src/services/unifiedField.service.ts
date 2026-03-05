@@ -1,6 +1,6 @@
 import { fieldSQLiteService } from './sqlite/fieldSQLite.service';
 import { Field } from '../models/Field';
-import firestore, {
+import {
     getFirestore,
     collection,
     doc,
@@ -97,10 +97,10 @@ class UnifiedFieldService {
                 query(collection(db, 'fields'), where('plantationId', '==', plantationId))
             );
 
-            for (const doc of snapshot.docs) {
-                const data = doc.data();
+            for (const fieldDoc of snapshot.docs) {
+                const data = fieldDoc.data();
                 const field: Field = {
-                    id: doc.id,
+                    id: fieldDoc.id,
                     name: data.name,
                     slope: data.slope,
                     maxWorkers: data.maxWorkers,
