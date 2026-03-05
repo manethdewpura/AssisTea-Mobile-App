@@ -1,4 +1,4 @@
-import { backendService } from './backend.service';
+import { backendService, HttpError } from './backend.service';
 import { syncQueueService } from './syncQueue.service';
 import { activityLogsSyncService } from './activityLogsSync.service';
 
@@ -74,12 +74,34 @@ export const backgroundSyncService = {
                                 return { id: item.id, success: true };
                             })
                             .catch(async (error) => {
-                                // Track failed attempt
+                                let statusCode: number | undefined;
+                                let isNetworkFailure = false;
+
+                                if (error instanceof HttpError) {
+                                    statusCode = error.statusCode;
+                                    isNetworkFailure = error.isNetworkFailure === true;
+                                }
+
+                                if (statusCode && statusCode >= 400 && statusCode < 500) {
+                                    // Treat as failed so it participates in retry/dead-letter handling
+                                    await syncQueueService.incrementSyncAttempt(item.id);
+                                    const attempts = (item.sync_attempts ?? 0) + 1;
+                                    console.warn(
+                                        `[BackgroundSync] Item ${item.id} rejected by server (${statusCode})` +
+                                        ` (attempt ${attempts}/${this.MAX_SYNC_ATTEMPTS}):`,
+                                        error,
+                                    );
+                                    return { id: item.id, success: false, attempts };
+                                }
+
+                                // 5xx or network failure 
                                 await syncQueueService.incrementSyncAttempt(item.id);
                                 const attempts = (item.sync_attempts ?? 0) + 1;
                                 console.error(
-                                    `[BackgroundSync] Failed to sync item ${item.id} (attempt ${attempts}/${this.MAX_SYNC_ATTEMPTS}):`,
-                                    error
+                                    `[BackgroundSync] Failed to sync item ${item.id} (attempt ${attempts}/${this.MAX_SYNC_ATTEMPTS})` +
+                                    `${statusCode ? ` [HTTP ${statusCode}]` : ''}` +
+                                    `${isNetworkFailure ? ' [NETWORK]' : ''}:`,
+                                    error,
                                 );
                                 return { id: item.id, success: false, attempts };
                             })

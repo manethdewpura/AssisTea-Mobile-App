@@ -3,6 +3,22 @@ import { NetworkError } from '../utils/network.util';
 import { configService } from './config.service';
 
 /**
+ * Custom error for HTTP-related failures.
+ * Extends NetworkError to provide type-safe access to status codes and failure flags.
+ */
+export class HttpError extends NetworkError {
+  public statusCode?: number;
+  public isNetworkFailure?: boolean;
+
+  constructor(message: string, statusCode?: number, isNetworkFailure: boolean = false) {
+    super(message);
+    this.name = 'HttpError';
+    this.statusCode = statusCode;
+    this.isNetworkFailure = isNetworkFailure;
+  }
+}
+
+/**
  * Get the backend base URL from the saved configuration.
  * Throws if no URL has been configured yet.
  */
@@ -34,7 +50,6 @@ export interface MLPredictionsResponse {
 export const backendService = {
   /**
    * Check if backend is available and connected on LAN
-   * Does NOT require internet - backend is on local network
    * Implements retry logic with exponential backoff for resilience
    */
   async checkBackendConnection(): Promise<boolean> {
@@ -109,10 +124,15 @@ export const backendService = {
       ]);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || `Failed to fetch ML predictions: ${response.status}`,
-        );
+        let errorMessage = `Status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          const rawMessage = errorData.message || errorData.error || JSON.stringify(errorData);
+          errorMessage = rawMessage.substring(0, 200);
+        } catch {
+          errorMessage = response.statusText;
+        }
+        throw new Error(`Failed to fetch ML predictions: ${errorMessage}`);
       }
 
       const result: MLPredictionsResponse = await response.json();
@@ -150,11 +170,22 @@ export const backendService = {
 
       const result: BackendSyncResponse = await response.json();
       return result;
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof NetworkError) {
         throw error;
       }
-      throw new NetworkError('Failed to sync current weather to backend');
+
+      const isFetchError = error instanceof TypeError || error?.message?.includes('timeout');
+      if (isFetchError) {
+        throw new HttpError(
+          'Failed to sync current weather to backend (network unreachable)',
+          undefined,
+          true
+        );
+      }
+
+      console.error('[Backend] syncCurrentWeather processing error:', error);
+      throw new Error(`Failed to process current weather sync: ${error.message}`);
     }
   },
 
@@ -185,11 +216,22 @@ export const backendService = {
 
       const result: BackendSyncResponse = await response.json();
       return result;
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof NetworkError) {
         throw error;
       }
-      throw new NetworkError('Failed to sync weather forecast to backend');
+
+      const isFetchError = error instanceof TypeError || error?.message?.includes('timeout');
+      if (isFetchError) {
+        throw new HttpError(
+          'Failed to sync weather forecast to backend (network unreachable)',
+          undefined,
+          true
+        );
+      }
+
+      console.error('[Backend] syncWeatherForecast processing error:', error);
+      throw new Error(`Failed to process weather forecast sync: ${error.message}`);
     }
   },
 
@@ -215,18 +257,52 @@ export const backendService = {
       });
 
       if (!response.ok) {
-        throw new NetworkError(
-          `Failed to sync weather data: ${response.status} ${response.statusText}`,
+        let errorSnippet = '';
+        try {
+          const errorData = await response.json();
+          const rawMessage = errorData.message || errorData.error || JSON.stringify(errorData);
+          errorSnippet = rawMessage.substring(0, 200);
+
+          console.warn(
+            `[Backend] syncAllWeatherData failed - Status: ${response.status}, Message:`,
+            errorSnippet,
+          );
+        } catch {
+          console.warn(
+            `[Backend] syncAllWeatherData failed - Status: ${response.status} ${response.statusText}`,
+          );
+        }
+
+        // Include status code in error message
+        throw new HttpError(
+          `Failed to sync weather data: ${response.status} ${response.statusText}` +
+          (errorSnippet ? ` - ${errorSnippet}` : ''),
+          response.status
         );
       }
 
       const result: BackendSyncResponse = await response.json();
       return result;
-    } catch (error) {
-      if (error instanceof NetworkError) {
+    } catch (error: any) {
+      if (error instanceof HttpError) {
         throw error;
       }
-      throw new NetworkError('Failed to sync weather data to backend');
+
+      // TypeError is thrown by fetch() on true network failure. 
+      const isFetchError = error instanceof TypeError || error?.message?.includes('timeout');
+
+      if (isFetchError) {
+        console.error('[Backend] syncAllWeatherData network failure:', error);
+        throw new HttpError(
+          'Failed to sync weather data to backend (network unreachable)',
+          undefined,
+          true
+        );
+      }
+
+      // This covers JSON parse errors or other non-network issues
+      console.error('[Backend] syncAllWeatherData processing error:', error);
+      throw error;
     }
   },
 };
