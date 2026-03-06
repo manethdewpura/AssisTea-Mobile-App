@@ -9,7 +9,7 @@ interface WeatherState {
   isFetching: boolean;
   error: string | null;
   fetchInterval: number | null;
-  isBackendConnected: boolean;
+  isBackendConnected: boolean | null;
   predictions: MLPrediction[];
   isPredictionMode: boolean;
 }
@@ -25,7 +25,7 @@ const initialState: WeatherState = {
   isFetching: false,
   error: null,
   fetchInterval: null,
-  isBackendConnected: false,
+  isBackendConnected: null,
   predictions: [],
   isPredictionMode: false,
 };
