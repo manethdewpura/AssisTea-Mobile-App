@@ -129,16 +129,21 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
             style={[
               styles.statusBar,
               {
-                backgroundColor: isBackendConnected
-                  ? colors.success
-                  : colors.warning,
+                backgroundColor:
+                  isBackendConnected === true
+                    ? colors.success
+                    : isBackendConnected === false
+                    ? colors.warning
+                    : colors.primary,
               },
             ]}
           >
             <Text style={styles.statusText}>
-              {isBackendConnected
+              {isBackendConnected === true
                 ? '✓ Backend Connected - Data Syncing'
-                : '⚠ Backend Disconnected - Local Mode'}
+                : isBackendConnected === false
+                ? '⚠ Backend Disconnected - Local Mode'
+                : 'Checking backend connection...'}
             </Text>
           </View>
         )}

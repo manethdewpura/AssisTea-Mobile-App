@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '../../hooks';
-import { selectWeather } from '../selectors';
+import { selectWeather, selectConfig } from '../selectors';
 import {
   setFetching,
   setWeatherData,
@@ -22,12 +22,25 @@ interface WeatherListenerProps {
 const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
   const dispatch = useAppDispatch();
   const { location, isBackendConnected } = useAppSelector(selectWeather);
+  const { backendUrl, isInitialized: isConfigInitialized } = useAppSelector(selectConfig);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const backendCheckIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const predictionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Fetch ML predictions from backend (reachable on LAN even without internet)
   const fetchPredictions = useCallback(async () => {
+    if (!isConfigInitialized) {
+      console.log('[WeatherListener] Config not initialized - skipping prediction fetch');
+      return;
+    }
+
+    if (!backendUrl) {
+      console.log('[WeatherListener] Backend URL not configured - cannot fetch predictions');
+      dispatch(clearPredictions());
+      dispatch(setError('Backend URL not configured. Please set it in Setup to enable local predictions.'));
+      return;
+    }
+
     try {
       console.log('[WeatherListener] API unavailable - fetching ML predictions from backend LAN...');
       const result = await backendService.fetchMLPredictions();
@@ -56,7 +69,7 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
       dispatch(clearPredictions());
       dispatch(setError('Weather API and backend both unreachable'));
     }
-  }, [dispatch]);
+  }, [dispatch, backendUrl, isConfigInitialized]);
 
   // Fetch weather data from API - falls back to ML predictions if API fails
   const fetchWeatherData = useCallback(async () => {
@@ -98,19 +111,29 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
     } catch (error: any) {
       console.warn('[WeatherListener] Weather API fetch failed:', error?.message || error);
 
-      // API failed - fall back to ML predictions from backend (reachable on LAN)
-      await fetchPredictions();
+      // API failed - fall back to ML predictions from backend
+      // but only if backend URL is configured.
+      if (isConfigInitialized && backendUrl) {
+        await fetchPredictions();
 
-      // Set up periodic prediction polling (every 15 min) while API is down
-      if (!predictionIntervalRef.current) {
-        predictionIntervalRef.current = setInterval(() => {
-          fetchPredictions();
-        }, 15 * 60 * 1000);
+        // Set up periodic prediction polling (every 15 min) while API is down
+        if (!predictionIntervalRef.current) {
+          predictionIntervalRef.current = setInterval(() => {
+            fetchPredictions();
+          }, 15 * 60 * 1000);
+        }
+      } else {
+        dispatch(clearPredictions());
+        dispatch(
+          setError(
+            'Weather API unavailable. Configure the backend URL in Setup to enable local predictions.',
+          ),
+        );
       }
     } finally {
       dispatch(setFetching(false));
     }
-  }, [dispatch, location, isBackendConnected, fetchPredictions]);
+  }, [dispatch, location, isBackendConnected, fetchPredictions, backendUrl, isConfigInitialized]);
 
   // Check backend connection (always runs - backend is on LAN, not internet)
   const checkBackendConnection = useCallback(async () => {
@@ -146,9 +169,23 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
     };
   }, [fetchWeatherData]);
 
-  // Set up backend connection checking (always runs, independent of internet)
+  // Set up backend connection checking (waits for config and reacts to backend URL)
   useEffect(() => {
-    // Initial backend check
+    // Wait until configuration (including backend URL) has finished loading
+    if (!isConfigInitialized) {
+      return;
+    }
+
+    // If no backend URL is configured, explicitly mark as disconnected and skip checks
+    if (!backendUrl) {
+      dispatch(setBackendConnected(false));
+      return;
+    }
+
+    // Backend URL exists; mark status as unknown while we re-check
+    dispatch(setBackendConnected(null));
+
+    // Initial backend check once URL is available
     checkBackendConnection();
 
     // Check backend connection every 5 minutes
@@ -162,7 +199,7 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
         backendCheckIntervalRef.current = null;
       }
     };
-  }, [checkBackendConnection]);
+  }, [checkBackendConnection, backendUrl, isConfigInitialized, dispatch]);
 
   // Listen to network changes - retry API immediately when network status changes
   useEffect(() => {
@@ -176,14 +213,14 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
         fetchWeatherData();
       }
 
-      // Always check backend regardless of internet (it's on LAN)
-      if (connected) {
+      // Only check backend if a URL has been configured
+      if (connected && backendUrl) {
         checkBackendConnection();
       }
     });
 
     return () => unsubscribe();
-  }, [fetchWeatherData, checkBackendConnection]);
+  }, [fetchWeatherData, checkBackendConnection, backendUrl]);
 
   return <>{children}</>;
 };

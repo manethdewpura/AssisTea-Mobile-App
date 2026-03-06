@@ -9,7 +9,7 @@ interface WeatherState {
   isFetching: boolean;
   error: string | null;
   fetchInterval: number | null;
-  isBackendConnected: boolean;
+  isBackendConnected: boolean | null;
   predictions: MLPrediction[];
   isPredictionMode: boolean;
 }
@@ -25,7 +25,7 @@ const initialState: WeatherState = {
   isFetching: false,
   error: null,
   fetchInterval: null,
-  isBackendConnected: false,
+  isBackendConnected: null,
   predictions: [],
   isPredictionMode: false,
 };
@@ -68,7 +68,7 @@ const weatherSlice = createSlice({
     setFetchInterval(state, action: PayloadAction<number | null>) {
       state.fetchInterval = action.payload;
     },
-    setBackendConnected(state, action: PayloadAction<boolean>) {
+    setBackendConnected(state, action: PayloadAction<boolean | null>) {
       state.isBackendConnected = action.payload;
     },
     setPredictions(state, action: PayloadAction<MLPrediction[]>) {
