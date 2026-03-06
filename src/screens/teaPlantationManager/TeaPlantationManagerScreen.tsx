@@ -17,6 +17,7 @@ import { teaPlantationService } from '../../services';
 import type { TeaPlantation } from '../../common/interfaces';
 import Button from '../../components/atoms/Button';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
+import { useTranslation } from 'react-i18next';
 
 interface TeaPlantationManagerScreenProps {
   onNavigateToWeather?: () => void;
@@ -31,6 +32,7 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
     useNavigation<NativeStackNavigationProp<TeaPlantationStackParamList>>();
   const { userProfile } = useAppSelector(selectAuth);
   const { colors } = useAppSelector(selectTheme);
+  const { t } = useTranslation('common');
   const [plantation, setPlantation] = useState<TeaPlantation | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -78,7 +80,7 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
         ]}
       >
         <Text style={[styles.loadingText, { color: colors.text }]}>
-          Loading plantation data...
+          {t('plantation.loading')}
         </Text>
       </View>
     );
@@ -92,7 +94,7 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
         {plantation ? (
           <View style={styles.plantationContainer}>
             <Text style={[styles.plantationTitle, { color: colors.text }]}>
-              Your Plantation
+              {t('plantation.your_plantation')}
             </Text>
 
             <View
@@ -118,7 +120,7 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
               <Text
                 style={[styles.plantationArea, { color: colors.textSecondary }]}
               >
-                🌱 Area: {plantation.area} acres
+                🌱 {t('plantation.area_label')} {plantation.area} {t('plantation.area_unit')}
               </Text>
               {plantation.description && (
                 <Text
@@ -127,7 +129,7 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
                     { color: colors.textSecondary },
                   ]}
                 >
-                  📝 Description: {plantation.description}
+                  📝 {t('plantation.description_label')} {plantation.description}
                 </Text>
               )}
             </View>
@@ -140,7 +142,7 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
               >
                 <View style={styles.buttonContent}>
                   <Text style={styles.buttonIcon}>📝</Text>
-                  <Text style={styles.buttonText}>Enter Daily Data</Text>
+                  <Text style={styles.buttonText}>{t('plantation.enter_daily_data')}</Text>
                 </View>
               </TouchableOpacity>
 
@@ -152,7 +154,7 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
               >
                 <View style={styles.buttonContent}>
                   <Text style={styles.buttonIcon}>📊</Text>
-                  <Text style={styles.buttonText}>View Daily Data</Text>
+                  <Text style={styles.buttonText}>{t('plantation.view_daily_data')}</Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -165,7 +167,7 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
               >
                 <View style={styles.buttonContent}>
                   <Text style={styles.buttonIcon}>👥</Text>
-                  <Text style={styles.buttonText}>Manage Workers</Text>
+                  <Text style={styles.buttonText}>{t('plantation.manage_workers')}</Text>
                 </View>
               </TouchableOpacity>
 
@@ -177,7 +179,7 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
               >
                 <View style={styles.buttonContent}>
                   <Text style={styles.buttonIcon}>🌱</Text>
-                  <Text style={styles.buttonText}>Manage Fields</Text>
+                  <Text style={styles.buttonText}>{t('plantation.manage_fields')}</Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -190,7 +192,7 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
               >
                 <View style={styles.buttonContent}>
                   <Lucide name="calendar" size={16} color="#fff" style={{ marginRight: 6 }} />
-                  <Text style={styles.buttonText}>Generate Schedule</Text>
+                  <Text style={styles.buttonText}>{t('plantation.generate_schedule')}</Text>
                 </View>
               </TouchableOpacity>
 
@@ -202,17 +204,16 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
               >
                 <View style={styles.buttonContent}>
                   <Text style={styles.buttonIcon}>📋</Text>
-                  <Text style={styles.buttonText}>View Schedule</Text>
+                  <Text style={styles.buttonText}>{t('plantation.view_schedule')}</Text>
                 </View>
               </TouchableOpacity>
             </View>
           </View>
         ) : (
           <View style={styles.noPlantationContainer}>
-            <Text style={styles.noPlantationTitle}>No Plantation Assigned</Text>
+            <Text style={styles.noPlantationTitle}>{t('plantation.no_plantation_title')}</Text>
             <Text style={styles.noPlantationText}>
-              You haven't been assigned to any tea plantation yet. Please
-              contact your administrator.
+              {t('plantation.no_plantation_text')}
             </Text>
           </View>
         )}

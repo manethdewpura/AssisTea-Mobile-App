@@ -16,9 +16,11 @@ import { selectAuth } from '../../store/selectors';
 import { fieldService } from '../../services/field.service';
 import { Field, CreateFieldInput } from '../../models/Field';
 import Slider from '@react-native-community/slider';
+import { useTranslation } from 'react-i18next';
 
 export default function FieldManagementScreen() {
     const { userProfile } = useAppSelector(selectAuth);
+    const { t } = useTranslation('common');
     const [fields, setFields] = useState<Field[]>([]);
     const [loading, setLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
@@ -123,21 +125,21 @@ export default function FieldManagementScreen() {
 
     const handleDelete = (field: Field) => {
         Alert.alert(
-            'Delete Field',
-            `Are you sure you want to delete "${field.name}"?`,
+            t('general.delete'),
+            t('fields.delete_confirm'),
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: t('general.cancel'), style: 'cancel' },
                 {
-                    text: 'Delete',
+                    text: t('general.delete'),
                     style: 'destructive',
                     onPress: async () => {
                         try {
                             await fieldService.deleteField(field.id);
-                            Alert.alert('Success', 'Field deleted successfully');
+                            Alert.alert(t('general.success'), 'Field deleted successfully');
                             loadFields();
                         } catch (error) {
                             console.error('Error deleting field:', error);
-                            Alert.alert('Error', 'Failed to delete field');
+                            Alert.alert(t('general.error'), 'Failed to delete field');
                         }
                     },
                 },
@@ -167,11 +169,11 @@ export default function FieldManagementScreen() {
 
             <View style={styles.fieldDetails}>
                 <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Slope:</Text>
+                    <Text style={styles.detailLabel}>{t('fields.slope_label')}:</Text>
                     <Text style={styles.detailValue}>{item.slope}°</Text>
                 </View>
                 <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Max Workers:</Text>
+                    <Text style={styles.detailLabel}>{t('fields.max_workers_label')}:</Text>
                     <Text style={styles.detailValue}>{item.maxWorkers}</Text>
                 </View>
                 {item.location && (
@@ -198,9 +200,9 @@ export default function FieldManagementScreen() {
             {/* Fields List */}
             {fields.length === 0 ? (
                 <View style={styles.emptyContainer}>
-                    <Text style={styles.emptyText}>No fields configured</Text>
+                    <Text style={styles.emptyText}>{t('fields.no_fields')}</Text>
                     <Text style={styles.emptySubtext}>
-                        Add fields to start generating assignments
+                        {t('fields.no_fields')}
                     </Text>
                 </View>
             ) : (
@@ -215,7 +217,7 @@ export default function FieldManagementScreen() {
             {/* Add Field Button - matching worker button style */}
             <TouchableOpacity style={styles.addButton} onPress={openAddModal}>
                 <Text style={styles.addButtonIcon}>+</Text>
-                <Text style={styles.addButtonText}>Add New Field</Text>
+                <Text style={styles.addButtonText}>{t('fields.add_field')}</Text>
             </TouchableOpacity>
 
             {/* Add/Edit Modal */}
@@ -228,21 +230,21 @@ export default function FieldManagementScreen() {
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <Text style={styles.modalTitle}>
-                            {editingField ? 'Edit Field' : 'Add New Field'}
+                            {editingField ? t('fields.edit_field') : t('fields.add_field')}
                         </Text>
 
                         {/* Field Name */}
-                        <Text style={styles.inputLabel}>Field Name *</Text>
+                        <Text style={styles.inputLabel}>{t('fields.field_name')} *</Text>
                         <TextInput
                             style={styles.input}
                             value={fieldName}
                             onChangeText={setFieldName}
-                            placeholder="e.g., Field A, Upper Valley"
+                            placeholder={t('fields.field_name_placeholder')}
                             placeholderTextColor="#999"
                         />
 
                         {/* Slope Slider */}
-                        <Text style={styles.inputLabel}>Slope: {slope}°</Text>
+                        <Text style={styles.inputLabel}>{t('fields.slope_label')}: {slope}°</Text>
                         <Slider
                             style={styles.slider}
                             minimumValue={5}
@@ -259,7 +261,7 @@ export default function FieldManagementScreen() {
                         </View>
 
                         {/* Max Workers */}
-                        <Text style={styles.inputLabel}>Maximum Workers *</Text>
+                        <Text style={styles.inputLabel}>{t('fields.max_workers_label')} *</Text>
                         <TextInput
                             style={styles.input}
                             value={maxWorkers.toString()}
@@ -278,7 +280,7 @@ export default function FieldManagementScreen() {
                                 onPress={() => setModalVisible(false)}
                                 disabled={saving}
                             >
-                                <Text style={styles.cancelButtonText}>Cancel</Text>
+                                <Text style={styles.cancelButtonText}>{t('general.cancel')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.saveButton, saving && styles.saveButtonDisabled]}
@@ -289,7 +291,7 @@ export default function FieldManagementScreen() {
                                     <ActivityIndicator color="#fff" />
                                 ) : (
                                     <Text style={styles.saveButtonText}>
-                                        {editingField ? 'Update' : 'Save'}
+                                        {editingField ? t('fields.edit_field') : t('general.save')}
                                     </Text>
                                 )}
                             </TouchableOpacity>

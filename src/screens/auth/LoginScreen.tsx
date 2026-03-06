@@ -15,6 +15,7 @@ import Input from '../../components/atoms/Input';
 import PasswordInput from '../../components/atoms/PasswordInput';
 import Button from '../../components/atoms/Button';
 import ThemeSelector from '../../components/organisms/ThemeSelector';
+import { useTranslation } from 'react-i18next';
 import {
   handleFirebaseError,
   logError,
@@ -37,6 +38,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSwitchToSignUp, onSwitchToF
   const [passwordError, setPasswordError] = useState('');
   const [retryCount, setRetryCount] = useState(0);
   const { colors } = useAppSelector(selectTheme);
+  const { t } = useTranslation('common');
   const { showErrorAlert, showToast } = useNotifications();
 
   const validateForm = (): boolean => {
@@ -132,14 +134,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSwitchToSignUp, onSwitchToF
           />
         </View>
         <Text style={[styles.title, { color: colors.textColoredSecondary }]}>
-          Welcome Back
+          {t('auth.login_title')}
         </Text>
         <Text style={[styles.subtitle, { color: colors.textColored }]}>
-          Sign in to your account
+          {t('auth.login_subtitle', 'Sign in to your account')}
         </Text>
 
         <Input
-          placeholder="Email"
+          placeholder={t('auth.email_label')}
           value={email}
           onChangeText={text => {
             setEmail(text);
@@ -152,7 +154,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSwitchToSignUp, onSwitchToF
         />
 
         <PasswordInput
-          placeholder="Password"
+          placeholder={t('auth.password_label')}
           value={password}
           onChangeText={text => {
             setPassword(text);
@@ -162,7 +164,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSwitchToSignUp, onSwitchToF
         />
 
         <Button
-          title={loading ? 'Signing In...' : 'Sign In'}
+          title={
+            loading
+              ? t('auth.login_loading', 'Signing In...')
+              : t('auth.login_button')
+          }
           onPress={handleLogin}
           loading={loading}
           disabled={loading}
@@ -173,28 +179,28 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSwitchToSignUp, onSwitchToF
           style={styles.forgotPasswordButton}
           onPress={onSwitchToForgotPassword}
         >
-          <Text
-            style={[
-              styles.switchTextBold,
-              { color: colors.textColoredSecondary },
-            ]}
-          >
-            Forgot password?
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.switchButton}
-          onPress={onSwitchToSignUp}
-        >
-          <Text style={[styles.switchText, { color: colors.textColored }]}>
-            Don't have an account?{' '}
             <Text
               style={[
                 styles.switchTextBold,
                 { color: colors.textColoredSecondary },
               ]}
             >
-              Sign Up
+              {t('auth.forgot_password_link')}
+            </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.switchButton}
+          onPress={onSwitchToSignUp}
+        >
+          <Text style={[styles.switchText, { color: colors.textColored }]}>
+            {t("auth.no_account_prompt", "Don't have an account?")}{' '}
+            <Text
+              style={[
+                styles.switchTextBold,
+                { color: colors.textColoredSecondary },
+              ]}
+            >
+              {t('auth.signup_button')}
             </Text>
           </Text>
         </TouchableOpacity>

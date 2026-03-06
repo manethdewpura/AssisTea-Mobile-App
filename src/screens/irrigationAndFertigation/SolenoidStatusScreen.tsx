@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useAppSelector } from '../../hooks';
 import { selectTheme } from '../../store/selectors';
+import { formatCompactDateTime } from '../../utils';
 import { solenoidService, SolenoidInfo } from '../../services/solenoid.service';
 import { Lucide } from '@react-native-vector-icons/lucide';
 
@@ -90,13 +91,7 @@ const SolenoidStatusScreen: React.FC<SolenoidStatusScreenProps> = () => {
       }
 
       const date = new Date(normalizedTimestamp);
-      return date.toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      });
+      return formatCompactDateTime(date.getTime());
     } catch {
       return timestamp;
     }

@@ -21,6 +21,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { dailyDataService, workerService, fieldService } from '../../services';
 import { handleFirebaseError, logError } from '../../utils';
+import { useTranslation } from 'react-i18next';
 import type { DailyData } from '../../models/DailyData';
 import type { Worker } from '../../models/Worker';
 import type { Field } from '../../models/Field';
@@ -35,6 +36,7 @@ type FilterType = 'all' | 'date' | 'dateRange' | 'worker' | 'field';
 const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
   const { colors } = useAppSelector(selectTheme);
   const { userProfile } = useAppSelector(selectAuth);
+  const { t } = useTranslation('common');
   const [dailyData, setDailyData] = useState<DailyData[]>([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [fields, setFields] = useState<Field[]>([]);
@@ -241,22 +243,22 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const handleDelete = (data: DailyData) => {
     Alert.alert(
-      'Delete Entry',
+      t('general.delete'),
       `Are you sure you want to delete this entry for ${getWorkerName(data.workerId)} on ${data.date}?`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('general.cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('general.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await dailyDataService.deleteDailyData(data.id);
-              Alert.alert('Success', 'Entry deleted successfully');
+              Alert.alert(t('general.success'), 'Entry deleted successfully');
               loadDailyData();
             } catch (error: any) {
               const appError = handleFirebaseError(error);
               logError(appError, 'DailyDataViewScreen - DeleteData');
-              Alert.alert('Error', appError.userMessage);
+              Alert.alert(t('general.error'), appError.userMessage);
             }
           },
         },
@@ -328,7 +330,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                 filterType === 'all' && styles.filterButtonTextActive,
               ]}
             >
-              All
+              {t('daily_data.filter_all')}
             </Text>
           </TouchableOpacity>
 
@@ -350,7 +352,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                   filterType === 'date' && styles.filterButtonTextActive,
                 ]}
               >
-                {dateFilter || 'Select Date'}
+                {dateFilter || t('workers.select_date_placeholder')}
               </Text>
             </View>
           </TouchableOpacity>
@@ -399,7 +401,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               👤{' '}
               {selectedWorkerId
                 ? getWorkerName(selectedWorkerId)
-                : 'Select Worker'}
+                : t('daily_data.select_worker_placeholder')}
             </Text>
           </TouchableOpacity>
 
@@ -420,7 +422,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               ]}
             >
               🏞️{' '}
-              {selectedField || 'Select Field'}
+              {selectedField || t('daily_data.select_field_placeholder')}
             </Text>
           </TouchableOpacity>
 
@@ -483,7 +485,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           <View style={styles.datePickerModal}>
             <View style={styles.datePickerHeader}>
               <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                <Text style={styles.datePickerHeaderText}>Done</Text>
+                <Text style={styles.datePickerHeaderText}>{t('general.done')}</Text>
               </TouchableOpacity>
             </View>
             <DateTimePicker
@@ -511,7 +513,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
             <View style={styles.dateRangeModalContent}>
               {/* Header */}
               <View style={styles.dateRangeHeader}>
-                <Text style={styles.dateRangeTitle}>Select Date Range</Text>
+                <Text style={styles.dateRangeTitle}>{t('daily_data.filter_date_range')}</Text>
                 <TouchableOpacity onPress={() => {
                   setShowDateRangeModal(false);
                   setActiveDatePicker(null);
@@ -597,7 +599,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           <View style={styles.datePickerModal}>
             <View style={styles.datePickerHeader}>
               <TouchableOpacity onPress={() => setActiveDatePicker(null)}>
-                <Text style={styles.datePickerHeaderText}>Done</Text>
+                <Text style={styles.datePickerHeaderText}>{t('general.done')}</Text>
               </TouchableOpacity>
             </View>
             <DateTimePicker
@@ -621,7 +623,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           <View style={styles.datePickerModal}>
             <View style={styles.datePickerHeader}>
               <TouchableOpacity onPress={() => setActiveDatePicker(null)}>
-                <Text style={styles.datePickerHeaderText}>Done</Text>
+                <Text style={styles.datePickerHeaderText}>{t('general.done')}</Text>
               </TouchableOpacity>
             </View>
             <DateTimePicker
@@ -646,13 +648,13 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#7cb342" />
             <Text style={[styles.loadingText, { color: colors.text }]}>
-              Loading...
+              {t('general.loading')}
             </Text>
           </View>
         ) : dailyData.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={[styles.emptyText, { color: colors.text }]}>
-              No daily data found
+              {t('daily_data.no_data')}
             </Text>
             <TouchableOpacity
               style={styles.addDataButton}
@@ -698,25 +700,25 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               <View style={styles.dataCardBody}>
                 <View style={styles.dataRow}>
                   <Text style={[styles.dataLabel, { color: colors.text }]}>
-                    Tea Plucked:
+                    {t('daily_data.tea_plucked_short')}:
                   </Text>
                   <Text style={[styles.dataValue, { color: colors.text }]}>
-                    {data.teaPluckedKg} kg
+                    {data.teaPluckedKg} {t('daily_data.kg_suffix')}
                   </Text>
                 </View>
 
                 <View style={styles.dataRow}>
                   <Text style={[styles.dataLabel, { color: colors.text }]}>
-                    Time Spent:
+                    {t('daily_data.time_spent_short')}:
                   </Text>
                   <Text style={[styles.dataValue, { color: colors.text }]}>
-                    {data.timeSpentHours} hours
+                    {data.timeSpentHours} {t('daily_data.hours_suffix')}
                   </Text>
                 </View>
 
                 <View style={styles.dataRow}>
                   <Text style={[styles.dataLabel, { color: colors.text }]}>
-                    Field Area:
+                    {t('daily_data.field_short')}:
                   </Text>
                   <Text style={[styles.dataValue, { color: colors.text }]}>
                     {data.fieldArea}

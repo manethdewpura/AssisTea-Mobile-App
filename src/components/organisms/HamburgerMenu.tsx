@@ -15,6 +15,8 @@ import { selectTheme, selectAuth } from '../../store/selectors';
 import { logout } from '../../store/slices/auth.slice';
 import { authService } from '../../services';
 import ThemeSelector from './ThemeSelector';
+import LanguageSelector from '../molecule/LanguageSelector';
+import { useTranslation } from 'react-i18next';
 import LogoImage from '../../common/assets/images/LogoRound.png';
 
 interface HamburgerMenuProps {
@@ -28,6 +30,7 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({ visible, onClose }) => {
   const dispatch = useAppDispatch();
   const { colors } = useAppSelector(selectTheme);
   const { userProfile } = useAppSelector(selectAuth);
+  const { t } = useTranslation('common');
   // Initialize animations off-screen and invisible
   const slideAnim = useRef(new Animated.Value(-screenWidth * 0.85)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -94,8 +97,8 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({ visible, onClose }) => {
   const getRoleDisplay = () => {
     if (!userProfile) return '';
     return userProfile.role === 'admin'
-      ? 'Administrator'
-      : 'Tea Plantation Manager';
+      ? t('menu.admin_role', 'Administrator')
+      : t('menu.manager_role', 'Tea Plantation Manager');
   };
 
   if (!visible) {
@@ -166,9 +169,10 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({ visible, onClose }) => {
             {/* Theme Selector */}
             <View style={[styles.section, { borderTopColor: colors.border }]}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Settings
+                {t('menu.settings')}
               </Text>
               <ThemeSelector />
+              <LanguageSelector />
             </View>
           </ScrollView>
 
@@ -180,7 +184,7 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({ visible, onClose }) => {
               activeOpacity={0.7}
             >
               <Lucide name="log-out" size={20} color="#ffffff" />
-              <Text style={styles.logoutText}>Logout</Text>
+              <Text style={styles.logoutText}>{t('menu.logout')}</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>

@@ -16,6 +16,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { assignmentStorageService } from '../../services/assignmentStorage.service';
 import { SavedSchedule } from '../../models/SavedSchedule';
+import { useTranslation } from 'react-i18next';
 
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
@@ -25,6 +26,7 @@ type Props = NativeStackScreenProps<
 const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppSelector(selectTheme);
   const { userProfile } = useAppSelector(selectAuth);
+  const { t } = useTranslation('common');
   const [loading, setLoading] = useState(true);
   const [schedule, setSchedule] = useState<SavedSchedule | null>(null);
 
@@ -70,7 +72,7 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color="#7cb342" />
           <Text style={[styles.loadingText, { color: colors.text }]}>
-            Loading schedule...
+            {t('schedule.loading')}
           </Text>
         </View>
       </SafeAreaView>
@@ -85,16 +87,16 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.emptyContainer}>
           <Lucide name="calendar" size={64} color="#ccc" />
           <Text style={[styles.emptyText, { color: colors.text }]}>
-            No schedule found
+            {t('schedule.no_schedule_title')}
           </Text>
           <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
-            Generate an assignment schedule first
+            {t('schedule.no_schedule_text')}
           </Text>
           <TouchableOpacity
             style={styles.generateButton}
             onPress={() => navigation.navigate('AssignmentGeneration')}
           >
-            <Text style={styles.generateButtonText}>Generate Schedule</Text>
+            <Text style={styles.generateButtonText}>{t('schedule.generate_btn')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -122,11 +124,11 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
             <Lucide name="calendar" size={32} color="#7cb342" style={{ marginRight: 12 }} />
             <View style={styles.dateInfo}>
               <Text style={[styles.dateText, { color: colors.text }]}>
-                Schedule for {new Date(schedule.date).toLocaleDateString()}
+                {t('schedule.schedule_for')} {new Date(schedule.date).toLocaleDateString()}
               </Text>
               <Text style={[styles.statsText, { color: colors.textSecondary }]}>
-                {schedule.totalWorkers} workers • {schedule.totalFields} fields
-                • Avg: {schedule.averageEfficiency.toFixed(1)} kg/hr
+                {schedule.totalWorkers} {t('schedule.workers_suffix')} • {schedule.totalFields} {t('schedule.fields_suffix')}
+                • {t('schedule.avg_label')} {schedule.averageEfficiency.toFixed(1)} {t('schedule.kg_per_hr')}
               </Text>
             </View>
           </View>
@@ -149,7 +151,7 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
                 <Text
                   style={[styles.workerCount, { color: colors.textSecondary }]}
                 >
-                  {assignments.length} workers
+                  {assignments.length} {t('schedule.workers_suffix')}
                 </Text>
               </View>
 

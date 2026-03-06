@@ -12,6 +12,7 @@ import { useAppSelector } from '../hooks';
 import { selectTheme } from '../store/selectors';
 import ScreenHeader from '../components/molecule/ScreenHeader';
 import StatusCard from '../components/molecule/StatusCard';
+import { useTranslation } from 'react-i18next';
 
 interface Notification {
   id: string;
@@ -31,6 +32,7 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
 }) => {
   const navigation = useNavigation();
   const { colors } = useAppSelector(selectTheme);
+  const { t } = useTranslation('common');
   const [notifications] = useState<Notification[]>([
     {
       id: '1',
@@ -116,9 +118,9 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
       edges={['top']}
     >
       {/* Header */}
-      <ScreenHeader 
-        title="Notifications" 
-        onBackPress={onBackPress || (() => navigation.goBack())} 
+      <ScreenHeader
+        title={t('notifications.title')}
+        onBackPress={onBackPress || (() => navigation.goBack())}
       />
 
       <ScrollView
@@ -129,7 +131,7 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
           <View style={styles.emptyContainer}>
             <Lucide name="bell" size={64} color={colors.textSecondary} />
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No notifications
+              {t('notifications.no_notifications')}
             </Text>
           </View>
         ) : (

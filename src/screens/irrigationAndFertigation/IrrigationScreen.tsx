@@ -6,6 +6,7 @@ import { useAppSelector } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import OptionCard from '../../components/molecule/OptionCard';
 import type { IrrigationStackParamList } from '../../navigation/IrrigationNavigator';
+import { useTranslation } from 'react-i18next';
 
 type IrrigationScreenNavigationProp = NativeStackNavigationProp<
   IrrigationStackParamList,
@@ -15,6 +16,7 @@ type IrrigationScreenNavigationProp = NativeStackNavigationProp<
 const IrrigationScreen: React.FC = () => {
   const { colors } = useAppSelector(selectTheme);
   const { userProfile } = useAppSelector(selectAuth);
+  const { t } = useTranslation('common');
   const navigation = useNavigation<IrrigationScreenNavigationProp>();
 
   const isAdmin = userProfile?.role === 'admin';
@@ -49,8 +51,8 @@ const IrrigationScreen: React.FC = () => {
           {/* Irrigation and Fertilizer Controls */}
           <OptionCard
             icon="droplet"
-            title="Irrigation and Fertilizer Controls"
-            description="Manage and control irrigation systems and fertilizer applications"
+            title={t('irrigation.controls_title')}
+            description={t('irrigation.controls_desc')}
             onPress={handleControlsPress}
           />
 
@@ -58,8 +60,8 @@ const IrrigationScreen: React.FC = () => {
           {isAdmin && (
             <OptionCard
               icon="settings"
-              title="Irrigation and Fertilizer Setup"
-              description="Configure irrigation schedules and fertilizer plans"
+              title={t('irrigation.setup_title')}
+              description={t('irrigation.setup_desc')}
               onPress={handleSetupPress}
             />
           )}
@@ -67,24 +69,24 @@ const IrrigationScreen: React.FC = () => {
           {/* Sensor Data */}
           <OptionCard
             icon="activity"
-            title="Sensor Data"
-            description="View real-time sensor readings and data"
+            title={t('irrigation.sensors_title')}
+            description={t('irrigation.sensors_desc')}
             onPress={handleSensorDataPress}
           />
 
           {/* Solenoid Valve Status */}
           <OptionCard
             icon="circle"
-            title="Solenoid Valve Status"
-            description="View status of all solenoid valves in the system"
+            title={t('irrigation.solenoid_title')}
+            description={t('irrigation.solenoid_desc')}
             onPress={handleSolenoidStatusPress}
           />
 
           {/* Activity Logs */}
           <OptionCard
             icon="file-text"
-            title="Activity Logs"
-            description="View history of irrigation and fertilizer activities"
+            title={t('irrigation.activity_logs_title')}
+            description={t('irrigation.activity_logs_desc')}
             onPress={handleActivityLogsPress}
           />
         </View>

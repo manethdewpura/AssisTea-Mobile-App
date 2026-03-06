@@ -23,37 +23,68 @@ import HamburgerMenu from './src/components/organisms/HamburgerMenu';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import NetworkStatus from './src/components/molecule/NetworkStatus';
 import { initBackgroundFetch } from './src/utils';
+import { I18nextProvider } from 'react-i18next';
+import i18n, { initializeI18n } from './src/common/config/i18n';
+import { useAppDispatch } from './src/hooks';
+import { setLanguage } from './src/store/slices/ai.slice';
+import type { Language } from './src/store/slices/ai.slice';
+import { loadLanguagePreference } from './src/common/utils/languageStorage';
 import NotificationsScreen from './src/screens/NotificationsScreen';
 
 export const navigationRef = createNavigationContainerRef();
 const { width: screenWidth } = Dimensions.get('window');
 
 function App() {
+  return (
+    <SafeAreaProvider>
+      <Provider store={store}>
+        <I18nextProvider i18n={initializeI18n()}>
+          <AppBootstrap />
+        </I18nextProvider>
+      </Provider>
+    </SafeAreaProvider>
+  );
+}
+
+function AppBootstrap() {
+  const dispatch = useAppDispatch();
+
   // Initialize background fetch when app starts
   useEffect(() => {
     initBackgroundFetch();
   }, []);
 
+  // Load stored language preference (if any) and sync with Redux + i18n.
+  useEffect(() => {
+    const syncLanguage = async () => {
+      const storedLanguage = await loadLanguagePreference();
+      if (storedLanguage) {
+        dispatch(setLanguage(storedLanguage as Language));
+        if (i18n.language !== storedLanguage) {
+          await i18n.changeLanguage(storedLanguage);
+        }
+      }
+    };
+
+    syncLanguage();
+  }, [dispatch]);
+
   return (
-    <SafeAreaProvider>
-      <Provider store={store}>
-        <NetworkListener>
-        <ThemeListener>
-          <ConfigListener>
-            <NotificationListener>
-              <AuthListener>
+    <NetworkListener>
+      <ThemeListener>
+        <ConfigListener>
+          <NotificationListener>
+            <AuthListener>
               <WeatherListener>
-                  <ErrorBoundary>
-                    <AppContent />
-                  </ErrorBoundary>
+                <ErrorBoundary>
+                  <AppContent />
+                </ErrorBoundary>
               </WeatherListener>
-              </AuthListener>
-            </NotificationListener>
-          </ConfigListener>
-        </ThemeListener>
-        </NetworkListener>
-      </Provider>
-    </SafeAreaProvider>
+            </AuthListener>
+          </NotificationListener>
+        </ConfigListener>
+      </ThemeListener>
+    </NetworkListener>
   );
 }
 

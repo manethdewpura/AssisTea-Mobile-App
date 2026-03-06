@@ -19,6 +19,7 @@ import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantation
 import { workerService } from '../../services';
 import { handleFirebaseError, logError } from '../../utils';
 import type { Worker } from '../../models/Worker';
+import { useTranslation } from 'react-i18next';
 
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
@@ -28,6 +29,7 @@ type Props = NativeStackScreenProps<
 const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppSelector(selectTheme);
   const { userProfile } = useAppSelector(selectAuth);
+  const { t } = useTranslation('common');
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [filteredWorkers, setFilteredWorkers] = useState<Worker[]>([]);
   const [searchText, setSearchText] = useState('');
@@ -77,26 +79,26 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleDeleteWorker = (workerId: string, workerName: string) => {
     Alert.alert(
-      'Delete Worker',
-      `Are you sure you want to delete ${workerName}?`,
+      t('workers.delete_title'),
+      t('workers.delete_confirm', { name: workerName }),
       [
         {
-          text: 'Cancel',
+          text: t('general.cancel'),
           style: 'cancel',
         },
         {
-          text: 'Delete',
+          text: t('general.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await workerService.deleteWorker(workerId);
               setWorkers(workers.filter(w => w.id !== workerId));
               setFilteredWorkers(filteredWorkers.filter(w => w.id !== workerId));
-              Alert.alert('Success', 'Worker deleted successfully');
+              Alert.alert(t('general.success'), t('workers.delete_success'));
             } catch (error: any) {
               const appError = handleFirebaseError(error);
               logError(appError, 'WorkerManagementScreen - DeleteWorker');
-              Alert.alert('Error', appError.userMessage);
+              Alert.alert(t('general.error'), appError.userMessage);
             }
           },
         },
@@ -121,7 +123,7 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
           {item.name}
         </Text>
         <Text style={[styles.workerId, { color: colors.textSecondary }]}>
-          ID: {item.workerId}
+          {t('workers.id_prefix')} {item.workerId}
         </Text>
       </View>
 
@@ -145,7 +147,7 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
         <Text style={styles.searchIcon}>🔍</Text>
         <TextInput
           style={[styles.searchInput, { color: colors.text }]}
-          placeholder="Search workers..."
+          placeholder={t('workers.search_placeholder')}
           placeholderTextColor={colors.textSecondary}
           value={searchText}
           onChangeText={handleSearch}
@@ -162,8 +164,8 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
           <View style={styles.emptyContainer}>
             <Text style={[styles.emptyText, { color: colors.text }]}>
               {workers.length === 0
-                ? 'No workers yet. Add your first worker!'
-                : 'No workers found'}
+                ? t('workers.no_workers')
+                : t('workers.no_workers_found')}
             </Text>
           </View>
         ) : (
@@ -183,7 +185,7 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
         onPress={handleAddWorker}
       >
         <Text style={styles.addButtonIcon}>+</Text>
-        <Text style={styles.addButtonText}>Add New Worker</Text>
+        <Text style={styles.addButtonText}>{t('workers.add_new_worker')}</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );

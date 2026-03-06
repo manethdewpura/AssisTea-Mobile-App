@@ -12,6 +12,11 @@ import {
 } from 'react-native';
 import { useAppSelector } from '../../hooks';
 import { selectWeather, selectTheme } from '../../store/selectors';
+import {
+  formatTimeFromUnixSeconds,
+  formatDateTimeToColombo,
+  formatCompactDateTime,
+} from '../../utils';
 import { Lucide } from '@react-native-vector-icons/lucide';
 
 interface WeatherScreenProps {
@@ -22,28 +27,6 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
   const { current, forecast, isFetching, error, lastUpdated, isBackendConnected, predictions, isPredictionMode } =
     useAppSelector(selectWeather);
   const { colors } = useAppSelector(selectTheme);
-
-  const formatTime = (timestamp: number): string => {
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  /** Format a date (string or UTC ms) to LK timezone display */
-  const formatDateTime = (input: string | number): string => {
-    const date = new Date(input);
-    return date.toLocaleString('en-US', {
-      timeZone: 'Asia/Colombo',
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
-  };
 
   /** Get confidence level label and color */
   const getConfidenceInfo = (score: number): { label: string; color: string } => {
@@ -267,7 +250,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
                     Sunrise
                   </Text>
                   <Text style={[styles.sunTimeValue, { color: colors.text }]}>
-                    {formatTime(current.sys.sunrise)}
+                    {formatTimeFromUnixSeconds(current.sys.sunrise)}
                   </Text>
                 </View>
                 <View style={styles.sunTimeItem}>
@@ -275,7 +258,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
                     Sunset
                   </Text>
                   <Text style={[styles.sunTimeValue, { color: colors.text }]}>
-                    {formatTime(current.sys.sunset)}
+                    {formatTimeFromUnixSeconds(current.sys.sunset)}
                   </Text>
                 </View>
               </View>
@@ -285,10 +268,10 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
             {isPredictionMode && predictions.length > 0 && (
               <View style={styles.predictionTimestamp}>
                 <Text style={[styles.predictionTimestampText, { color: colors.textSecondary }]}>
-                  Predicted for: {formatDateTime(predictions[0].measured_at)} (LK Time)
+                  Predicted for: {formatDateTimeToColombo(predictions[0].measured_at)} (LK Time)
                 </Text>
                 <Text style={[styles.predictionTimestampText, { color: colors.textSecondary }]}>
-                  Generated at: {formatDateTime(predictions[0].predicted_at)}
+                  Generated at: {formatDateTimeToColombo(predictions[0].predicted_at)}
                 </Text>
               </View>
             )}
@@ -333,7 +316,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
                 >
                   <View style={styles.forecastItemLeft}>
                     <Text style={[styles.forecastDate, { color: colors.text }]}>
-                      {formatDateTime(prediction.measured_at)}
+                      {formatDateTimeToColombo(prediction.measured_at)}
                     </Text>
                     <View style={styles.confidenceRow}>
                       <View
@@ -406,7 +389,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
               >
                 <View style={styles.forecastItemLeft}>
                   <Text style={[styles.forecastDate, { color: colors.text }]}>
-                    {formatDateTime(item.dt_txt)}
+                    {formatCompactDateTime(item.dt_txt)}
                   </Text>
                   {item.weather[0] && (
                     <Text

@@ -17,6 +17,7 @@ import Input from '../../components/atoms/Input';
 import PasswordInput from '../../components/atoms/PasswordInput';
 import Button from '../../components/atoms/Button';
 import ThemeSelector from '../../components/organisms/ThemeSelector';
+import { useTranslation } from 'react-i18next';
 import {
   handleFirebaseError,
   logError,
@@ -44,6 +45,7 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSwitchToLogin }) => {
   const [retryCount, setRetryCount] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const { colors } = useAppSelector(selectTheme);
+  const { t } = useTranslation('common');
   const { showErrorAlert, showToast } = useNotifications();
 
   const togglePasswordVisibility = () => {
@@ -164,14 +166,14 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSwitchToLogin }) => {
             />
           </View>
           <Text style={[styles.title, { color: colors.textColoredSecondary }]}>
-            Create Admin Account
+            {t('auth.signup_title')}
           </Text>
           <Text style={[styles.subtitle, { color: colors.textColored }]}>
-            Sign up as an administrator
+            {t('auth.signup_subtitle', 'Sign up as an administrator')}
           </Text>
 
           <Input
-            placeholder="Name"
+            placeholder={t('auth.name_label', 'Name')}
             value={name}
             onChangeText={text => {
               setName(text);
@@ -183,7 +185,7 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSwitchToLogin }) => {
           />
 
           <Input
-            placeholder="Email"
+            placeholder={t('auth.email_label')}
             value={email}
             onChangeText={text => {
               setEmail(text);
@@ -196,7 +198,7 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSwitchToLogin }) => {
           />
 
           <PasswordInput
-            placeholder="Password"
+            placeholder={t('auth.password_label')}
             value={password}
             onChangeText={text => {
               setPassword(text);
@@ -208,7 +210,7 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSwitchToLogin }) => {
           />
 
           <PasswordInput
-            placeholder="Confirm Password"
+            placeholder={t('auth.confirm_password_label')}
             value={confirmPassword}
             onChangeText={text => {
               setConfirmPassword(text);
@@ -220,7 +222,11 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSwitchToLogin }) => {
           />
 
           <Button
-            title={loading ? 'Creating Account...' : 'Sign Up'}
+            title={
+              loading
+                ? t('auth.signup_loading', 'Creating Account...')
+                : t('auth.signup_button')
+            }
             onPress={handleSignUp}
             loading={loading}
             disabled={loading}
@@ -232,11 +238,14 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSwitchToLogin }) => {
             onPress={onSwitchToLogin}
           >
             <Text style={[styles.switchText, { color: colors.textColored }]}>
-              Already have an account?{' '}
+              {t('auth.have_account_prompt', 'Already have an account?')}{' '}
               <Text
-                style={[styles.switchTextBold, { color: colors.textColoredSecondary }]}
+                style={[
+                  styles.switchTextBold,
+                  { color: colors.textColoredSecondary },
+                ]}
               >
-                Sign In
+                {t('auth.login_button')}
               </Text>
             </Text>
           </TouchableOpacity>

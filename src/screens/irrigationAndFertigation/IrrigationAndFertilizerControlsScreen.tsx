@@ -12,6 +12,7 @@ import { IrrigationStatus } from '../../services/irrigation.service';
 import { FertigationStatus } from '../../services/fertigation.service';
 import { showToast } from '../../store/slices/notification.slice';
 import type { IrrigationStackParamList } from '../../navigation/IrrigationNavigator';
+import { useTranslation } from 'react-i18next';
 
 type IrrigationControlsNavigationProp = NativeStackNavigationProp<
   IrrigationStackParamList,
@@ -23,6 +24,7 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
   const { colors } = useAppSelector(selectTheme);
   const { backendUrl } = useAppSelector(selectConfig);
   const dispatch = useAppDispatch();
+  const { t } = useTranslation('common');
 
   const [irrigationStatus, setIrrigationStatus] = useState<IrrigationStatus | null>(null);
   const [fertigationStatus, setFertigationStatus] = useState<FertigationStatus | null>(null);
@@ -182,26 +184,26 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
           <View style={[styles.warningCard, { backgroundColor: colors.error + '20', borderColor: colors.error }]}>
             <Lucide name={"alert-triangle" as any} size={24} color={colors.error} />
             <Text style={[styles.warningText, { color: colors.error }]}>
-              Backend URL not configured. Please configure it in the Setup screen.
+              {t('irrigation_controls.backend_warning')}
             </Text>
           </View>
         )}
 
         {/* Irrigation Controls */}
         <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Irrigation Controls</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('irrigation_controls.irrigation_title')}</Text>
           <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
-            Manage and control your irrigation systems
+            {t('irrigation_controls.irrigation_desc')}
           </Text>
 
           {/* Status Display */}
           {irrigationStatus && (
             <View style={[styles.statusContainer, { backgroundColor: colors.background }]}>
               <View style={styles.statusRow}>
-                <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>Status:</Text>
+                <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>{t('irrigation_controls.status_label')}</Text>
                 <View style={[styles.statusBadge, { backgroundColor: irrigationStatus.is_running ? colors.success + '20' : colors.textSecondary + '20' }]}>
                   <Text style={[styles.statusText, { color: irrigationStatus.is_running ? colors.success : colors.textSecondary }]}>
-                    {irrigationStatus.is_running ? 'RUNNING' : 'STOPPED'}
+                    {irrigationStatus.is_running ? t('irrigation_controls.running') : t('irrigation_controls.stopped')}
                   </Text>
                 </View>
               </View>
@@ -209,19 +211,19 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
                 <>
                   {irrigationStatus.duration && (
                     <View style={styles.statusRow}>
-                      <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>Duration:</Text>
+                      <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>{t('irrigation_controls.duration_label')}</Text>
                       <Text style={[styles.statusValue, { color: colors.text }]}>{formatDuration(irrigationStatus.duration)}</Text>
                     </View>
                   )}
                   {irrigationStatus.pressure && (
                     <View style={styles.statusRow}>
-                      <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>Pressure:</Text>
+                      <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>{t('irrigation_controls.pressure_label')}</Text>
                       <Text style={[styles.statusValue, { color: colors.text }]}>{irrigationStatus.pressure} PSI</Text>
                     </View>
                   )}
                   {irrigationStatus.water_volume && (
                     <View style={styles.statusRow}>
-                      <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>Water Volume:</Text>
+                      <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>{t('irrigation_controls.water_volume_label')}</Text>
                       <Text style={[styles.statusValue, { color: colors.text }]}>{irrigationStatus.water_volume} L</Text>
                     </View>
                   )}
@@ -232,7 +234,7 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
 
           <View style={styles.buttonRow}>
             <Button
-              title="Start Irrigation"
+              title={t('irrigation_controls.start_irrigation')}
               onPress={handleStartIrrigation}
               disabled={!backendUrl || irrigationStatus?.is_running}
               loading={loadingIrrigation}
@@ -240,7 +242,7 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
               style={styles.button}
             />
             <Button
-              title="Stop Irrigation"
+              title={t('irrigation_controls.stop_irrigation')}
               onPress={handleStopIrrigation}
               disabled={!backendUrl || !irrigationStatus?.is_running}
               loading={loadingIrrigation}
@@ -252,19 +254,19 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
 
         {/* Fertilizer Controls */}
         <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Fertilizer Controls</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('irrigation_controls.fertilizer_title')}</Text>
           <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
-            Manage and control fertilizer applications
+            {t('irrigation_controls.fertilizer_desc')}
           </Text>
 
           {/* Status Display */}
           {fertigationStatus && (
             <View style={[styles.statusContainer, { backgroundColor: colors.background }]}>
               <View style={styles.statusRow}>
-                <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>Status:</Text>
+                <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>{t('irrigation_controls.status_label')}</Text>
                 <View style={[styles.statusBadge, { backgroundColor: fertigationStatus.is_running ? colors.success + '20' : colors.textSecondary + '20' }]}>
                   <Text style={[styles.statusText, { color: fertigationStatus.is_running ? colors.success : colors.textSecondary }]}>
-                    {fertigationStatus.is_running ? 'RUNNING' : 'STOPPED'}
+                    {fertigationStatus.is_running ? t('irrigation_controls.running') : t('irrigation_controls.stopped')}
                   </Text>
                 </View>
               </View>
@@ -272,19 +274,19 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
                 <>
                   {fertigationStatus.duration && (
                     <View style={styles.statusRow}>
-                      <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>Duration:</Text>
+                      <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>{t('irrigation_controls.duration_label')}</Text>
                       <Text style={[styles.statusValue, { color: colors.text }]}>{formatDuration(fertigationStatus.duration)}</Text>
                     </View>
                   )}
                   {fertigationStatus.fertilizer_volume && (
                     <View style={styles.statusRow}>
-                      <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>Fertilizer Volume:</Text>
+                      <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>{t('irrigation_controls.fertilizer_volume_label')}</Text>
                       <Text style={[styles.statusValue, { color: colors.text }]}>{fertigationStatus.fertilizer_volume} L</Text>
                     </View>
                   )}
                   {fertigationStatus.water_volume && (
                     <View style={styles.statusRow}>
-                      <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>Water Volume:</Text>
+                      <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>{t('irrigation_controls.water_volume_label')}</Text>
                       <Text style={[styles.statusValue, { color: colors.text }]}>{fertigationStatus.water_volume} L</Text>
                     </View>
                   )}
@@ -295,7 +297,7 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
 
           <View style={styles.buttonRow}>
             <Button
-              title="Start Fertigation"
+              title={t('irrigation_controls.start_fertigation')}
               onPress={handleStartFertigation}
               disabled={!backendUrl || fertigationStatus?.is_running}
               loading={loadingFertigation}
@@ -303,7 +305,7 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
               style={styles.button}
             />
             <Button
-              title="Stop Fertigation"
+              title={t('irrigation_controls.stop_fertigation')}
               onPress={handleStopFertigation}
               disabled={!backendUrl || !fertigationStatus?.is_running}
               loading={loadingFertigation}

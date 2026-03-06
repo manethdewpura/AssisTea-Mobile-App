@@ -16,6 +16,7 @@ import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantation
 import { workerService } from '../../services';
 import { handleFirebaseError, logError } from '../../utils';
 import type { Worker } from '../../models/Worker';
+import { useTranslation } from 'react-i18next';
 
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
@@ -24,6 +25,7 @@ type Props = NativeStackScreenProps<
 
 const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
   const { colors } = useAppSelector(selectTheme);
+  const { t } = useTranslation('common');
   const { workerId } = route.params;
   const [worker, setWorker] = useState<Worker | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,7 +77,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
         ]}
       >
         <Text style={[styles.errorText, { color: colors.text }]}>
-          Worker not found
+          {t('workers.not_found')}
         </Text>
       </View>
     );
@@ -114,7 +116,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
           <View style={styles.detailsSection}>
             {/* Name */}
             <View style={styles.detailGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Name</Text>
+              <Text style={[styles.label, { color: colors.text }]}>{t('workers.name_label')}</Text>
               <View
                 style={[
                   styles.detailBox,
@@ -130,7 +132,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
             {/* Worker ID */}
             <View style={styles.detailGroup}>
               <Text style={[styles.label, { color: colors.text }]}>
-                Worker ID
+                {t('workers.worker_id_label')}
               </Text>
               <View
                 style={[
@@ -147,7 +149,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
             {/* Birth Date */}
             <View style={styles.detailGroup}>
               <Text style={[styles.label, { color: colors.text }]}>
-                Birth Date
+                {t('workers.birth_date_label')}
               </Text>
               <View
                 style={[
@@ -163,7 +165,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
 
             {/* Age */}
             <View style={styles.detailGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Age</Text>
+              <Text style={[styles.label, { color: colors.text }]}>{t('workers.age_label')}</Text>
               <View
                 style={[
                   styles.detailBox,
@@ -179,7 +181,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
             {/* Experience */}
             <View style={styles.detailGroup}>
               <Text style={[styles.label, { color: colors.text }]}>
-                Experience
+                {t('workers.experience_label')}
               </Text>
               <View
                 style={[
@@ -196,7 +198,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
             {/* Gender */}
             <View style={styles.detailGroup}>
               <Text style={[styles.label, { color: colors.text }]}>
-                Gender
+                {t('workers.gender_label')}
               </Text>
               <View
                 style={[

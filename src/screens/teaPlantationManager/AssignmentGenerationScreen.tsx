@@ -20,11 +20,13 @@ import { workerSQLiteService } from '../../services/sqlite/workerSQLite.service'
 import { AssignmentSchedule, WorkerAssignment } from '../../models/MLPrediction';
 import { useAppSelector } from '../../hooks';
 import { selectAuth } from '../../store/selectors';
+import { useTranslation } from 'react-i18next';
 
 type Props = NativeStackScreenProps<TeaPlantationStackParamList, 'AssignmentGeneration'>;
 
 const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
     const { userProfile } = useAppSelector(selectAuth);
+    const { t } = useTranslation('common');
     const [loading, setLoading] = useState(false);
     const [schedule, setSchedule] = useState<AssignmentSchedule | null>(null);
 
@@ -128,10 +130,9 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
             <ScrollView style={styles.content}>
                 {/* Info Card */}
                 <View style={styles.infoCard}>
-                    <Text style={styles.infoTitle}>🤖 ML-Powered Assignments</Text>
+                    <Text style={styles.infoTitle}>🤖 {t('schedule.ml_title')}</Text>
                     <Text style={styles.infoText}>
-                        Our ML model analyzes worker experience, age, field conditions, and historical data to
-                        generate optimized work assignments.
+                        {t('schedule.ml_text')}
                     </Text>
                 </View>
 
@@ -146,7 +147,7 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
                     ) : (
                         <>
                             <Text style={styles.buttonIcon}>📊</Text>
-                            <Text style={styles.buttonText}>Generate Today's Schedule</Text>
+                            <Text style={styles.buttonText}>{t('schedule.generate_today')}</Text>
                         </>
                     )}
                 </TouchableOpacity>
@@ -154,23 +155,23 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
                 {/* Results */}
                 {schedule && (
                     <View style={styles.resultsContainer}>
-                        <Text style={styles.resultsTitle}>Generated Schedule</Text>
+                        <Text style={styles.resultsTitle}>{t('schedule.results_title')}</Text>
 
                         {/* Stats */}
                         <View style={styles.statsContainer}>
                             <View style={styles.statBox}>
                                 <Text style={styles.statValue}>{schedule.totalWorkers}</Text>
-                                <Text style={styles.statLabel}>Workers</Text>
+                                <Text style={styles.statLabel}>{t('schedule.workers_stat')}</Text>
                             </View>
                             <View style={styles.statBox}>
                                 <Text style={styles.statValue}>{schedule.totalFields}</Text>
-                                <Text style={styles.statLabel}>Fields</Text>
+                                <Text style={styles.statLabel}>{t('schedule.fields_stat')}</Text>
                             </View>
                             <View style={styles.statBox}>
                                 <Text style={styles.statValue}>
                                     {schedule.averagePredictedEfficiency.toFixed(1)}
                                 </Text>
-                                <Text style={styles.statLabel}>Avg kg/hr</Text>
+                                <Text style={styles.statLabel}>{t('schedule.avg_stat')}</Text>
                             </View>
                         </View>
 
@@ -185,7 +186,7 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
                                         <View style={styles.workerInfo}>
                                             <Text style={styles.workerName}>{assignment.workerName}</Text>
                                             <Text style={styles.efficiency}>
-                                                Predicted: {assignment.predictedEfficiency.toFixed(2)} kg/hour
+                                                {t('schedule.predicted')} {assignment.predictedEfficiency.toFixed(2)} {t('schedule.kg_per_hr')}
                                             </Text>
                                         </View>
                                         <View style={styles.badge}>

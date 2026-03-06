@@ -14,6 +14,7 @@ import { useNotifications, useAppSelector } from '../../hooks';
 import Input from '../../components/atoms/Input';
 import Button from '../../components/atoms/Button';
 import ThemeSelector from '../../components/organisms/ThemeSelector';
+import { useTranslation } from 'react-i18next';
 import {
   handleFirebaseError,
   logError,
@@ -32,6 +33,7 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ onSwitchToL
   const [emailError, setEmailError] = useState('');
   const [emailSent, setEmailSent] = useState(false);
   const { colors } = useAppSelector(selectTheme);
+  const { t } = useTranslation('common');
   const { showErrorAlert, showToast } = useNotifications();
 
   const validateForm = (): boolean => {
@@ -105,15 +107,19 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ onSwitchToL
             />
           </View>
           <Text style={[styles.title, { color: colors.textColoredSecondary }]}>
-            Check Your Email
+            {t('auth.forgot_password_email_sent_title', 'Check Your Email')}
           </Text>
           <Text style={[styles.subtitle, { color: colors.textColored }]}>
-            We've sent a password reset link to{'\n'}
+            {t(
+              'auth.forgot_password_email_sent_message',
+              "We've sent a password reset link to",
+            )}
+            {'\n'}
             <Text style={[styles.emailText, { color: colors.primary }]}>{email}</Text>
           </Text>
 
           <Button
-            title="Back to Login"
+            title={t('auth.go_to_login')}
             onPress={onSwitchToLogin}
             style={styles.button}
           />
@@ -126,7 +132,10 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ onSwitchToL
             }}
           >
             <Text style={[styles.resendText, { color: colors.textColoredSecondary }]}>
-              Didn't receive the email? Resend
+              {t(
+                'auth.resend_email',
+                "Didn't receive the email? Resend",
+              )}
             </Text>
           </TouchableOpacity>
         </View>
@@ -151,14 +160,17 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ onSwitchToL
           />
         </View>
         <Text style={[styles.title, { color: colors.textColoredSecondary }]}>
-          Forgot Password?
+          {t('auth.forgot_password_title')}
         </Text>
         <Text style={[styles.subtitle, { color: colors.textColored }]}>
-          Enter your email address and we'll send you a link to reset your password
+          {t(
+            'auth.forgot_password_description',
+            "Enter your email address and we'll send you a link to reset your password",
+          )}
         </Text>
 
         <Input
-          placeholder="Email"
+          placeholder={t('auth.email_label')}
           value={email}
           onChangeText={text => {
             setEmail(text);
@@ -171,7 +183,11 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ onSwitchToL
         />
 
         <Button
-          title={loading ? 'Sending...' : 'Send Reset Link'}
+          title={
+            loading
+              ? t('auth.forgot_password_loading', 'Sending...')
+              : t('auth.forgot_password_button', 'Send Reset Link')
+          }
           onPress={handleResetPassword}
           loading={loading}
           disabled={loading}
@@ -183,9 +199,14 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ onSwitchToL
           onPress={onSwitchToLogin}
         >
           <Text style={[styles.backText, { color: colors.textColored }]}>
-            Remember your password?{' '}
-            <Text style={[styles.backTextBold, { color: colors.textColoredSecondary }]}>
-              Sign In
+            {t(
+              'auth.remember_password_prompt',
+              'Remember your password?',
+            )}{' '}
+            <Text
+              style={[styles.backTextBold, { color: colors.textColoredSecondary }]}
+            >
+              {t('auth.login_button')}
             </Text>
           </Text>
         </TouchableOpacity>

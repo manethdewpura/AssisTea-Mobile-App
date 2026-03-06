@@ -229,15 +229,35 @@ const MainNavigator: React.FC<MainNavigatorProps> = ({ userRole, navigationRef }
           initialRouteName="Home"
           tabBar={renderCustomTabBar}
         >
-          <Tab.Screen name="Watering" component={WateringComponent} />
+          <Tab.Screen
+            name="Watering"
+            component={WateringComponent}
+            options={{ tabBarLabel: () => null }}
+          />
 
-          <Tab.Screen name="Chat" component={ChatScreen} />
+          <Tab.Screen
+            name="Chat"
+            component={ChatScreen}
+            options={{ tabBarLabel: () => null }}
+          />
 
-          <Tab.Screen name="Home" component={HomeComponent} />
+          <Tab.Screen
+            name="Home"
+            component={HomeComponent}
+            options={{ tabBarLabel: () => null }}
+          />
 
-          <Tab.Screen name="Schedule" component={ScheduleTab} />
+          <Tab.Screen
+            name="Schedule"
+            component={ScheduleTab}
+            options={{ tabBarLabel: () => null }}
+          />
 
-          <Tab.Screen name="Team" component={TeamTab} />
+          <Tab.Screen
+            name="Team"
+            component={TeamTab}
+            options={{ tabBarLabel: () => null }}
+          />
         </Tab.Navigator>
       </View>
     </NavigationContainer>

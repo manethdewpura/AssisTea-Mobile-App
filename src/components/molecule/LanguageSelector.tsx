@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useAppSelector, useAppDispatch } from '../../hooks';
 import { selectTheme } from '../../store/selectors';
 import { setLanguage } from '../../store/slices/ai.slice';
 import type { Language } from '../../store/slices/ai.slice';
+import i18n from '../../common/config/i18n';
+import { saveLanguagePreference } from '../../common/utils/languageStorage';
 
 const LanguageSelector: React.FC = () => {
   const { colors } = useAppSelector(selectTheme);
@@ -13,6 +15,21 @@ const LanguageSelector: React.FC = () => {
   const handleLanguageChange = (lang: Language) => {
     dispatch(setLanguage(lang));
   };
+
+  // Whenever the Redux language changes, update i18n and persist preference.
+  useEffect(() => {
+    if (!language) {
+      return;
+    }
+    i18n.changeLanguage(language).catch(error => {
+      // eslint-disable-next-line no-console
+      console.error('[LanguageSelector] Failed to change i18n language', error);
+    });
+    saveLanguagePreference(language).catch(error => {
+      // eslint-disable-next-line no-console
+      console.error('[LanguageSelector] Failed to save language preference', error);
+    });
+  }, [language]);
 
   return (
     <View style={styles.container}>

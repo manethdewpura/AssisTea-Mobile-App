@@ -34,6 +34,7 @@ import {
 import CustomAlert, {
   type AlertButton,
 } from '../../components/molecule/CustomAlert';
+import { useTranslation } from 'react-i18next';
 
 interface AdminDashboardProps {
   onNavigateToWeather?: () => void;
@@ -43,6 +44,7 @@ interface AdminDashboardProps {
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, onNavigateToSensors }) => {
   const { userProfile } = useAppSelector(selectAuth);
   const { colors } = useAppSelector(selectTheme);
+  const { t } = useTranslation('common');
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [plantations, setPlantations] = useState<TeaPlantation[]>([]);
   const [loading, setLoading] = useState(false);
@@ -119,20 +121,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
       logError(appError, 'AdminDashboard - LoadData');
 
       if (isNetworkError(error)) {
-        showCustomAlert('Network Error', appError.userMessage, {
+        showCustomAlert(t('admin.network_error'), appError.userMessage, {
           severity: 'high',
           buttons: [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Retry', onPress: () => loadData() },
+            { text: t('general.cancel'), style: 'cancel' },
+            { text: t('general.retry'), onPress: () => loadData() },
           ],
         });
       } else {
         showCustomAlert(
           appError.severity === 'low'
-            ? 'Notice'
+            ? t('general.notice')
             : appError.severity === 'high'
-            ? 'Error'
-            : 'Warning',
+            ? t('general.error')
+            : t('general.warning'),
           appError.userMessage,
           { severity: appError.severity },
         );
@@ -186,8 +188,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
     // Validate plantation assignment for tea plantation managers
     if (newUser.role === 'tea_plantation_manager' && !newUser.plantationId) {
       showCustomAlert(
-        'Validation Error',
-        'Tea plantation managers must be assigned to a plantation.',
+        t('admin.validation_error'),
+        t('admin.validation_plantation_required'),
         { severity: 'low' },
       );
       isValid = false;
@@ -249,9 +251,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
         newUser.plantationId || undefined,
         userProfile?.uid, // Pass adminId for access control
       );
-      showCustomAlert('Success', 'User account created successfully', {
+      showCustomAlert(t('general.success'), t('admin.user_created'), {
         severity: 'low',
-        buttons: [{ text: 'OK' }],
+        buttons: [{ text: t('general.ok') }],
       });
       setShowCreateUserModal(false);
       setNewUser({
@@ -308,9 +310,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
         },
         userProfile.uid,
       );
-      showCustomAlert('Success', 'Tea plantation created successfully', {
+      showCustomAlert(t('general.success'), t('admin.plantation_created'), {
         severity: 'low',
-        buttons: [{ text: 'OK' }],
+        buttons: [{ text: t('general.ok') }],
       });
       setShowCreatePlantationModal(false);
       setNewPlantation({ name: '', location: '', area: '', description: '' });
@@ -326,21 +328,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
 
   const handleDeletePlantation = (plantationId: string) => {
     showCustomAlert(
-      'Delete Plantation',
-      'Are you sure you want to delete this plantation?',
+      t('admin.delete_plantation_title'),
+      t('admin.delete_plantation_message'),
       {
         severity: 'high',
         buttons: [
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('general.cancel'), style: 'cancel' },
           {
-            text: 'Delete',
+            text: t('general.delete'),
             style: 'destructive',
             onPress: async () => {
               try {
                 await teaPlantationService.deleteTeaPlantation(plantationId);
-                showCustomAlert('Success', 'Plantation deleted successfully', {
+                showCustomAlert(t('general.success'), t('admin.plantation_deleted'), {
                   severity: 'low',
-                  buttons: [{ text: 'OK' }],
+                  buttons: [{ text: t('general.ok') }],
                 });
                 loadData();
               } catch (error: any) {
@@ -368,11 +370,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
         {item.email}
       </Text>
       <Text style={[styles.userRole, { color: colors.textSecondary }]}>
-        Role: {item.role.replace('_', ' ').toUpperCase()}
+        {t('admin.role_label')} {item.role.replace('_', ' ').toUpperCase()}
       </Text>
       {item.plantationName && (
         <Text style={[styles.userPlantation, { color: colors.textSecondary }]}>
-          Plantation: {item.plantationName}
+          {t('admin.plantation_prefix')} {item.plantationName}
         </Text>
       )}
     </View>
@@ -391,10 +393,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
       <Text
         style={[styles.plantationLocation, { color: colors.textSecondary }]}
       >
-        Location: {item.location}
+        {t('admin.location_prefix')} {item.location}
       </Text>
       <Text style={[styles.plantationArea, { color: colors.textSecondary }]}>
-        Area: {item.area} acres
+        {t('admin.area_prefix')} {item.area} {t('admin.area_suffix')}
       </Text>
       {item.description && (
         <Text
@@ -407,7 +409,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
         </Text>
       )}
       <Button
-        title="Delete"
+        title={t('general.delete')}
         onPress={() => handleDeletePlantation(item.id)}
         variant="danger"
         size="small"
@@ -428,7 +430,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
             <Text style={[styles.loadingText, { color: colors.text }]}>
-              Loading...
+              {t('general.loading')}
             </Text>
           </View>
         )}
@@ -436,10 +438,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
         <View style={[styles.section, { backgroundColor: colors.surface }]}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Plantation Managers
+              {t('admin.plantation_managers')}
             </Text>
             <Button
-              title="+ Add Manager"
+              title={t('admin.add_manager')}
               onPress={() => setShowCreateUserModal(true)}
               size="small"
               style={styles.addButton}
@@ -457,11 +459,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
         <View style={[styles.section, { backgroundColor: colors.surface }]}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              My Plantation
+              {t('admin.my_plantation')}
             </Text>
             {plantations.length === 0 && (
               <Button
-                title="+ Create Plantation"
+                title={t('admin.create_plantation_btn_short')}
                 onPress={() => setShowCreatePlantationModal(true)}
                 size="small"
                 style={styles.addButton}
@@ -481,10 +483,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
         {onNavigateToWeather && (
           <View style={[styles.section, { backgroundColor: colors.surface }]}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Weather Forecast
+              {t('admin.weather_section')}
             </Text>
             <Button
-              title="🌤️ View Weather Forecast"
+              title={`🌤️ ${t('admin.view_weather')}`}
               onPress={onNavigateToWeather}
               style={styles.weatherButton}
             />
@@ -495,10 +497,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
         {onNavigateToSensors && (
           <View style={[styles.section, { backgroundColor: colors.surface }]}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Real-Time Sensors
+              {t('admin.sensors_section')}
             </Text>
             <Button
-              title="📊 View Sensor Data"
+              title={`📊 ${t('admin.view_sensors')}`}
               onPress={onNavigateToSensors}
               style={styles.weatherButton}
             />
@@ -512,11 +514,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
               style={[styles.modalContent, { backgroundColor: colors.surface }]}
             >
               <Text style={[styles.modalTitle, { color: colors.text }]}>
-                Create New Manager
+                {t('admin.create_manager_title')}
               </Text>
 
               <Input
-                placeholder="Email"
+                placeholder={t('auth.email_label')}
                 value={newUser.email}
                 onChangeText={text => {
                   setNewUser({ ...newUser, email: text });
@@ -529,7 +531,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
               />
 
               <PasswordInput
-                placeholder="Password"
+                placeholder={t('auth.password_label')}
                 value={newUser.password}
                 onChangeText={text => {
                   setNewUser({ ...newUser, password: text });
@@ -540,12 +542,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
               />
 
               <View style={styles.roleContainer}>
-                <Text style={styles.roleLabel}>Role:</Text>
+                <Text style={styles.roleLabel}>{t('admin.role_label')}</Text>
                 <View style={[styles.roleButton, styles.roleButtonActive]}>
                   <Text
                     style={[styles.roleButtonText, styles.roleButtonTextActive]}
                   >
-                    Tea Plantation Manager
+                    {t('menu.manager_role')}
                   </Text>
                 </View>
               </View>
@@ -553,7 +555,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
               {newUser.role === 'tea_plantation_manager' && (
                 <View style={styles.plantationSelector}>
                   <Text style={styles.plantationLabel}>
-                    Assign to Plantation:
+                    {t('admin.assign_plantation')}
                   </Text>
                   {plantations.length > 0 ? (
                     <ScrollView style={styles.plantationList}>
@@ -591,8 +593,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
                         { color: colors.textSecondary },
                       ]}
                     >
-                      You need to create a plantation first before adding
-                      managers.
+                      {t('admin.no_plantation_for_manager')}
                     </Text>
                   )}
                 </View>
@@ -603,13 +604,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
                   style={styles.cancelButton}
                   onPress={() => setShowCreateUserModal(false)}
                 >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                  <Text style={styles.cancelButtonText}>{t('general.cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.createButton}
                   onPress={handleCreateUser}
                 >
-                  <Text style={styles.createButtonText}>Create Manager</Text>
+                  <Text style={styles.createButtonText}>{t('admin.create_manager_btn')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -627,11 +628,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
               style={[styles.modalContent, { backgroundColor: colors.surface }]}
             >
               <Text style={[styles.modalTitle, { color: colors.text }]}>
-                Create My Tea Plantation
+                {t('admin.create_plantation_title')}
               </Text>
 
               <Input
-                placeholder="Plantation Name"
+                placeholder={t('admin.plantation_name_placeholder')}
                 value={newPlantation.name}
                 onChangeText={text => {
                   setNewPlantation({ ...newPlantation, name: text });
@@ -642,7 +643,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
               />
 
               <Input
-                placeholder="Location"
+                placeholder={t('admin.location_placeholder')}
                 value={newPlantation.location}
                 onChangeText={text => {
                   setNewPlantation({ ...newPlantation, location: text });
@@ -656,7 +657,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
               />
 
               <Input
-                placeholder="Area (acres)"
+                placeholder={t('admin.area_placeholder')}
                 value={newPlantation.area}
                 onChangeText={text => {
                   setNewPlantation({ ...newPlantation, area: text });
@@ -668,7 +669,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
               />
 
               <Input
-                placeholder="Description (optional)"
+                placeholder={t('admin.description_placeholder')}
                 value={newPlantation.description}
                 onChangeText={text =>
                   setNewPlantation({ ...newPlantation, description: text })
@@ -682,14 +683,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
                   style={styles.cancelButton}
                   onPress={() => setShowCreatePlantationModal(false)}
                 >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                  <Text style={styles.cancelButtonText}>{t('general.cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.createButton}
                   onPress={handleCreatePlantation}
                 >
                   <Text style={styles.createButtonText}>
-                    Create My Plantation
+                    {t('admin.create_plantation_btn')}
                   </Text>
                 </TouchableOpacity>
               </View>

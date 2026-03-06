@@ -6,6 +6,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { useAppSelector } from '../../hooks';
 import { selectTheme, selectConfig } from '../../store/selectors';
+import { formatCompactDateTime } from '../../utils';
 import StatusCard from '../../components/molecule/StatusCard';
 import { logsService, OperationalLog, activityLogsSQLiteService } from '../../services';
 import type { IrrigationStackParamList } from '../../navigation/IrrigationNavigator';
@@ -134,14 +135,7 @@ const ActivityLogsScreen: React.FC = () => {
       } else if (diffDays < 7) {
         return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
       } else {
-        // Use toLocaleString to ensure local timezone is displayed
-        return date.toLocaleString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        });
+        return formatCompactDateTime(date.getTime());
       }
     } catch {
       return timestamp;

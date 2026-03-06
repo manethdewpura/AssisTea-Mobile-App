@@ -20,6 +20,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { workerService } from '../../services';
 import { handleFirebaseError, logError, validateRequired } from '../../utils';
+import { useTranslation } from 'react-i18next';
 
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
@@ -29,6 +30,7 @@ type Props = NativeStackScreenProps<
 const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppSelector(selectTheme);
   const { userProfile } = useAppSelector(selectAuth);
+  const { t } = useTranslation('common');
   const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -165,9 +167,9 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
         gender: formData.gender,
       });
 
-      Alert.alert('Success', 'Worker added successfully', [
+      Alert.alert(t('general.success'), 'Worker added successfully', [
         {
-          text: 'OK',
+          text: t('general.ok'),
           onPress: () => {
             navigation.goBack();
           },
@@ -198,7 +200,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
           <View style={[styles.formCard, { backgroundColor: colors.cardBackground || '#fff' }]}>
             {/* Name Input */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Name</Text>
+              <Text style={[styles.label, { color: colors.text }]}>{t('workers.name_label')}</Text>
               <View
                 style={[
                   styles.inputBox,
@@ -215,7 +217,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
                     setFormData({ ...formData, name: text });
                     if (errors.name) setErrors({ ...errors, name: '' });
                   }}
-                  placeholder="Enter worker name"
+                  placeholder={t('workers.enter_name_placeholder')}
                   placeholderTextColor="#999"
                 />
               </View>
@@ -228,7 +230,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
 
             {/* Worker ID Input */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Worker ID</Text>
+              <Text style={[styles.label, { color: colors.text }]}>{t('workers.worker_id_label')}</Text>
               <View
                 style={[
                   styles.inputBox,
@@ -245,7 +247,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
                     setFormData({ ...formData, workerId: text });
                     if (errors.workerId) setErrors({ ...errors, workerId: '' });
                   }}
-                  placeholder="e.g., T-001"
+                  placeholder={t('workers.worker_id_placeholder')}
                   placeholderTextColor="#999"
                 />
               </View>
@@ -258,7 +260,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
 
             {/* Birth Date Input */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Birth Date</Text>
+              <Text style={[styles.label, { color: colors.text }]}>{t('workers.birth_date_label')}</Text>
               <TouchableOpacity
                 style={[
                   styles.inputBox,
@@ -271,7 +273,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
                 disabled={loading}
               >
                 <Text style={[styles.datePickerText, { color: colors.text }]}>
-                  {formData.birthDate || 'Select Date'}
+                  {formData.birthDate || t('workers.select_date_placeholder')}
                 </Text>
               </TouchableOpacity>
               {errors.birthDate && (
@@ -289,7 +291,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
                 <View style={styles.datePickerModal}>
                   <View style={styles.datePickerHeader}>
                     <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                      <Text style={styles.datePickerHeaderText}>Done</Text>
+                      <Text style={styles.datePickerHeaderText}>{t('general.done')}</Text>
                     </TouchableOpacity>
                   </View>
                   <DateTimePicker
@@ -306,7 +308,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
 
             {/* Age Input */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Age</Text>
+              <Text style={[styles.label, { color: colors.text }]}>{t('workers.age_label')}</Text>
               <View
                 style={[
                   styles.inputBox,
@@ -320,7 +322,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
                   style={[styles.textInput, { color: colors.text }]}
                   value={formData.age}
                   editable={false}
-                  placeholder="Auto-calculated"
+                  placeholder={t('workers.auto_calculated')}
                   placeholderTextColor="#999"
                 />
               </View>
@@ -328,7 +330,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
 
             {/* Experience Input */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Experience</Text>
+              <Text style={[styles.label, { color: colors.text }]}>{t('workers.experience_label')}</Text>
               <View
                 style={[
                   styles.inputBox,
@@ -345,7 +347,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
                     setFormData({ ...formData, experience: text });
                     if (errors.experience) setErrors({ ...errors, experience: '' });
                   }}
-                  placeholder="e.g., 10 years"
+                  placeholder={t('workers.experience_placeholder')}
                   placeholderTextColor="#999"
                 />
               </View>
@@ -358,7 +360,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
 
             {/* Gender Input */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Gender</Text>
+              <Text style={[styles.label, { color: colors.text }]}>{t('workers.gender_label')}</Text>
               <View style={styles.genderContainer}>
                 {(['Male', 'Female'] as const).map(gender => (
                   <TouchableOpacity
@@ -383,7 +385,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
                         formData.gender === gender && styles.genderButtonTextActive,
                       ]}
                     >
-                      {gender}
+                      {gender === 'Male' ? t('workers.male') : t('workers.female')}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -404,7 +406,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
               ) : (
                 <>
                   <Text style={styles.saveIcon}>✓</Text>
-                  <Text style={styles.saveButtonText}>Save</Text>
+                  <Text style={styles.saveButtonText}>{t('general.save')}</Text>
                 </>
               )}
             </TouchableOpacity>

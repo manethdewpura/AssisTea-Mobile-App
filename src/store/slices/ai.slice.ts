@@ -1,7 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import type { SupportedLanguage } from '../../common/config/i18n';
 
 export type MessageSource = 'offline' | 'online';
-export type Language = 'en' | 'si' | 'ta';
+export type Language = SupportedLanguage;
 
 export interface ChatMessage {
   id: string;

@@ -21,6 +21,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { workerService, dailyDataService } from '../../services';
 import { handleFirebaseError, logError } from '../../utils';
+import { useTranslation } from 'react-i18next';
 import type { Worker } from '../../models/Worker';
 
 type Props = NativeStackScreenProps<
@@ -42,6 +43,7 @@ const MOCK_FIELD_AREAS: FieldArea[] = [
 const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
   const { colors } = useAppSelector(selectTheme);
   const { userProfile } = useAppSelector(selectAuth);
+  const { t } = useTranslation('common');
   const { dataId } = route.params;
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -132,12 +134,12 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const getWorkerName = (workerId: string) => {
     const worker = workers.find(w => w.id === workerId);
-    return worker ? worker.name : 'Select Worker';
+    return worker ? worker.name : t('daily_data.select_worker_placeholder');
   };
 
   const getFieldName = (fieldId: string) => {
     const field = MOCK_FIELD_AREAS.find(f => f.id === fieldId);
-    return field ? field.name : 'Select Field Area';
+    return field ? field.name : t('daily_data.select_field_placeholder');
   };
 
   const handleSaveData = async () => {
@@ -161,9 +163,9 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
         fieldArea: formData.fieldArea,
       });
 
-      Alert.alert('Success', 'Daily data updated successfully', [
+      Alert.alert(t('general.success'), 'Daily data updated successfully', [
         {
-          text: 'OK',
+          text: t('general.ok'),
           onPress: () => {
             navigation.goBack();
           },
@@ -188,7 +190,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
       >
         <ActivityIndicator size="large" color="#7cb342" />
         <Text style={[styles.loadingText, { color: colors.text }]}>
-          Loading...
+          {t('general.loading')}
         </Text>
       </View>
     );
@@ -216,7 +218,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
             {/* Date Section */}
             <View style={styles.dateSection}>
               <Text style={[styles.dateLabel, { color: colors.text }]}>
-                Date: {formData.date}
+                {t('daily_data.date_label')} {formData.date}
               </Text>
               <TouchableOpacity
                 style={styles.calendarButton}
@@ -236,7 +238,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
                 <View style={styles.datePickerModal}>
                   <View style={styles.datePickerHeader}>
                     <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                      <Text style={styles.datePickerHeaderText}>Done</Text>
+                      <Text style={styles.datePickerHeaderText}>{t('general.done')}</Text>
                     </TouchableOpacity>
                   </View>
                   <DateTimePicker
@@ -253,7 +255,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
             {/* Select Worker */}
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: colors.text }]}>
-                Select Worker
+                {t('daily_data.select_worker_label')}
               </Text>
               <TouchableOpacity
                 style={[
@@ -291,7 +293,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
             {/* Amount of Tea Plucked */}
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: colors.text }]}>
-                Amount of Tea Plucked(kg)
+                {t('daily_data.tea_plucked_label')}
               </Text>
               <View
                 style={[
@@ -301,7 +303,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
               >
                 <TextInput
                   style={[styles.textInput, { color: colors.text }]}
-                  placeholder="Enter amount in kg"
+                  placeholder={t('daily_data.tea_plucked_placeholder')}
                   placeholderTextColor="#999"
                   value={formData.teaPluckedKg}
                   onChangeText={text =>
@@ -315,7 +317,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
             {/* Time Spent */}
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: colors.text }]}>
-                Time Spent (hours)
+                {t('daily_data.time_spent_label')}
               </Text>
               <View
                 style={[
@@ -325,7 +327,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
               >
                 <TextInput
                   style={[styles.textInput, { color: colors.text }]}
-                  placeholder="Enter time in hours"
+                  placeholder={t('daily_data.time_spent_placeholder')}
                   placeholderTextColor="#999"
                   value={formData.timeSpentHours}
                   onChangeText={text =>
@@ -339,7 +341,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
             {/* Field Area */}
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: colors.text }]}>
-                Field Area Worked
+                {t('daily_data.field_area_label')}
               </Text>
               <TouchableOpacity
                 style={[
@@ -384,7 +386,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
               ) : (
                 <>
                   <Text style={styles.saveIcon}>✓</Text>
-                  <Text style={styles.saveButtonText}>Update</Text>
+                  <Text style={styles.saveButtonText}>{t('fields.edit_field')}</Text>
                 </>
               )}
             </TouchableOpacity>
