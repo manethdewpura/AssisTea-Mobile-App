@@ -68,7 +68,7 @@ const weatherSlice = createSlice({
     setFetchInterval(state, action: PayloadAction<number | null>) {
       state.fetchInterval = action.payload;
     },
-    setBackendConnected(state, action: PayloadAction<boolean>) {
+    setBackendConnected(state, action: PayloadAction<boolean | null>) {
       state.isBackendConnected = action.payload;
     },
     setPredictions(state, action: PayloadAction<MLPrediction[]>) {
