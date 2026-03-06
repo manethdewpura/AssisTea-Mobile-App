@@ -1,5 +1,6 @@
 import { apiClient, ApiResponse } from '../utils/apiClient.util';
-import { AppError, logError } from '../utils/errorHandling.util';
+import { AppError, handleFirebaseError, logError } from '../utils/errorHandling.util';
+import { configService } from './config.service';
 
 export interface IrrigationStatus {
   is_running: boolean;
@@ -21,13 +22,23 @@ export interface StartIrrigationResponse {
 
 export const irrigationService = {
   /**
-   * Start irrigation for the system zone
+   * Start irrigation for the configured system zone.
+   * The backend now requires a zone_id, so we either
+   * accept one explicitly or fall back to the zone info
+   * from the configuration service.
    */
-  async startIrrigation(): Promise<StartIrrigationResponse> {
+  async startIrrigation(zoneId?: number): Promise<StartIrrigationResponse> {
     try {
+      let targetZoneId = zoneId;
+
+      if (targetZoneId == null) {
+        const zoneInfo = await configService.getZoneInfo();
+        targetZoneId = zoneInfo.zone_id;
+      }
+
       const response = await apiClient.post<StartIrrigationResponse>(
         '/irrigation/start',
-        {}
+        { zone_id: targetZoneId }
       );
 
       if (!response.success) {

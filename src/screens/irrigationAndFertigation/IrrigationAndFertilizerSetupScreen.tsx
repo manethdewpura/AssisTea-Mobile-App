@@ -601,14 +601,14 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
             Backend Server Configuration
           </Text>
           <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
-            Configure the backend server URL (e.g., http://192.168.1.15)
+            Configure the backend server URL (e.g., http://192.168.1.50:5000)
           </Text>
 
           <TextInput
             style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
             value={backendUrlInput}
             onChangeText={setBackendUrlInput}
-            placeholder="http://192.168.1.15"
+            placeholder="http://192.168.1.50:5000"
             placeholderTextColor={colors.textSecondary}
             autoCapitalize="none"
             autoCorrect={false}
@@ -644,20 +644,21 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Zone Information */}
+        {/* System & Zone Configuration (combined view) */}
         {backendUrl && (
           <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionHeaderText}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                  Zone Information
+                  System & Zone Configuration
                 </Text>
                 <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
-                  System zone configuration (read-only)
+                  Review fixed zone wiring details and edit hydraulic configuration values used for calculations.
                 </Text>
               </View>
             </View>
 
+            {/* Zone information (read-only text) */}
             {loadingZoneInfo ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="small" color={colors.primary} />
@@ -668,28 +669,28 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
             ) : zoneInfo ? (
               <View style={[styles.zoneInfoContainer, { backgroundColor: colors.background }]}>
                 <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Zone ID:</Text>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Zone ID</Text>
                   <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.zone_id}</Text>
                 </View>
                 <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Slope:</Text>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Valve GPIO Pin</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.valve_gpio_pin}</Text>
+                </View>
+                <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Soil Moisture Sensor Channel</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.soil_moisture_sensor_channel}</Text>
+                </View>
+                <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Configured Slope</Text>
                   <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.slope}°</Text>
                 </View>
                 <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Area:</Text>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Configured Area</Text>
                   <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.area} m²</Text>
                 </View>
-                <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Base Pressure:</Text>
-                  <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.base_pressure} kPa</Text>
-                </View>
-                <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Valve GPIO Pin:</Text>
-                  <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.valve_gpio_pin}</Text>
-                </View>
                 <View style={styles.infoRow}>
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Soil Moisture Sensor Channel:</Text>
-                  <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.soil_moisture_sensor_channel}</Text>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Configured Base Pressure</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.base_pressure} kPa</Text>
                 </View>
               </View>
             ) : (
@@ -700,23 +701,8 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
                 </Text>
               </View>
             )}
-          </View>
-        )}
 
-        {/* System Hydraulic Configuration */}
-        {backendUrl && (
-          <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionHeaderText}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                  System Configuration
-                </Text>
-                <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
-                  Configure slope, area, and pipe geometry used for pressure calculations.
-                </Text>
-              </View>
-            </View>
-
+            {/* Editable system configuration values */}
             {loadingSystemConfig ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="small" color={colors.primary} />

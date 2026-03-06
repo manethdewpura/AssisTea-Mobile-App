@@ -1,5 +1,6 @@
 import { apiClient, ApiResponse } from '../utils/apiClient.util';
 import { handleFirebaseError, logError } from '../utils/errorHandling.util';
+import { configService } from './config.service';
 
 export interface FertigationStatus {
   is_running: boolean;
@@ -20,13 +21,23 @@ export interface StartFertigationResponse {
 
 export const fertigationService = {
   /**
-   * Start fertigation for the system zone
+   * Start fertigation for the system zone.
+   * The backend now requires a zone_id, so we either
+   * accept one explicitly or fall back to the zone info
+   * from the configuration service.
    */
-  async startFertigation(): Promise<StartFertigationResponse> {
+  async startFertigation(zoneId?: number): Promise<StartFertigationResponse> {
     try {
+      let targetZoneId = zoneId;
+
+      if (targetZoneId == null) {
+        const zoneInfo = await configService.getZoneInfo();
+        targetZoneId = zoneInfo.zone_id;
+      }
+
       const response = await apiClient.post<StartFertigationResponse>(
         '/fertigation/start',
-        {}
+        { zone_id: targetZoneId }
       );
 
       if (!response.success) {
