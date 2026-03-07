@@ -40,7 +40,7 @@ interface AdminDashboardProps {
   onNavigateToSensors?: () => void;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, onNavigateToSensors }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) => {
   const { userProfile } = useAppSelector(selectAuth);
   const { colors } = useAppSelector(selectTheme);
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -104,7 +104,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
         throw new Error('User profile not found');
       }
 
-      // Load only the admin's own plantation and its managers
       const [plantationData, managersData] = await Promise.all([
         teaPlantationService.getPlantationByAdminId(userProfile.uid),
         userProfile.plantationId
@@ -131,8 +130,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
           appError.severity === 'low'
             ? 'Notice'
             : appError.severity === 'high'
-            ? 'Error'
-            : 'Warning',
+              ? 'Error'
+              : 'Warning',
           appError.userMessage,
           { severity: appError.severity },
         );
@@ -169,21 +168,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
     let isValid = true;
     const errors = { email: '', password: '' };
 
-    // Validate email
     const emailValidation = validateEmail(newUser.email);
     if (!emailValidation.isValid) {
       errors.email = emailValidation.error!;
       isValid = false;
     }
 
-    // Validate password
     const passwordValidation = validatePassword(newUser.password);
     if (!passwordValidation.isValid) {
       errors.password = passwordValidation.error!;
       isValid = false;
     }
 
-    // Validate plantation assignment for tea plantation managers
     if (newUser.role === 'tea_plantation_manager' && !newUser.plantationId) {
       showCustomAlert(
         'Validation Error',
@@ -201,27 +197,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
     let isValid = true;
     const errors = { name: '', location: '', area: '' };
 
-    // Validate name
-    const nameValidation = validateRequired(
-      newPlantation.name,
-      'Plantation name',
-    );
+    const nameValidation = validateRequired(newPlantation.name, 'Plantation name');
     if (!nameValidation.isValid) {
       errors.name = nameValidation.error!;
       isValid = false;
     }
 
-    // Validate location
-    const locationValidation = validateRequired(
-      newPlantation.location,
-      'Location',
-    );
+    const locationValidation = validateRequired(newPlantation.location, 'Location');
     if (!locationValidation.isValid) {
       errors.location = locationValidation.error!;
       isValid = false;
     }
 
-    // Validate area
     const areaValidation = validateNumeric(newPlantation.area, 'Area');
     if (!areaValidation.isValid) {
       errors.area = areaValidation.error!;
@@ -233,10 +220,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
   };
 
   const handleCreateUser = async () => {
-    // Clear previous errors
     setUserFormErrors({ email: '', password: '' });
 
-    // Validate form
     if (!validateUserForm()) {
       return;
     }
@@ -247,7 +232,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
         newUser.password,
         newUser.role,
         newUser.plantationId || undefined,
-        userProfile?.uid, // Pass adminId for access control
+        userProfile?.uid,
       );
       showCustomAlert('Success', 'User account created successfully', {
         severity: 'low',
@@ -284,10 +269,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
   };
 
   const handleCreatePlantation = async () => {
-    // Clear previous errors
     setPlantationFormErrors({ name: '', location: '', area: '' });
 
-    // Validate form
     if (!validatePlantationForm()) {
       return;
     }
@@ -358,61 +341,62 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
   };
 
   const renderUser = ({ item }: { item: UserProfile }) => (
-    <View
-      style={[
-        styles.userCard,
-        { backgroundColor: colors.cardBackground, borderColor: colors.border },
-      ]}
-    >
-      <Text style={[styles.userEmail, { color: colors.text }]}>
-        {item.email}
-      </Text>
-      <Text style={[styles.userRole, { color: colors.textSecondary }]}>
-        Role: {item.role.replace('_', ' ').toUpperCase()}
-      </Text>
-      {item.plantationName && (
-        <Text style={[styles.userPlantation, { color: colors.textSecondary }]}>
-          Plantation: {item.plantationName}
-        </Text>
-      )}
+    <View style={[styles.userCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+      <View style={styles.userCardLeft}>
+        <View style={styles.userIconContainer}>
+          <Text style={styles.userIconText}>🧑‍💼</Text>
+        </View>
+        <View style={styles.userInfo}>
+          <Text style={[styles.userEmail, { color: colors.text }]} numberOfLines={1}>
+            {item.email}
+          </Text>
+          <View style={styles.roleBadge}>
+            <Text style={[styles.roleBadgeText, { color: colors.text }]}>
+              {item.role.replace(/_/g, ' ').toUpperCase()}
+            </Text>
+          </View>
+          {item.plantationName && (
+            <Text style={[styles.userPlantation, { color: colors.textSecondary }]}>
+              🌱 {item.plantationName}
+            </Text>
+          )}
+        </View>
+      </View>
     </View>
   );
 
   const renderPlantation = ({ item }: { item: TeaPlantation }) => (
-    <View
-      style={[
-        styles.plantationCard,
-        { backgroundColor: colors.cardBackground, borderColor: colors.border },
-      ]}
-    >
-      <Text style={[styles.plantationName, { color: colors.text }]}>
-        {item.name}
-      </Text>
-      <Text
-        style={[styles.plantationLocation, { color: colors.textSecondary }]}
-      >
-        Location: {item.location}
-      </Text>
-      <Text style={[styles.plantationArea, { color: colors.textSecondary }]}>
-        Area: {item.area} acres
-      </Text>
-      {item.description && (
-        <Text
-          style={[
-            styles.plantationDescription,
-            { color: colors.textSecondary },
-          ]}
-        >
-          {item.description}
-        </Text>
-      )}
-      <Button
-        title="Delete"
+    <View style={[styles.plantationCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+      <View style={styles.plantationHeader}>
+        <View style={styles.plantationIconContainer}>
+          <Text style={styles.plantationIcon}>🌿</Text>
+        </View>
+        <View style={styles.plantationInfo}>
+          <Text style={[styles.plantationName, { color: colors.text }]}>
+            {item.name}
+          </Text>
+          <Text style={[styles.plantationLocation, { color: colors.textSecondary }]}>
+            📍 {item.location}
+          </Text>
+        </View>
+      </View>
+      <View style={styles.plantationDetails}>
+        <View style={styles.detailChip}>
+          <Text style={[styles.detailChipText, { color: colors.text }]}>🌾 {item.area} acres</Text>
+        </View>
+        {item.description && (
+          <Text style={[styles.plantationDescription, { color: colors.textSecondary }]}>
+            {item.description}
+          </Text>
+        )}
+      </View>
+      <TouchableOpacity
+        style={[styles.deletePlantationBtn, { alignSelf: 'flex-end' }]}
         onPress={() => handleDeletePlantation(item.id)}
-        variant="danger"
-        size="small"
-        style={styles.deleteButton}
-      />
+        activeOpacity={0.7}
+      >
+        <Text style={styles.deletePlantationBtnText}>Delete Plantation</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -423,94 +407,169 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
     >
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
+        showsVerticalScrollIndicator={false}
       >
+        {/* Hero Header */}
+        <View style={styles.heroHeader}>
+          <View style={styles.heroOverlay} />
+          <View style={styles.heroContent}>
+            <View style={styles.heroTop}>
+              <View>
+                <Text style={styles.heroLabel}>ADMIN CONTROL CENTER</Text>
+                <Text style={styles.heroTitle}>Dashboard</Text>
+              </View>
+              <View style={styles.heroBadge}>
+                <Text style={styles.heroBadgeText}>⚙️</Text>
+              </View>
+            </View>
+            <Text style={styles.heroSubtitle}>
+              Welcome back, {userProfile?.email?.split('@')[0] || 'Admin'}
+            </Text>
+
+            {/* Summary Stats Row */}
+            <View style={styles.statsRow}>
+              <View style={styles.statPill}>
+                <Text style={styles.statPillValue}>{plantations.length}</Text>
+                <Text style={styles.statPillLabel}>Plantation</Text>
+              </View>
+              <View style={styles.statPillDivider} />
+              <View style={styles.statPill}>
+                <Text style={styles.statPillValue}>{users.length}</Text>
+                <Text style={styles.statPillLabel}>Managers</Text>
+              </View>
+              <View style={styles.statPillDivider} />
+              <View style={styles.statPill}>
+                <Text style={styles.statPillValue}>
+                  {plantations.reduce((acc, p) => acc + (p.area || 0), 0)}
+                </Text>
+                <Text style={styles.statPillLabel}>Acres</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
         {loading && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={[styles.loadingText, { color: colors.text }]}>
-              Loading...
+            <ActivityIndicator size="large" color="#73AB2E" />
+            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+              Loading data...
             </Text>
           </View>
         )}
 
-        <View style={[styles.section, { backgroundColor: colors.surface }]}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Plantation Managers
-            </Text>
-            <Button
-              title="+ Add Manager"
+        {/* Plantation Managers Section */}
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={styles.sectionTitleGroup}>
+              <View style={styles.sectionAccent} />
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Plantation Managers
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.addBtn}
               onPress={() => setShowCreateUserModal(true)}
-              size="small"
-              style={styles.addButton}
-            />
+              activeOpacity={0.7}
+            >
+              <Text style={styles.addBtnPlus}>＋</Text>
+              <Text style={styles.addBtnText}>Add Manager</Text>
+            </TouchableOpacity>
           </View>
 
-          <FlatList
-            data={users}
-            renderItem={renderUser}
-            keyExtractor={item => item.uid}
-            scrollEnabled={false}
-          />
+          {users.length === 0 && !loading ? (
+            <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={styles.emptyIcon}>👤</Text>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>No Managers Yet</Text>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                Add a plantation manager to get started.
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={users}
+              renderItem={renderUser}
+              keyExtractor={item => item.uid}
+              scrollEnabled={false}
+            />
+          )}
         </View>
 
-        <View style={[styles.section, { backgroundColor: colors.surface }]}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              My Plantation
-            </Text>
+        {/* My Plantation Section */}
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={styles.sectionTitleGroup}>
+              <View style={[styles.sectionAccent, styles.sectionAccentAmber]} />
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                My Plantation
+              </Text>
+            </View>
             {plantations.length === 0 && (
-              <Button
-                title="+ Create Plantation"
+              <TouchableOpacity
+                style={[styles.addBtn, styles.addBtnAmber]}
                 onPress={() => setShowCreatePlantationModal(true)}
-                size="small"
-                style={styles.addButton}
-              />
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.addBtnPlus, styles.addBtnPlusAmber]}>＋</Text>
+                <Text style={[styles.addBtnText, styles.addBtnTextAmber]}>Create</Text>
+              </TouchableOpacity>
             )}
           </View>
 
-          <FlatList
-            data={plantations}
-            renderItem={renderPlantation}
-            keyExtractor={item => item.id}
-            scrollEnabled={false}
-          />
+          {plantations.length === 0 && !loading ? (
+            <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={styles.emptyIcon}>🌿</Text>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>No Plantation Yet</Text>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                Create your first tea plantation to start managing.
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={plantations}
+              renderItem={renderPlantation}
+              keyExtractor={item => item.id}
+              scrollEnabled={false}
+            />
+          )}
         </View>
 
         {/* Weather Section */}
         {onNavigateToWeather && (
-          <View style={[styles.section, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Weather Forecast
-            </Text>
-            <Button
-              title="🌤️ View Weather Forecast"
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionTitleGroup}>
+              <View style={[styles.sectionAccent, styles.sectionAccentSky]} />
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Weather Forecast
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.weatherCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
               onPress={onNavigateToWeather}
-              style={styles.weatherButton}
-            />
+              activeOpacity={0.8}
+            >
+              <View style={styles.weatherCardInner}>
+                <View style={styles.weatherIconContainer}>
+                  <Text style={styles.weatherCardIcon}>🌤️</Text>
+                </View>
+                <View>
+                  <Text style={[styles.weatherCardTitle, { color: colors.text }]}>View Weather Forecast</Text>
+                  <Text style={[styles.weatherCardSub, { color: colors.textSecondary }]}>Tap to see current forecast</Text>
+                </View>
+              </View>
+              <Text style={styles.weatherCardArrow}>›</Text>
+            </TouchableOpacity>
           </View>
         )}
 
-        {/* Sensors Section */}
-        {onNavigateToSensors && (
-          <View style={[styles.section, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Real-Time Sensors
-            </Text>
-            <Button
-              title="📊 View Sensor Data"
-              onPress={onNavigateToSensors}
-              style={styles.weatherButton}
-            />
-          </View>
-        )}
+        <View style={styles.bottomSpacer} />
 
         {/* Create User Modal */}
         <Modal visible={showCreateUserModal} animationType="slide" transparent>
           <View style={styles.modalOverlay}>
-            <View
-              style={[styles.modalContent, { backgroundColor: colors.surface }]}
-            >
+            <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+              <View style={styles.modalHeaderBar}>
+                <View style={styles.modalDragHandle} />
+              </View>
               <Text style={[styles.modalTitle, { color: colors.text }]}>
                 Create New Manager
               </Text>
@@ -540,19 +599,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
               />
 
               <View style={styles.roleContainer}>
-                <Text style={styles.roleLabel}>Role:</Text>
-                <View style={[styles.roleButton, styles.roleButtonActive]}>
-                  <Text
-                    style={[styles.roleButtonText, styles.roleButtonTextActive]}
-                  >
-                    Tea Plantation Manager
-                  </Text>
+                <Text style={[styles.roleLabel, { color: colors.textSecondary }]}>Role:</Text>
+                <View style={styles.roleChip}>
+                  <Text style={[styles.roleChipText, { color: colors.text }]}>Tea Plantation Manager</Text>
                 </View>
               </View>
 
               {newUser.role === 'tea_plantation_manager' && (
                 <View style={styles.plantationSelector}>
-                  <Text style={styles.plantationLabel}>
+                  <Text style={[styles.plantationLabel, { color: colors.text }]}>
                     Assign to Plantation:
                   </Text>
                   {plantations.length > 0 ? (
@@ -562,8 +617,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
                           key={plantation.id}
                           style={[
                             styles.plantationOption,
+                            { borderColor: colors.border },
                             newUser.plantationId === plantation.id &&
-                              styles.plantationOptionActive,
+                            styles.plantationOptionActive,
                           ]}
                           onPress={() =>
                             setNewUser({
@@ -575,8 +631,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
                           <Text
                             style={[
                               styles.plantationOptionText,
+                              { color: colors.text },
                               newUser.plantationId === plantation.id &&
-                                styles.plantationOptionTextActive,
+                              styles.plantationOptionTextActive,
                             ]}
                           >
                             {plantation.name} - {plantation.location}
@@ -585,14 +642,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
                       ))}
                     </ScrollView>
                   ) : (
-                    <Text
-                      style={[
-                        styles.noPlantationText,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      You need to create a plantation first before adding
-                      managers.
+                    <Text style={[styles.noPlantationText, { color: colors.textSecondary }]}>
+                      You need to create a plantation first before adding managers.
                     </Text>
                   )}
                 </View>
@@ -600,10 +651,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
 
               <View style={styles.modalButtons}>
                 <TouchableOpacity
-                  style={styles.cancelButton}
+                  style={[styles.cancelButton, { borderColor: colors.border }]}
                   onPress={() => setShowCreateUserModal(false)}
                 >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                  <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.createButton}
@@ -623,9 +674,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
           transparent
         >
           <View style={styles.modalOverlay}>
-            <View
-              style={[styles.modalContent, { backgroundColor: colors.surface }]}
-            >
+            <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+              <View style={styles.modalHeaderBar}>
+                <View style={styles.modalDragHandle} />
+              </View>
               <Text style={[styles.modalTitle, { color: colors.text }]}>
                 Create My Tea Plantation
               </Text>
@@ -679,18 +731,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
 
               <View style={styles.modalButtons}>
                 <TouchableOpacity
-                  style={styles.cancelButton}
+                  style={[styles.cancelButton, { borderColor: colors.border }]}
                   onPress={() => setShowCreatePlantationModal(false)}
                 >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                  <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.createButton}
+                  style={[styles.createButton, styles.createButtonAmber]}
                   onPress={handleCreatePlantation}
                 >
-                  <Text style={styles.createButtonText}>
-                    Create My Plantation
-                  </Text>
+                  <Text style={styles.createButtonText}>Create Plantation</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -713,200 +763,445 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather, on
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
+
+  /* ── Hero Header ── */
+  heroHeader: {
+    backgroundColor: '#0E401D',
+    paddingTop: 52,
+    paddingBottom: 28,
+    paddingHorizontal: 20,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(115, 171, 46, 0.12)',
+  },
+  heroContent: {},
+  heroTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 6,
+  },
+  heroLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#73AB2E',
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
+  heroTitle: {
+    fontSize: 30,
+    fontWeight: '800',
+    color: '#ffffff',
+    letterSpacing: -0.5,
+  },
+  heroBadge: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: 'rgba(115,171,46,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(115,171,46,0.4)',
+  },
+  heroBadgeText: {
+    fontSize: 22,
+  },
+  heroSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.7)',
+    marginBottom: 20,
+  },
+
+  /* Stats Row inside hero */
+  statsRow: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+  },
+  statPill: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statPillValue: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#ffffff',
+  },
+  statPillLabel: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.6)',
+    marginTop: 2,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  statPillDivider: {
+    width: 1,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    marginVertical: 4,
+  },
+
+  /* Loading */
   loadingContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 24,
+    gap: 10,
   },
   loadingText: {
-    marginLeft: 10,
-    fontSize: 16,
+    fontSize: 15,
   },
-  header: {
-    backgroundColor: '#007AFF',
-    padding: 20,
-    paddingTop: 60,
+
+  /* Section */
+  sectionContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 24,
   },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 5,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#ffffff',
-    opacity: 0.9,
-  },
-  themeSelector: {
-    alignSelf: 'flex-end',
-  },
-  section: {
-    margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 15,
-  },
-  sectionHeader: {
+  sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 14,
+  },
+  sectionTitleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 14,
+  },
+  sectionAccent: {
+    width: 4,
+    height: 20,
+    borderRadius: 2,
+    backgroundColor: '#73AB2E',
+  },
+  sectionAccentAmber: {
+    backgroundColor: '#F4B124',
+  },
+  sectionAccentSky: {
+    backgroundColor: '#F4B124',
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
-  addButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 5,
+
+  /* Add Button */
+  addBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderWidth: 1.5,
+    borderColor: '#73AB2E',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginBottom: 14,
+    backgroundColor: 'transparent',
   },
-  addButtonText: {
-    color: 'white',
-    fontWeight: '600',
+  addBtnAmber: {
+    borderColor: '#F4B124',
   },
+  addBtnPlus: {
+    color: '#73AB2E',
+    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 16,
+  },
+  addBtnPlusAmber: {
+    color: '#F4B124',
+  },
+  addBtnText: {
+    color: '#73AB2E',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  addBtnTextAmber: {
+    color: '#F4B124',
+  },
+
+  /* User Card */
   userCard: {
-    backgroundColor: '#f8f9fa',
-    padding: 15,
-    borderRadius: 8,
+    borderRadius: 14,
+    padding: 14,
     marginBottom: 10,
-    borderLeftWidth: 4,
-    borderLeftColor: '#007AFF',
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  userEmail: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+  userCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  userRole: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 5,
-  },
-  userPlantation: {
-    fontSize: 14,
-    color: '#007AFF',
-    marginTop: 5,
-  },
-  plantationCard: {
-    backgroundColor: '#f8f9fa',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 10,
-    borderLeftWidth: 4,
-    borderLeftColor: '#28a745',
-  },
-  plantationName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  plantationLocation: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 5,
-  },
-  plantationArea: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 5,
-  },
-  plantationDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 5,
-    fontStyle: 'italic',
-  },
-  deleteButton: {
-    backgroundColor: '#dc3545',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 5,
-    alignSelf: 'flex-start',
-    marginTop: 10,
-  },
-  deleteButtonText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  userIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(115,171,46,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
   },
+  userIconText: {
+    fontSize: 22,
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userEmail: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 5,
+  },
+  roleBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(115,171,46,0.12)',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginBottom: 4,
+  },
+  roleBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  userPlantation: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+
+  /* Plantation Card */
+  plantationCard: {
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 10,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  plantationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  plantationIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(244,177,36,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  plantationIcon: {
+    fontSize: 22,
+  },
+  plantationInfo: {
+    flex: 1,
+  },
+  plantationName: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 3,
+  },
+  plantationLocation: {
+    fontSize: 13,
+  },
+  plantationDetails: {
+    marginBottom: 12,
+  },
+  detailChip: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(14,64,29,0.08)',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    marginBottom: 8,
+  },
+  detailChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  plantationDescription: {
+    fontSize: 13,
+    fontStyle: 'italic',
+    lineHeight: 18,
+  },
+  deleteButton: {
+    alignSelf: 'flex-start',
+    marginTop: 4,
+  },
+
+  /* Empty state card */
+  emptyCard: {
+    borderRadius: 14,
+    padding: 28,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    marginBottom: 8,
+  },
+  emptyIcon: {
+    fontSize: 36,
+    marginBottom: 10,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  emptyText: {
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+
+  /* Delete button (ghost outlined, red) */
+  deletePlantationBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderWidth: 1.5,
+    borderColor: '#E53935',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: 'transparent',
+  },
+  deletePlantationBtnPlus: {
+    color: '#E53935',
+    fontWeight: '700',
+    fontSize: 16,
+    lineHeight: 16,
+  },
+  deletePlantationBtnText: {
+    color: '#E53935',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+
+  /* Weather card */
+  weatherCard: {
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  weatherCardInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  weatherIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(244,177,36,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  weatherCardIcon: {
+    fontSize: 22,
+  },
+  weatherCardTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 3,
+  },
+  weatherCardSub: {
+    fontSize: 12,
+  },
+  weatherCardArrow: {
+    fontSize: 28,
+    color: '#F4B124',
+    fontWeight: '300',
+  },
+
+  bottomSpacer: {
+    height: 36,
+  },
+
+  /* Modals */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    justifyContent: 'flex-end',
+  },
   modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    width: '90%',
-    maxHeight: '80%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingTop: 12,
+    maxHeight: '88%',
+  },
+  modalHeaderBar: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalDragHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#e0e0e0',
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 20,
     textAlign: 'center',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
-    fontSize: 16,
-  },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
+    letterSpacing: -0.3,
   },
   roleContainer: {
     flexDirection: 'row',
     marginBottom: 15,
     alignItems: 'center',
+    gap: 10,
   },
   roleLabel: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    marginRight: 10,
   },
-  roleButton: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    marginRight: 10,
+  roleChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: 'rgba(115,171,46,0.12)',
   },
-  roleButtonActive: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
-  },
-  roleButtonText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  roleButtonTextActive: {
-    color: 'white',
-    fontWeight: '600',
+  roleChipText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   plantationSelector: {
     marginBottom: 15,
   },
   plantationLabel: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     marginBottom: 10,
   },
@@ -914,67 +1209,60 @@ const styles = StyleSheet.create({
     maxHeight: 150,
   },
   plantationOption: {
-    padding: 10,
-    borderRadius: 5,
+    padding: 12,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#ddd',
-    marginBottom: 5,
+    marginBottom: 6,
   },
   plantationOptionActive: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    backgroundColor: '#73AB2E',
+    borderColor: '#73AB2E',
   },
   plantationOptionText: {
     fontSize: 14,
-    color: '#666',
   },
   plantationOptionTextActive: {
     color: 'white',
     fontWeight: '600',
   },
   noPlantationText: {
-    fontSize: 14,
+    fontSize: 13,
     fontStyle: 'italic',
     textAlign: 'center',
-    padding: 10,
+    padding: 12,
+    lineHeight: 20,
   },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 20,
+    gap: 12,
   },
   cancelButton: {
     flex: 1,
-    padding: 12,
-    borderRadius: 8,
+    padding: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
-    marginRight: 10,
     alignItems: 'center',
   },
   cancelButtonText: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: 15,
+    fontWeight: '600',
   },
   createButton: {
     flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: '#007AFF',
-    marginLeft: 10,
+    padding: 14,
+    borderRadius: 12,
+    backgroundColor: '#73AB2E',
     alignItems: 'center',
   },
-  createButtonText: {
-    fontSize: 16,
-    color: 'white',
-    fontWeight: '600',
+  createButtonAmber: {
+    backgroundColor: '#F4B124',
   },
-  weatherButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 10,
+  createButtonText: {
+    fontSize: 15,
+    color: 'white',
+    fontWeight: '700',
   },
 });
 
