@@ -244,7 +244,10 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
   const handleDelete = (data: DailyData) => {
     Alert.alert(
       t('general.delete'),
-      `Are you sure you want to delete this entry for ${getWorkerName(data.workerId)} on ${data.date}?`,
+      t('daily_data.delete_entry_confirm', {
+        name: getWorkerName(data.workerId),
+        date: data.date,
+      }),
       [
         { text: t('general.cancel'), style: 'cancel' },
         {
@@ -253,7 +256,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           onPress: async () => {
             try {
               await dailyDataService.deleteDailyData(data.id);
-              Alert.alert(t('general.success'), 'Entry deleted successfully');
+              Alert.alert(t('general.success'), t('daily_data.entry_deleted_success'));
               loadDailyData();
             } catch (error: any) {
               const appError = handleFirebaseError(error);

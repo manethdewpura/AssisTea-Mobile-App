@@ -34,11 +34,13 @@ import NotificationsScreen from './src/screens/NotificationsScreen';
 export const navigationRef = createNavigationContainerRef();
 const { width: screenWidth } = Dimensions.get('window');
 
+const i18nInstance = initializeI18n();
+
 function App() {
   return (
     <SafeAreaProvider>
       <Provider store={store}>
-        <I18nextProvider i18n={initializeI18n()}>
+        <I18nextProvider i18n={i18nInstance}>
           <AppBootstrap />
         </I18nextProvider>
       </Provider>

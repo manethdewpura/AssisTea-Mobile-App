@@ -38,3 +38,19 @@ export function formatCompactDateTime(input: string | number): string {
   });
 }
 
+/** Like formatCompactDateTime but includes seconds. Use for frequently-updating UIs (e.g. 5s refresh). */
+export function formatCompactDateTimeWithSeconds(input: string | number): string {
+  const date = new Date(input);
+  if (Number.isNaN(date.getTime())) {
+    return String(input);
+  }
+  return date.toLocaleString(getCurrentLocaleTag(), {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+}
+

@@ -386,7 +386,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
               ) : (
                 <>
                   <Text style={styles.saveIcon}>✓</Text>
-                  <Text style={styles.saveButtonText}>{t('fields.edit_field')}</Text>
+                  <Text style={styles.saveButtonText}>{t('daily_data.update')}</Text>
                 </>
               )}
             </TouchableOpacity>

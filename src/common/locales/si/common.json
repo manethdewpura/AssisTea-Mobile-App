@@ -55,7 +55,8 @@
     "or": "හෝ",
     "pull_to_refresh": "අලුත් කිරීමට පහළට අදින්න",
     "no_data": "දත්ත නොමැත",
-    "notice": "දැනුම්දීම"
+    "notice": "දැනුම්දීම",
+    "update": "යාවත්කාලීන කරන්න"
   },
   "workers": {
     "add_worker_title": "කම්කරු එකතු කරන්න",
@@ -157,7 +158,10 @@
     "time_spent_short": "ගත කළ කාලය",
     "field_short": "ක්ෂේත්‍රය",
     "date_short": "දිනය",
-    "worker_short": "කම්කරු"
+    "worker_short": "කම්කරු",
+    "update": "යාවත්කාලීන කරන්න",
+    "delete_entry_confirm": "ඔබට {{date}} දින {{name}} සඳහා මෙම ඇතුළත් කිරීම මකා දැමීමට අවශ්‍යද?",
+    "entry_deleted_success": "ඇතුළත් කිරීම සාර්ථකව මකා දමන ලදී"
   },
   "irrigation": {
     "controls_title": "ජලසේචන හා පොහොර පාලකය",
@@ -187,8 +191,11 @@
     "max_workers_label": "උපරිම කම්කරුවන්",
     "save": "සුරකින්න",
     "cancel": "අවලංගු",
-    "delete_confirm": "ඔබට මෙම ක්ෂේත්‍රය ඉවත් කිරීමට අවශ්‍යද?",
+    "delete_confirm": "ඔබට \"{{name}}\" ඉවත් කිරීමට අවශ්‍යද?",
+    "delete_success": "ක්ෂේත්‍රය සාර්ථකව ඉවත් කරන ලදී",
+    "delete_error": "ක්ෂේත්‍රය ඉවත් කිරීමට අපොහොසත් විය",
     "no_fields": "ක්ෂේත්‍ර හමු නොවිණ. ආරම්භ කිරීමට ක්ෂේත්‍රයක් එකතු කරන්න.",
+    "no_fields_subtext": "භාරයන් ජනනය කිරීම ආරම්භ කිරීමට ක්ෂේත්‍ර එකතු කරන්න",
     "workers_short": "කම්කරුවන්"
   },
   "notifications": {

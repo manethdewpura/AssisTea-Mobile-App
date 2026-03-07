@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useAppSelector } from '../../hooks';
 import { selectTheme } from '../../store/selectors';
-import { formatCompactDateTime } from '../../utils';
+import { formatCompactDateTimeWithSeconds } from '../../utils';
 import { sensorsService, SensorReading } from '../../services/sensors.service';
 import { Lucide } from '@react-native-vector-icons/lucide';
 
@@ -100,7 +100,10 @@ const SensorDataScreen: React.FC<SensorDataScreenProps> = () => {
       }
       
       const date = new Date(normalizedTimestamp);
-      return formatCompactDateTime(date.getTime());
+      if (Number.isNaN(date.getTime())) {
+        return timestamp;
+      }
+      return formatCompactDateTimeWithSeconds(date.getTime());
     } catch {
       return timestamp;
     }

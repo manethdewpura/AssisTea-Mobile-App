@@ -55,7 +55,8 @@
     "or": "Or",
     "pull_to_refresh": "Pull down to refresh",
     "no_data": "No data available",
-    "notice": "Notice"
+    "notice": "Notice",
+    "update": "Update"
   },
   "workers": {
     "add_worker_title": "Add Worker",
@@ -157,7 +158,10 @@
     "time_spent_short": "Time Spent",
     "field_short": "Field",
     "date_short": "Date",
-    "worker_short": "Worker"
+    "worker_short": "Worker",
+    "update": "Update",
+    "delete_entry_confirm": "Are you sure you want to delete this entry for {{name}} on {{date}}?",
+    "entry_deleted_success": "Entry deleted successfully"
   },
   "irrigation": {
     "controls_title": "Irrigation and Fertilizer Controls",
@@ -187,8 +191,11 @@
     "max_workers_label": "Max Workers",
     "save": "Save",
     "cancel": "Cancel",
-    "delete_confirm": "Are you sure you want to delete this field?",
+    "delete_confirm": "Are you sure you want to delete \"{{name}}\"?",
+    "delete_success": "Field deleted successfully",
+    "delete_error": "Failed to delete field",
     "no_fields": "No fields found. Add a field to get started.",
+    "no_fields_subtext": "Add fields to start generating assignments",
     "workers_short": "workers"
   },
   "notifications": {

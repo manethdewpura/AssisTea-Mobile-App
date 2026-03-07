@@ -34,6 +34,7 @@ import AddWorkerScreen from '../../screens/teaPlantationManager/AddWorkerScreen'
 import WorkerDetailsScreen from '../../screens/teaPlantationManager/WorkerDetailsScreen';
 import WeatherScreen from '../../screens/weather/WeatherScreen';
 import SensorDataScreen from '../../screens/irrigationAndFertigation/SensorDataScreen';
+import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../hooks';
 import { selectTheme } from '../../store/selectors';
 
@@ -163,6 +164,15 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
   navigation,
 }) => {
   const { colors, isDark } = useAppSelector(selectTheme);
+  const { t } = useTranslation('common');
+
+  const tabAccessibilityLabel: Record<keyof MainTabParamList, string> = {
+    Watering: t('menu.watering'),
+    Chat: t('menu.chat'),
+    Home: t('menu.home'),
+    Schedule: t('menu.schedule'),
+    Team: t('menu.team'),
+  };
 
   return (
     <View
@@ -175,6 +185,8 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
       {state.routes.map((route, index) => {
         const isActive = state.index === index;
         const iconName = iconMap[route.name as keyof MainTabParamList] ?? 'circle';
+        const accessibilityLabel =
+          tabAccessibilityLabel[route.name as keyof MainTabParamList] ?? route.name;
 
         const activeTabStyle: StyleProp<ViewStyle> = {
           ...styles.activeTabBase,
@@ -185,6 +197,9 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
           <TouchableOpacity
             key={route.key}
             style={[styles.tab, isActive && activeTabStyle]}
+            accessibilityRole="button"
+            accessibilityLabel={accessibilityLabel}
+            accessibilityState={{ selected: isActive }}
             onPress={() => {
               const event = navigation.emit({
                 type: 'tabPress',

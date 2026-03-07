@@ -126,7 +126,7 @@ export default function FieldManagementScreen() {
     const handleDelete = (field: Field) => {
         Alert.alert(
             t('general.delete'),
-            t('fields.delete_confirm'),
+            t('fields.delete_confirm', { name: field.name }),
             [
                 { text: t('general.cancel'), style: 'cancel' },
                 {
@@ -135,11 +135,11 @@ export default function FieldManagementScreen() {
                     onPress: async () => {
                         try {
                             await fieldService.deleteField(field.id);
-                            Alert.alert(t('general.success'), 'Field deleted successfully');
+                            Alert.alert(t('general.success'), t('fields.delete_success'));
                             loadFields();
                         } catch (error) {
                             console.error('Error deleting field:', error);
-                            Alert.alert(t('general.error'), 'Failed to delete field');
+                            Alert.alert(t('general.error'), t('fields.delete_error'));
                         }
                     },
                 },
@@ -202,7 +202,7 @@ export default function FieldManagementScreen() {
                 <View style={styles.emptyContainer}>
                     <Text style={styles.emptyText}>{t('fields.no_fields')}</Text>
                     <Text style={styles.emptySubtext}>
-                        {t('fields.no_fields')}
+                        {t('fields.no_fields_subtext')}
                     </Text>
                 </View>
             ) : (
@@ -291,7 +291,7 @@ export default function FieldManagementScreen() {
                                     <ActivityIndicator color="#fff" />
                                 ) : (
                                     <Text style={styles.saveButtonText}>
-                                        {editingField ? t('fields.edit_field') : t('general.save')}
+                                        {editingField ? t('general.update') : t('general.save')}
                                     </Text>
                                 )}
                             </TouchableOpacity>
