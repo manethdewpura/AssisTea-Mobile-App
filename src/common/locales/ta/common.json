@@ -244,5 +244,14 @@
     "fields_stat": "நிலங்கள்",
     "avg_stat": "சராசரி kg/மணி",
     "predicted": "கணிக்கப்பட்டது:"
+  },
+  "time_ago": {
+    "just_now": "இப்போது",
+    "minute_ago_one": "{{count}} நிமிடத்திற்கு முன்",
+    "minute_ago_other": "{{count}} நிமிடங்களுக்கு முன்",
+    "hour_ago_one": "{{count}} மணி நேரத்திற்கு முன்",
+    "hour_ago_other": "{{count}} மணி நேரத்திற்கு முன்",
+    "day_ago_one": "{{count}} நாளுக்கு முன்",
+    "day_ago_other": "{{count}} நாட்களுக்கு முன்"
   }
 }

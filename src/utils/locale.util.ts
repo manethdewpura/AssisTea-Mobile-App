@@ -32,6 +32,22 @@ export function formatDateTimeToColombo(input: string | number): string {
   });
 }
 
+/** Compact date-time in Asia/Colombo. Use for forecast/list timestamps when LK time is required. */
+export function formatCompactDateTimeColombo(input: string | number): string {
+  const date = new Date(input);
+  if (Number.isNaN(date.getTime())) {
+    return String(input);
+  }
+  return date.toLocaleString(getCurrentLocaleTag(), {
+    timeZone: 'Asia/Colombo',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export function formatCompactDateTime(input: string | number): string {
   const date = new Date(input);
   return date.toLocaleString(getCurrentLocaleTag(), {

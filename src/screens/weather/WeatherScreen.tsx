@@ -15,7 +15,7 @@ import { selectWeather, selectTheme } from '../../store/selectors';
 import {
   formatTimeFromUnixSeconds,
   formatDateTimeToColombo,
-  formatCompactDateTime,
+  formatCompactDateTimeColombo,
 } from '../../utils';
 import { Lucide } from '@react-native-vector-icons/lucide';
 
@@ -389,7 +389,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
               >
                 <View style={styles.forecastItemLeft}>
                   <Text style={[styles.forecastDate, { color: colors.text }]}>
-                    {formatCompactDateTime(item.dt_txt)}
+                    {formatCompactDateTimeColombo(item.dt_txt)}
                   </Text>
                   {item.weather[0] && (
                     <Text

@@ -39,13 +39,12 @@ function detectInitialLanguage(): SupportedLanguage {
   return DEFAULT_LANGUAGE;
 }
 
-export function initializeI18n(initialLanguage?: SupportedLanguage) {
+export async function initializeI18n(initialLanguage?: SupportedLanguage): Promise<typeof i18n> {
   const lng = initialLanguage ?? detectInitialLanguage();
 
   if (!i18n.isInitialized) {
-    i18n
-      .use(initReactI18next)
-      .init({
+    try {
+      await i18n.use(initReactI18next).init({
         compatibilityJSON: 'v3',
         resources,
         lng,
@@ -55,16 +54,18 @@ export function initializeI18n(initialLanguage?: SupportedLanguage) {
         interpolation: {
           escapeValue: false,
         },
-      })
-      .catch(error => {
-        // eslint-disable-next-line no-console
-        console.error('[i18n] Failed to initialize i18next', error);
       });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('[i18n] Failed to initialize i18next', error);
+    }
   } else if (i18n.language !== lng) {
-    i18n.changeLanguage(lng).catch(error => {
+    try {
+      await i18n.changeLanguage(lng);
+    } catch (error) {
       // eslint-disable-next-line no-console
       console.error('[i18n] Failed to change language during initialization', error);
-    });
+    }
   }
 
   return i18n;

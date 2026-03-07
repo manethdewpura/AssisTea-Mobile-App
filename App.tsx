@@ -35,11 +35,11 @@ export const navigationRef = createNavigationContainerRef();
 const { width: screenWidth } = Dimensions.get('window');
 
 function App() {
-  const [i18nInstance, setI18nInstance] = useState<ReturnType<typeof initializeI18n> | null>(null);
+  const [i18nInstance, setI18nInstance] = useState<Awaited<ReturnType<typeof initializeI18n>> | null>(null);
 
   useEffect(() => {
-    loadLanguagePreference().then(stored => {
-      const instance = initializeI18n(stored ?? undefined);
+    loadLanguagePreference().then(async stored => {
+      const instance = await initializeI18n(stored ?? undefined);
       setI18nInstance(instance);
     });
   }, []);
@@ -73,15 +73,14 @@ function AppBootstrap() {
     initBackgroundFetch();
   }, []);
 
-  // Load stored language preference (if any) and sync with Redux + i18n.
+  // Load stored language preference (if any) and ensure Redux + i18n use the same initial language.
   useEffect(() => {
     const syncLanguage = async () => {
       const storedLanguage = await loadLanguagePreference();
-      if (storedLanguage) {
-        dispatch(setLanguage(storedLanguage as Language));
-        if (i18n.language !== storedLanguage) {
-          await i18n.changeLanguage(storedLanguage);
-        }
+      const effectiveLanguage = (storedLanguage as Language | null) ?? (i18n.language as Language);
+      dispatch(setLanguage(effectiveLanguage));
+      if (i18n.language !== effectiveLanguage) {
+        await i18n.changeLanguage(effectiveLanguage);
       }
     };
 

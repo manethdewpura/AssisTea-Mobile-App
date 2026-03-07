@@ -244,5 +244,14 @@
     "fields_stat": "Fields",
     "avg_stat": "Avg kg/hr",
     "predicted": "Predicted:"
+  },
+  "time_ago": {
+    "just_now": "Just now",
+    "minute_ago_one": "{{count}} minute ago",
+    "minute_ago_other": "{{count}} minutes ago",
+    "hour_ago_one": "{{count}} hour ago",
+    "hour_ago_other": "{{count}} hours ago",
+    "day_ago_one": "{{count}} day ago",
+    "day_ago_other": "{{count}} days ago"
   }
 }

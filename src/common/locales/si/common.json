@@ -244,5 +244,14 @@
     "fields_stat": "ක්ෂේත්‍ර",
     "avg_stat": "සාමාන්‍ය kg/පැය",
     "predicted": "නිකුත් කළ:"
+  },
+  "time_ago": {
+    "just_now": "දැන්",
+    "minute_ago_one": "මිනිත්තු {{count}}කට පෙර",
+    "minute_ago_other": "මිනිත්තු {{count}}කට පෙර",
+    "hour_ago_one": "පැය {{count}}කට පෙර",
+    "hour_ago_other": "පැය {{count}}කට පෙර",
+    "day_ago_one": "දින {{count}}කට පෙර",
+    "day_ago_other": "දින {{count}}කට පෙර"
   }
 }

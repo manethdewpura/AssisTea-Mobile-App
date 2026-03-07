@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Lucide } from '@react-native-vector-icons/lucide';
+import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../hooks';
 import { selectTheme, selectConfig } from '../../store/selectors';
 import { formatCompactDateTime } from '../../utils';
@@ -18,6 +19,7 @@ type ActivityLogsNavigationProp = NativeStackNavigationProp<
 
 const ActivityLogsScreen: React.FC = () => {
   const navigation = useNavigation<ActivityLogsNavigationProp>();
+  const { t } = useTranslation('common');
   const { colors } = useAppSelector(selectTheme);
   const { backendUrl } = useAppSelector(selectConfig);
   const [activityLogs, setActivityLogs] = useState<OperationalLog[]>([]);
@@ -127,13 +129,13 @@ const ActivityLogsScreen: React.FC = () => {
       const diffDays = Math.floor(diffMs / 86400000);
 
       if (diffMins < 1) {
-        return 'Just now';
+        return t('time_ago.just_now');
       } else if (diffMins < 60) {
-        return `${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`;
+        return t('time_ago.minute_ago', { count: diffMins });
       } else if (diffHours < 24) {
-        return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
+        return t('time_ago.hour_ago', { count: diffHours });
       } else if (diffDays < 7) {
-        return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
+        return t('time_ago.day_ago', { count: diffDays });
       } else {
         return formatCompactDateTime(date.getTime());
       }
