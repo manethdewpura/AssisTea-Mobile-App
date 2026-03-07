@@ -141,6 +141,23 @@ const SensorDataScreen: React.FC<SensorDataScreenProps> = () => {
     return colors.primary;
   };
 
+  /** Tank level: sensor measures distance (cm) from sensor to water. 100cm = empty, 10cm = full. */
+  const TANK_EMPTY_CM = 100;
+  const TANK_FULL_CM = 10;
+
+  const isTankLevelSensor = (reading: SensorReading): boolean => {
+    const type = reading.sensor_type?.toLowerCase() || '';
+    const id = reading.sensor_id?.toLowerCase() || '';
+    return (type.includes('tank') || type.includes('level') || id.includes('tank') || id.includes('level')) && (reading.unit === 'cm' || reading.unit === 'CM');
+  };
+
+  /** Convert sensor distance (cm) to fill percentage: 100cm → 0%, 10cm → 100%. */
+  const getTankFillPercent = (distanceCm: number): number => {
+    const range = TANK_EMPTY_CM - TANK_FULL_CM;
+    const fill = ((TANK_EMPTY_CM - distanceCm) / range) * 100;
+    return Math.max(0, Math.min(100, fill));
+  };
+
   const formatSensorName = (sensorType: string, sensorId?: string): string => {
     const type = sensorType?.toLowerCase() || '';
     const id = sensorId?.toLowerCase() || '';
@@ -366,14 +383,23 @@ const SensorDataScreen: React.FC<SensorDataScreenProps> = () => {
                 <View style={styles.sensorData}>
                   <View style={styles.valueContainer}>
                     <Text style={[styles.valueLabel, { color: colors.textSecondary }]}>
-                      Current Value
+                      {isTankLevelSensor(reading) ? 'Distance (sensor)' : 'Current Value'}
                     </Text>
                     <Text style={[styles.valueText, { color: colors.text }]}>
                       {formatValue(reading)}
                     </Text>
                   </View>
 
-                  {reading.value_percent !== undefined && (
+                  {isTankLevelSensor(reading) ? (
+                    <View style={styles.valueContainer}>
+                      <Text style={[styles.valueLabel, { color: colors.textSecondary }]}>
+                        Level (full)
+                      </Text>
+                      <Text style={[styles.valueText, { color: colors.text }]}>
+                        {getTankFillPercent(reading.value).toFixed(1)}%
+                      </Text>
+                    </View>
+                  ) : reading.value_percent !== undefined ? (
                     <View style={styles.valueContainer}>
                       <Text style={[styles.valueLabel, { color: colors.textSecondary }]}>
                         Level
@@ -382,7 +408,7 @@ const SensorDataScreen: React.FC<SensorDataScreenProps> = () => {
                         {reading.value_percent.toFixed(1)}%
                       </Text>
                     </View>
-                  )}
+                  ) : null}
 
                   {reading.raw_value !== undefined && (
                     <View style={styles.rawValueContainer}>
