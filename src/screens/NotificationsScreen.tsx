@@ -14,34 +14,27 @@ import { useAppSelector } from '../hooks';
 import { selectTheme } from '../store/selectors';
 import ScreenHeader from '../components/molecule/ScreenHeader';
 import StatusCard from '../components/molecule/StatusCard';
-import { useTranslation } from 'react-i18next';
 import { logsService, OperationalLog } from '../services/logs.service';
 
 export interface NotificationsScreenProps {
   onBackPress?: () => void;
 }
 
-/** Format timestamp to relative time (e.g. "2 hours ago") using i18n */
-function useFormatTimeAgo() {
-  const { t } = useTranslation('common');
-  return useCallback(
-    (isoTimestamp: string): string => {
-      const date = new Date(isoTimestamp);
-      const now = new Date();
-      const diffMs = now.getTime() - date.getTime();
-      const diffMins = Math.floor(diffMs / 60000);
-      const diffHours = Math.floor(diffMs / 3600000);
-      const diffDays = Math.floor(diffMs / 86400000);
-      const diffWeeks = Math.floor(diffDays / 7);
+/** Format timestamp to relative time (e.g. "2 hours ago") */
+function formatTimeAgo(isoTimestamp: string): string {
+  const date = new Date(isoTimestamp);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  const diffWeeks = Math.floor(diffDays / 7);
 
-      if (diffMins < 1) return t('time_ago.just_now');
-      if (diffMins < 60) return t(diffMins === 1 ? 'time_ago.minute_ago_one' : 'time_ago.minute_ago_other', { count: diffMins });
-      if (diffHours < 24) return t(diffHours === 1 ? 'time_ago.hour_ago_one' : 'time_ago.hour_ago_other', { count: diffHours });
-      if (diffDays < 7) return t(diffDays === 1 ? 'time_ago.day_ago_one' : 'time_ago.day_ago_other', { count: diffDays });
-      return t(diffWeeks === 1 ? 'time_ago.week_ago_one' : 'time_ago.week_ago_other', { count: diffWeeks });
-    },
-    [t]
-  );
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return diffMins === 1 ? '1 minute ago' : `${diffMins} minutes ago`;
+  if (diffHours < 24) return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
+  if (diffDays < 7) return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+  return diffWeeks === 1 ? '1 week ago' : `${diffWeeks} weeks ago`;
 }
 
 /** Map operation status to card type for icon/color */
@@ -70,8 +63,6 @@ export const NotificationsScreenContent: React.FC<{
   onBackPress: () => void;
 }> = ({ onBackPress }) => {
   const { colors } = useAppSelector(selectTheme);
-  const { t } = useTranslation('common');
-  const formatTimeAgo = useFormatTimeAgo();
 
   const [logs, setLogs] = useState<OperationalLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,9 +90,7 @@ export const NotificationsScreenContent: React.FC<{
   }, [loadLogs]);
 
   const getOperationTitle = (log: OperationalLog): string => {
-    const opLabel = log.operation_type === 'fertigation'
-      ? t('irrigation_controls.fertilizer_title')
-      : t('irrigation_controls.irrigation_title');
+    const opLabel = log.operation_type === 'fertigation' ? 'Fertigation' : 'Irrigation';
     const zone = log.zone_id != null ? ` - Zone ${log.zone_id}` : '';
     return `${opLabel}${zone}`;
   };
@@ -150,14 +139,14 @@ export const NotificationsScreenContent: React.FC<{
       edges={['top']}
     >
       <ScreenHeader
-        title={t('notifications.title')}
+        title="Notifications"
         onBackPress={onBackPress}
       />
       {loading ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            {t('notifications.loading_logs')}
+            Loading logs...
           </Text>
         </View>
       ) : error ? (
@@ -168,7 +157,7 @@ export const NotificationsScreenContent: React.FC<{
             style={[styles.retryButton, { backgroundColor: colors.primary }]}
             onPress={loadLogs}
           >
-            <Text style={styles.retryButtonText}>{t('general.retry')}</Text>
+            <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -180,7 +169,7 @@ export const NotificationsScreenContent: React.FC<{
             <View style={styles.emptyContainer}>
               <Lucide name="droplets" size={64} color={colors.textSecondary} />
               <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                {t('notifications.no_notifications')}
+                No notifications
               </Text>
             </View>
           ) : (
