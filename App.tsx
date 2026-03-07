@@ -23,7 +23,7 @@ import HamburgerMenu from './src/components/organisms/HamburgerMenu';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import NetworkStatus from './src/components/molecule/NetworkStatus';
 import { initBackgroundFetch } from './src/utils';
-import NotificationsScreen from './src/screens/NotificationsScreen';
+import { NotificationsScreenContent } from './src/screens/NotificationsScreen';
 
 export const navigationRef = createNavigationContainerRef();
 const { width: screenWidth } = Dimensions.get('window');
@@ -207,7 +207,7 @@ function AppContent() {
                   },
                 ]}
               >
-                <NotificationsScreen
+                <NotificationsScreenContent
                   onBackPress={handleCloseNotifications}
                 />
               </Animated.View>
@@ -262,7 +262,7 @@ function AppContent() {
                   },
                 ]}
               >
-                <NotificationsScreen
+                <NotificationsScreenContent
                   onBackPress={handleCloseNotifications}
                 />
               </Animated.View>
