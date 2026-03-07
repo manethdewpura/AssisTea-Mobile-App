@@ -386,7 +386,9 @@ const SensorDataScreen: React.FC<SensorDataScreenProps> = () => {
                       {isTankLevelSensor(reading) ? 'Distance (sensor)' : 'Current Value'}
                     </Text>
                     <Text style={[styles.valueText, { color: colors.text }]}>
-                      {formatValue(reading)}
+                      {isTankLevelSensor(reading) && reading.raw_value !== undefined
+                        ? `${reading.raw_value.toFixed(1)} cm`
+                        : formatValue(reading)}
                     </Text>
                   </View>
 
@@ -396,7 +398,10 @@ const SensorDataScreen: React.FC<SensorDataScreenProps> = () => {
                         Level (full)
                       </Text>
                       <Text style={[styles.valueText, { color: colors.text }]}>
-                        {getTankFillPercent(reading.value).toFixed(1)}%
+                        {(reading.value_percent !== undefined
+                          ? reading.value_percent
+                          : getTankFillPercent(reading.raw_value ?? reading.value)
+                        ).toFixed(1)}%
                       </Text>
                     </View>
                   ) : reading.value_percent !== undefined ? (
