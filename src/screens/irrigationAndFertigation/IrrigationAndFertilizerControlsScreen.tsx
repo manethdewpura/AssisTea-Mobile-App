@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, Alert, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -30,6 +30,7 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
   const [fertigationStatus, setFertigationStatus] = useState<FertigationStatus | null>(null);
   const [loadingIrrigation, setLoadingIrrigation] = useState(false);
   const [loadingFertigation, setLoadingFertigation] = useState(false);
+  const [skipWeatherCheck, setSkipWeatherCheck] = useState(false);
 
   // Check backend URL configuration
   useEffect(() => {
@@ -74,7 +75,7 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
 
     try {
       setLoadingIrrigation(true);
-      await irrigationService.startIrrigation();
+      await irrigationService.startIrrigation(undefined, skipWeatherCheck);
       dispatch(
         showToast({
           message: 'Irrigation started',
@@ -231,6 +232,19 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
               )}
             </View>
           )}
+
+          <View style={[styles.checkboxRow, { borderColor: colors.border }]}>
+            <Text style={[styles.checkboxLabel, { color: colors.text }]}>Skip weather check</Text>
+            <Switch
+              value={skipWeatherCheck}
+              onValueChange={setSkipWeatherCheck}
+              trackColor={{ false: colors.border, true: colors.success + '80' }}
+              thumbColor={skipWeatherCheck ? colors.success : colors.textSecondary}
+            />
+          </View>
+          <Text style={[styles.checkboxHint, { color: colors.textSecondary }]}>
+            When enabled, irrigation will start without checking weather conditions (e.g. rain).
+          </Text>
 
           <View style={styles.buttonRow}>
             <Button
@@ -401,6 +415,23 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 0,
+    marginBottom: 4,
+  },
+  checkboxLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  checkboxHint: {
+    fontSize: 12,
+    marginBottom: 16,
+    lineHeight: 18,
   },
   buttonRow: {
     flexDirection: 'row',
