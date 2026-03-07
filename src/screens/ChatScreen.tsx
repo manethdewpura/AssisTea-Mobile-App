@@ -24,7 +24,7 @@ import { chatHistorySQLiteService } from '../services/sqlite/chatHistorySQLite.s
 import MessageBubble from '../components/molecule/MessageBubble';
 import LanguageSelector from '../components/molecule/LanguageSelector';
 import ChatInput from '../components/molecule/ChatInput';
-import type { Language } from '../store/slices/ai.slice';
+import type { Language, MessageSource } from '../store/slices/ai.slice';
  
 const getEmptyTexts = (lang: Language) => {
   switch (lang) {
@@ -247,7 +247,7 @@ const ChatScreen: React.FC = () => {
         answer: isLanguageMismatch
           ? errorMessage
           : `Sorry, I encountered an error: ${errorMessage}. Please try again.`,
-        source: (isOnline ? 'online' : 'offline') as const,
+        source: (isOnline ? 'online' : 'offline') as MessageSource,
         confidence: 0,
       };
       console.log('[ChatScreen] Dispatching error receiveMessage with:', errorPayload);
