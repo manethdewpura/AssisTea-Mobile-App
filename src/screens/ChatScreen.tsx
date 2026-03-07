@@ -25,7 +25,7 @@ import MessageBubble from '../components/molecule/MessageBubble';
 import LanguageSelector from '../components/molecule/LanguageSelector';
 import ChatInput from '../components/molecule/ChatInput';
 import type { Language } from '../store/slices/ai.slice';
-
+ 
 const getEmptyTexts = (lang: Language) => {
   switch (lang) {
     case 'si':
@@ -52,7 +52,7 @@ const getEmptyTexts = (lang: Language) => {
       };
   }
 };
-
+ 
 const ChatScreen: React.FC = () => {
   const { colors } = useAppSelector(selectTheme);
   const { messages, loading, language, modelLoaded, error } =
@@ -64,7 +64,7 @@ const ChatScreen: React.FC = () => {
   const [initializing, setInitializing] = useState(false);
   const pendingQuestionRef = useRef<string | null>(null);
   const historyRequestIdRef = useRef(0);
-
+ 
   // Initialize model on mount
   useEffect(() => {
     const initializeModel = async () => {
@@ -90,22 +90,17 @@ const ChatScreen: React.FC = () => {
         setInitializing(false);
       }
     };
-
+ 
     initializeModel();
   }, [dispatch, initializing]);
-
-  // Load chat history from SQLite when language changes
-  // Only load if there are no messages yet for the current language.
+ 
+  // Load chat history from SQLite when language changes.
+  // When the user switches language, we always load that language's history from the DB.
+  // Dependency is only [dispatch, language] so we don't overwrite in-memory messages after each send.
   useEffect(() => {
-    // If we already have messages in Redux, don't reload from SQLite.
-    // This prevents chat history from visually "reloading" on every remount.
-    if (messages.length > 0) {
-      return;
-    }
-
     const currentRequestId = ++historyRequestIdRef.current;
     let isCurrent = true;
-
+ 
     const loadHistory = async () => {
       try {
         const history = await chatHistorySQLiteService.getMessagesByLanguage(
@@ -119,19 +114,19 @@ const ChatScreen: React.FC = () => {
         console.error('[ChatScreen] Failed to load chat history:', err);
       }
     };
-
+ 
     loadHistory();
-
+ 
     return () => {
       isCurrent = false;
     };
-  }, [dispatch, language, messages.length]);
-
+  }, [dispatch, language]);
+ 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
-
+ 
   // Log messages state changes
   useEffect(() => {
     console.log('[ChatScreen] Messages updated:', {
@@ -144,30 +139,30 @@ const ChatScreen: React.FC = () => {
       })),
     });
   }, [messages]);
-
+ 
   const handleSendMessage = async () => {
     console.log('[ChatScreen] handleSendMessage called');
     const question = inputText.trim();
     console.log('[ChatScreen] Question:', question);
     console.log('[ChatScreen] Loading state:', loading);
-    
+   
     if (!question || loading) {
       console.log('[ChatScreen] Early return - question empty or loading');
       return;
     }
-
+ 
     setInputText('');
     pendingQuestionRef.current = question;
-
+ 
     // Dispatch user message
     console.log('[ChatScreen] Dispatching sendMessage with:', { question, language });
     dispatch(sendMessage({ question, language }));
-
+ 
     try {
       console.log('[ChatScreen] Setting AI loading to true');
       dispatch(setAILoading(true));
       dispatch(setAIError(null));
-
+ 
       const response = isOnline
         ? await aiService.queryOnline(question, language)
         : await aiService.queryOffline(question, language);
@@ -178,7 +173,7 @@ const ChatScreen: React.FC = () => {
         confidence: response.confidence,
         fullResponse: response,
       });
-
+ 
       // Find the message ID from the current messages state
       // Get the most recent message that matches the question and has no answer
       const currentMessages = messages;
@@ -186,11 +181,11 @@ const ChatScreen: React.FC = () => {
         .slice()
         .reverse()
         .find(msg => msg.question === question && !msg.answer);
-      
+     
       const actualQuestionId = questionMessage?.id || `user-${Date.now()}`;
       console.log('[ChatScreen] Found question message ID:', actualQuestionId);
       console.log('[ChatScreen] All messages:', currentMessages.map(m => ({ id: m.id, question: m.question?.substring(0, 30), hasAnswer: !!m.answer })));
-
+ 
       // Dispatch AI response
       // Note: Redux slice will fallback to most recent unanswered message if questionId doesn't match
       const receiveMessagePayload = {
@@ -209,7 +204,7 @@ const ChatScreen: React.FC = () => {
       dispatch(receiveMessage(receiveMessagePayload));
       console.log('[ChatScreen] receiveMessage dispatched successfully');
       pendingQuestionRef.current = null;
-
+ 
       // Persist this Q/A pair in per-language chat history
       try {
         await chatHistorySQLiteService.saveMessagePair({
@@ -231,7 +226,7 @@ const ChatScreen: React.FC = () => {
         err instanceof Error ? err.message : 'Failed to get response';
       console.log('[ChatScreen] Error message:', errorMessage);
       dispatch(setAIError(errorMessage));
-
+ 
       // Find the message ID for error case too
       const currentMessages = messages;
       const questionMessage = currentMessages
@@ -239,18 +234,18 @@ const ChatScreen: React.FC = () => {
         .reverse()
         .find(msg => msg.question === question && !msg.answer);
       const actualQuestionId = questionMessage?.id || `user-${Date.now()}`;
-
+ 
       // Check if it's a language mismatch error - display the message directly
-      const isLanguageMismatch = errorMessage.includes('appears to be in') || 
+      const isLanguageMismatch = errorMessage.includes('appears to be in') ||
                                  errorMessage.includes('ඔබගේ ප්‍රශ්නය') ||
                                  errorMessage.includes('உங்கள் வினா');
-      
+     
       // Show error message in chat
       // Redux slice will fallback to most recent unanswered message if questionId doesn't match
       const errorPayload = {
         questionId: actualQuestionId,
-        answer: isLanguageMismatch 
-          ? errorMessage 
+        answer: isLanguageMismatch
+          ? errorMessage
           : `Sorry, I encountered an error: ${errorMessage}. Please try again.`,
         source: (isOnline ? 'online' : 'offline') as const,
         confidence: 0,
@@ -263,7 +258,7 @@ const ChatScreen: React.FC = () => {
       dispatch(setAILoading(false));
     }
   };
-
+ 
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
@@ -305,10 +300,10 @@ const ChatScreen: React.FC = () => {
           </View>
         )}
       </View>
-
+ 
       {/* Language Selector */}
       <LanguageSelector />
-
+ 
       {/* Chat Messages */}
       <KeyboardAvoidingView
         style={styles.chatContainer}
@@ -370,7 +365,7 @@ const ChatScreen: React.FC = () => {
                 answer: message.answer?.substring(0, 30),
                 fullMessage: message,
               });
-
+ 
               // User messages (have question, no answer)
               if (message.question && !message.answer) {
                 console.log(`[ChatScreen] Rendering as USER message (index ${index})`);
@@ -382,7 +377,7 @@ const ChatScreen: React.FC = () => {
                   />
                 );
               }
-
+ 
               // AI messages (have answer)
               if (message.answer) {
                 console.log(`[ChatScreen] Rendering as AI message (index ${index})`);
@@ -394,7 +389,7 @@ const ChatScreen: React.FC = () => {
                   />
                 );
               }
-
+ 
               console.log(`[ChatScreen] Message ${index} doesn't match any condition, returning null`);
               return null;
             })
@@ -410,7 +405,7 @@ const ChatScreen: React.FC = () => {
             </View>
           )}
         </ScrollView>
-
+ 
         {/* Error Display */}
         {error && (
           <View
@@ -424,7 +419,7 @@ const ChatScreen: React.FC = () => {
             </Text>
           </View>
         )}
-
+ 
         {/* Input Field */}
         <ChatInput
           value={inputText}
@@ -438,7 +433,7 @@ const ChatScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
-
+ 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -517,5 +512,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
+ 
 export default ChatScreen;
