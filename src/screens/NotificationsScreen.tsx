@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -12,75 +14,107 @@ import { useAppSelector } from '../hooks';
 import { selectTheme } from '../store/selectors';
 import ScreenHeader from '../components/molecule/ScreenHeader';
 import StatusCard from '../components/molecule/StatusCard';
+import { useTranslation } from 'react-i18next';
+import { logsService, OperationalLog } from '../services/logs.service';
 
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  time: string;
-  type: 'info' | 'warning' | 'error' | 'success';
-  read: boolean;
-}
-
-interface NotificationsScreenProps {
+export interface NotificationsScreenProps {
   onBackPress?: () => void;
 }
 
-const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
-  onBackPress,
-}) => {
-  const navigation = useNavigation();
+/** Format timestamp to relative time (e.g. "2 hours ago") using i18n */
+function useFormatTimeAgo() {
+  const { t } = useTranslation('common');
+  return useCallback(
+    (isoTimestamp: string): string => {
+      const date = new Date(isoTimestamp);
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+      const diffWeeks = Math.floor(diffDays / 7);
+
+      if (diffMins < 1) return t('time_ago.just_now');
+      if (diffMins < 60) return t(diffMins === 1 ? 'time_ago.minute_ago_one' : 'time_ago.minute_ago_other', { count: diffMins });
+      if (diffHours < 24) return t(diffHours === 1 ? 'time_ago.hour_ago_one' : 'time_ago.hour_ago_other', { count: diffHours });
+      if (diffDays < 7) return t(diffDays === 1 ? 'time_ago.day_ago_one' : 'time_ago.day_ago_other', { count: diffDays });
+      return t(diffWeeks === 1 ? 'time_ago.week_ago_one' : 'time_ago.week_ago_other', { count: diffWeeks });
+    },
+    [t]
+  );
+}
+
+/** Map operation status to card type for icon/color */
+function getLogCardType(status: string): 'info' | 'success' | 'warning' | 'error' {
+  switch (status?.toLowerCase()) {
+    case 'completed':
+      return 'success';
+    case 'failed':
+    case 'stopped':
+      return 'error';
+    case 'in_progress':
+    case 'started':
+      return 'info';
+    case 'skipped':
+      return 'warning';
+    default:
+      return 'info';
+  }
+}
+
+/**
+ * Presentational notifications content. Use this when the component is rendered
+ * outside NavigationContainer (e.g. in an overlay). Pass onBackPress for back behavior.
+ */
+export const NotificationsScreenContent: React.FC<{
+  onBackPress: () => void;
+}> = ({ onBackPress }) => {
   const { colors } = useAppSelector(selectTheme);
-  const [notifications] = useState<Notification[]>([
-    {
-      id: '1',
-      title: 'Watering Schedule Updated',
-      message: 'The watering schedule for Plot A has been updated for tomorrow at 8:00 AM.',
-      time: '2 hours ago',
-      type: 'info',
-      read: false,
-    },
-    {
-      id: '2',
-      title: 'Team Member Assigned',
-      message: 'John Doe has been assigned to manage Plot B.',
-      time: '5 hours ago',
-      type: 'success',
-      read: false,
-    },
-    {
-      id: '3',
-      title: 'Weather Alert',
-      message: 'Heavy rain expected in the next 24 hours. Consider adjusting your irrigation schedule.',
-      time: '1 day ago',
-      type: 'warning',
-      read: true,
-    },
-    {
-      id: '4',
-      title: 'System Maintenance',
-      message: 'System maintenance will be performed on 15th at 2:00 AM. No action needed.',
-      time: '2 days ago',
-      type: 'info',
-      read: true,
-    },
-    {
-      id: '5',
-      title: 'Harvest Reminder',
-      message: 'Tea leaves in Plot C are ready for harvesting.',
-      time: '3 days ago',
-      type: 'success',
-      read: true,
-    },
-    {
-      id: '6',
-      title: 'New Feature Available',
-      message: 'The mobile app has been updated with new features. Update now for the best experience.',
-      time: '1 week ago',
-      type: 'info',
-      read: true,
-    },
-  ]);
+  const { t } = useTranslation('common');
+  const formatTimeAgo = useFormatTimeAgo();
+
+  const [logs, setLogs] = useState<OperationalLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadLogs = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await logsService.getOperationalLogs({
+        limit: 50,
+        hours: 168, // last 7 days
+      });
+      setLogs(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load logs');
+      setLogs([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadLogs();
+  }, [loadLogs]);
+
+  const getOperationTitle = (log: OperationalLog): string => {
+    const opLabel = log.operation_type === 'fertigation'
+      ? t('irrigation_controls.fertilizer_title')
+      : t('irrigation_controls.irrigation_title');
+    const zone = log.zone_id != null ? ` - Zone ${log.zone_id}` : '';
+    return `${opLabel}${zone}`;
+  };
+
+  const getOperationMessage = (log: OperationalLog): string => {
+    const status = log.status || '';
+    const parts: string[] = [status.replace(/_/g, ' ')];
+    if (log.duration != null) parts.push(`${log.duration}s`);
+    if (log.water_volume != null) parts.push(`${log.water_volume} L water`);
+    if (log.fertilizer_volume != null) parts.push(`${log.fertilizer_volume} L fertilizer`);
+    if (log.notes) parts.push(log.notes);
+    return parts.join(' · ');
+  };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -93,7 +127,7 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
       case 'error':
         return 'alert-circle';
       default:
-        return 'bell';
+        return 'droplets';
     }
   };
 
@@ -115,39 +149,73 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
       style={[styles.container, { backgroundColor: colors.background }]}
       edges={['top']}
     >
-      {/* Header */}
-      <ScreenHeader 
-        title="Notifications" 
-        onBackPress={onBackPress || (() => navigation.goBack())} 
+      <ScreenHeader
+        title={t('notifications.title')}
+        onBackPress={onBackPress}
       />
-
-      <ScrollView
-        style={styles.notificationsContainer}
-        contentContainerStyle={styles.notificationsContent}
-      >
-        {notifications.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Lucide name="bell" size={64} color={colors.textSecondary} />
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No notifications
-            </Text>
-          </View>
-        ) : (
-          notifications.map(notification => (
-            <StatusCard
-              key={notification.id}
-              icon={getNotificationIcon(notification.type)}
-              iconColor={getNotificationColor(notification.type)}
-              title={notification.title}
-              message={notification.message}
-              timestamp={notification.time}
-              unreadDot={!notification.read}
-              borderColor={getNotificationColor(notification.type)}
-            />
-          ))
-        )}
-      </ScrollView>
+      {loading ? (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+            {t('notifications.loading_logs')}
+          </Text>
+        </View>
+      ) : error ? (
+        <View style={styles.centerContainer}>
+          <Lucide name={"alert-circle" as any} size={48} color={colors.error} />
+          <Text style={[styles.errorText, { color: colors.text }]}>{error}</Text>
+          <TouchableOpacity
+            style={[styles.retryButton, { backgroundColor: colors.primary }]}
+            onPress={loadLogs}
+          >
+            <Text style={styles.retryButtonText}>{t('general.retry')}</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.notificationsContainer}
+          contentContainerStyle={styles.notificationsContent}
+        >
+          {logs.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Lucide name="droplets" size={64} color={colors.textSecondary} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                {t('notifications.no_notifications')}
+              </Text>
+            </View>
+          ) : (
+            logs.map((log) => {
+              const cardType = getLogCardType(log.status);
+              return (
+                <StatusCard
+                  key={String(log.id)}
+                  icon={getNotificationIcon(cardType)}
+                  iconColor={getNotificationColor(cardType)}
+                  title={getOperationTitle(log)}
+                  message={getOperationMessage(log)}
+                  timestamp={formatTimeAgo(log.timestamp)}
+                  borderColor={getNotificationColor(cardType)}
+                />
+              );
+            })
+          )}
+        </ScrollView>
+      )}
     </SafeAreaView>
+  );
+};
+
+/**
+ * Notifications screen that uses React Navigation. Use only inside a navigator (NavigationContainer).
+ */
+const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
+  onBackPress,
+}) => {
+  const navigation = useNavigation();
+  return (
+    <NotificationsScreenContent
+      onBackPress={onBackPress ?? (() => navigation.goBack())}
+    />
   );
 };
 
@@ -171,7 +239,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 16,
   },
+  centerContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+  },
+  errorText: {
+    marginTop: 12,
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
 
 export default NotificationsScreen;
-
