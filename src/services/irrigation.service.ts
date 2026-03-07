@@ -26,8 +26,10 @@ export const irrigationService = {
    * The backend now requires a zone_id, so we either
    * accept one explicitly or fall back to the zone info
    * from the configuration service.
+   * @param zoneId - Optional zone ID (defaults from config)
+   * @param skipWeatherCheck - If true, start irrigation without checking weather conditions
    */
-  async startIrrigation(zoneId?: number): Promise<StartIrrigationResponse> {
+  async startIrrigation(zoneId?: number, skipWeatherCheck?: boolean): Promise<StartIrrigationResponse> {
     try {
       let targetZoneId = zoneId;
 
@@ -38,7 +40,7 @@ export const irrigationService = {
 
       const response = await apiClient.post<StartIrrigationResponse>(
         '/irrigation/start',
-        { zone_id: targetZoneId }
+        { zone_id: targetZoneId, skip_weather_check: Boolean(skipWeatherCheck) }
       );
 
       if (!response.success) {

@@ -111,6 +111,9 @@ const SolenoidStatusScreen: React.FC<SolenoidStatusScreenProps> = () => {
 
   const getSolenoidIcon = (name: string): string => {
     const lowerName = name.toLowerCase();
+    if (lowerName.includes('zone_valve') || lowerName.includes('zone valve')) {
+      return 'toggle-right';
+    }
     if (lowerName.includes('pump')) {
       return 'droplet';
     } else if (lowerName.includes('tank')) {
