@@ -167,7 +167,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
         gender: formData.gender,
       });
 
-      Alert.alert(t('general.success'), 'Worker added successfully', [
+      Alert.alert(t('general.success'), t('workers.add_success'), [
         {
           text: t('general.ok'),
           onPress: () => {

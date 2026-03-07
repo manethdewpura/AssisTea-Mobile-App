@@ -99,11 +99,7 @@ const SensorDataScreen: React.FC<SensorDataScreenProps> = () => {
         }
       }
       
-      const date = new Date(normalizedTimestamp);
-      if (Number.isNaN(date.getTime())) {
-        return timestamp;
-      }
-      return formatCompactDateTimeWithSeconds(date.getTime());
+      return formatCompactDateTimeWithSeconds(normalizedTimestamp);
     } catch {
       return timestamp;
     }

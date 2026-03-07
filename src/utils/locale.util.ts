@@ -1,9 +1,14 @@
 import i18n from '../common/config/i18n';
-import { languageToLocale } from '../common/config/i18n';
+import { languageToLocale, type SupportedLanguage } from '../common/config/i18n';
+
+const SUPPORTED_LANGUAGES: readonly SupportedLanguage[] = ['en', 'si', 'ta'];
 
 export function getCurrentLocaleTag(): string {
-  const lang = (i18n.language || 'en').split('-')[0] as 'en' | 'si' | 'ta';
-  return languageToLocale[lang] ?? languageToLocale.en;
+  const lang = (i18n.language || 'en').split('-')[0];
+  const key = SUPPORTED_LANGUAGES.includes(lang as SupportedLanguage)
+    ? (lang as SupportedLanguage)
+    : 'en';
+  return languageToLocale[key];
 }
 
 export function formatTimeFromUnixSeconds(unixSeconds: number): string {

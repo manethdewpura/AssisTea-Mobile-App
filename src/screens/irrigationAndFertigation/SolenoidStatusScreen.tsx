@@ -90,12 +90,7 @@ const SolenoidStatusScreen: React.FC<SolenoidStatusScreenProps> = () => {
         }
       }
 
-      const date = new Date(normalizedTimestamp);
-      if (Number.isNaN(date.getTime())) {
-        return timestamp;
-      }
-      // Include seconds so changes are visible between 5s refreshes
-      return formatCompactDateTimeWithSeconds(date.getTime());
+      return formatCompactDateTimeWithSeconds(normalizedTimestamp);
     } catch {
       return timestamp;
     }

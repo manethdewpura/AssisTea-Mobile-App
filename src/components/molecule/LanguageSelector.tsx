@@ -21,14 +21,13 @@ const LanguageSelector: React.FC = () => {
     if (!language) {
       return;
     }
-    i18n.changeLanguage(language).catch(error => {
-      // eslint-disable-next-line no-console
-      console.error('[LanguageSelector] Failed to change i18n language', error);
-    });
-    saveLanguagePreference(language).catch(error => {
-      // eslint-disable-next-line no-console
-      console.error('[LanguageSelector] Failed to save language preference', error);
-    });
+    if (i18n.language !== language) {
+      i18n.changeLanguage(language).catch(error => {
+        // eslint-disable-next-line no-console
+        console.error('[LanguageSelector] Failed to change i18n language', error);
+      });
+    }
+    saveLanguagePreference(language);
   }, [language]);
 
   return (

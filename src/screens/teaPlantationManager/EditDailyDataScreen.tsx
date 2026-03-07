@@ -163,7 +163,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
         fieldArea: formData.fieldArea,
       });
 
-      Alert.alert(t('general.success'), 'Daily data updated successfully', [
+      Alert.alert(t('general.success'), t('daily_data.update_success'), [
         {
           text: t('general.ok'),
           onPress: () => {

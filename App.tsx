@@ -34,9 +34,26 @@ import NotificationsScreen from './src/screens/NotificationsScreen';
 export const navigationRef = createNavigationContainerRef();
 const { width: screenWidth } = Dimensions.get('window');
 
-const i18nInstance = initializeI18n();
-
 function App() {
+  const [i18nInstance, setI18nInstance] = useState<ReturnType<typeof initializeI18n> | null>(null);
+
+  useEffect(() => {
+    loadLanguagePreference().then(stored => {
+      const instance = initializeI18n(stored ?? undefined);
+      setI18nInstance(instance);
+    });
+  }, []);
+
+  if (!i18nInstance) {
+    return (
+      <SafeAreaProvider>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" />
+        </View>
+      </SafeAreaProvider>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <Provider store={store}>

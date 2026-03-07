@@ -17,6 +17,7 @@ import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantation
 import { assignmentStorageService } from '../../services/assignmentStorage.service';
 import { SavedSchedule } from '../../models/SavedSchedule';
 import { useTranslation } from 'react-i18next';
+import { getCurrentLocaleTag } from '../../utils';
 
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
@@ -124,7 +125,7 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
             <Lucide name="calendar" size={32} color="#7cb342" style={{ marginRight: 12 }} />
             <View style={styles.dateInfo}>
               <Text style={[styles.dateText, { color: colors.text }]}>
-                {t('schedule.schedule_for')} {new Date(schedule.date).toLocaleDateString()}
+                {t('schedule.schedule_for')} {new Date(schedule.date).toLocaleDateString(getCurrentLocaleTag())}
               </Text>
               <Text style={[styles.statsText, { color: colors.textSecondary }]}>
                 {schedule.totalWorkers} {t('schedule.workers_suffix')} • {schedule.totalFields} {t('schedule.fields_suffix')}
