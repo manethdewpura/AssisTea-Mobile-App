@@ -1,5 +1,4 @@
-import i18n from '../common/config/i18n';
-import { languageToLocale, type SupportedLanguage } from '../common/config/i18n';
+import i18n, { languageToLocale, type SupportedLanguage } from '../common/config/i18n';
 
 const SUPPORTED_LANGUAGES: readonly SupportedLanguage[] = ['en', 'si', 'ta'];
 
@@ -50,6 +49,9 @@ export function formatCompactDateTimeColombo(input: string | number): string {
 
 export function formatCompactDateTime(input: string | number): string {
   const date = new Date(input);
+  if (Number.isNaN(date.getTime())) {
+    return String(input);
+  }
   return date.toLocaleString(getCurrentLocaleTag(), {
     month: 'short',
     day: 'numeric',

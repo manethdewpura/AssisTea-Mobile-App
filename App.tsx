@@ -75,9 +75,18 @@ function AppBootstrap() {
 
   // Load stored language preference (if any) and ensure Redux + i18n use the same initial language.
   useEffect(() => {
+    const normalizeToSupportedLanguage = (lang: string | null | undefined): Language | null => {
+      if (!lang) return null;
+      const base = lang.split('-')[0];
+      if (base === 'en' || base === 'si' || base === 'ta') return base as Language;
+      return null;
+    };
+
     const syncLanguage = async () => {
       const storedLanguage = await loadLanguagePreference();
-      const effectiveLanguage = (storedLanguage as Language | null) ?? (i18n.language as Language);
+      const normalizedStored = normalizeToSupportedLanguage(storedLanguage ?? undefined);
+      const normalizedI18n = normalizeToSupportedLanguage(i18n.language);
+      const effectiveLanguage = normalizedStored ?? normalizedI18n ?? 'en';
       dispatch(setLanguage(effectiveLanguage));
       if (i18n.language !== effectiveLanguage) {
         await i18n.changeLanguage(effectiveLanguage);
