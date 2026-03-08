@@ -8,14 +8,12 @@ import {
   BackHandler,
   TouchableOpacity,
 } from 'react-native';
-import { Lucide } from '@react-native-vector-icons/lucide';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAppSelector } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import { teaPlantationService } from '../../services';
 import type { TeaPlantation } from '../../common/interfaces';
-import Button from '../../components/atoms/Button';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 
 interface TeaPlantationManagerScreenProps {
@@ -25,7 +23,6 @@ interface TeaPlantationManagerScreenProps {
 
 const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
   onNavigateToWeather,
-  onNavigateToSensors,
 }) => {
   const navigation =
     useNavigation<NativeStackNavigationProp<TeaPlantationStackParamList>>();
@@ -57,11 +54,7 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
   }, [loadPlantationData]);
 
   useEffect(() => {
-    const backAction = () => {
-      // Let the parent handle back button (App.tsx will show exit confirmation)
-      return false;
-    };
-
+    const backAction = () => false;
     const backHandler = BackHandler.addEventListener(
       'hardwareBackPress',
       backAction,
@@ -71,151 +64,177 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
 
   if (loading) {
     return (
-      <View
-        style={[
-          styles.loadingContainer,
-          { backgroundColor: colors.background },
-        ]}
-      >
-        <Text style={[styles.loadingText, { color: colors.text }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
           Loading plantation data...
         </Text>
       </View>
     );
   }
 
+  const actionCards = [
+    {
+      icon: '📝',
+      label: 'Enter Daily Data',
+      sub: 'Add today\'s records',
+      color: '#73AB2E',
+      onPress: () => navigation.navigate('DailyDataEntry'),
+    },
+    {
+      icon: '📊',
+      label: 'View Daily Data',
+      sub: 'Browse past records',
+      color: '#73AB2E',
+      onPress: () => navigation.navigate('DailyDataView'),
+    },
+    {
+      icon: '👥',
+      label: 'Manage Workers',
+      sub: 'Add, edit workers',
+      color: '#F4B124',
+      onPress: () => navigation.navigate('WorkerManagement'),
+    },
+    {
+      icon: '🌱',
+      label: 'Manage Fields',
+      sub: 'View & edit fields',
+      color: '#F4B124',
+      onPress: () => navigation.navigate('FieldManagement'),
+    },
+    {
+      icon: '📅',
+      label: 'Generate Schedule',
+      sub: 'Auto-assign labour',
+      color: '#0E401D',
+      onPress: () => navigation.navigate('AssignmentGeneration'),
+    },
+    {
+      icon: '📋',
+      label: 'View Schedule',
+      sub: 'See latest schedule',
+      color: '#0E401D',
+      onPress: () => navigation.navigate('ViewLatestSchedule'),
+    },
+  ];
+
   return (
     <View style={styles.fullContainer}>
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
+        showsVerticalScrollIndicator={false}
       >
-        {plantation ? (
-          <View style={styles.plantationContainer}>
-            <Text style={[styles.plantationTitle, { color: colors.text }]}>
-              Your Plantation
-            </Text>
-
-            <View
-              style={[
-                styles.plantationCard,
-                {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <Text style={[styles.plantationName, { color: colors.text }]}>
-                {plantation.name}
+        {/* Hero Header */}
+        <View style={styles.heroHeader}>
+          <View style={styles.heroOverlay} />
+          <View style={styles.heroTop}>
+            <View>
+              <Text style={styles.heroLabel}>TEA PLANTATION</Text>
+              <Text style={styles.heroTitle}>
+                {plantation ? plantation.name : 'My Dashboard'}
               </Text>
-              <Text
-                style={[
-                  styles.plantationLocation,
-                  { color: colors.textSecondary },
-                ]}
-              >
-                📍 {plantation.location}
-              </Text>
-              <Text
-                style={[styles.plantationArea, { color: colors.textSecondary }]}
-              >
-                🌱 Area: {plantation.area} acres
-              </Text>
-              {plantation.description && (
-                <Text
-                  style={[
-                    styles.plantationDescription,
-                    { color: colors.textSecondary },
-                  ]}
-                >
-                  📝 Description: {plantation.description}
-                </Text>
-              )}
             </View>
-
-            {/* Split Button Container */}
-            <View style={styles.splitButtonContainer}>
-              <TouchableOpacity
-                style={[styles.splitButton, styles.leftButton]}
-                onPress={() => navigation.navigate('DailyDataEntry')}
-              >
-                <View style={styles.buttonContent}>
-                  <Text style={styles.buttonIcon}>📝</Text>
-                  <Text style={styles.buttonText}>Enter Daily Data</Text>
-                </View>
-              </TouchableOpacity>
-
-              <View style={styles.buttonDivider} />
-
-              <TouchableOpacity
-                style={[styles.splitButton, styles.rightButton]}
-                onPress={() => navigation.navigate('DailyDataView')}
-              >
-                <View style={styles.buttonContent}>
-                  <Text style={styles.buttonIcon}>📊</Text>
-                  <Text style={styles.buttonText}>View Daily Data</Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-
-            {/* Split Button 2: Manage Workers | Manage Fields (Yellow) */}
-            <View style={[styles.splitButtonContainer, styles.yellowButton]}>
-              <TouchableOpacity
-                style={[styles.splitButton, styles.leftButton]}
-                onPress={() => navigation.navigate('WorkerManagement')}
-              >
-                <View style={styles.buttonContent}>
-                  <Text style={styles.buttonIcon}>👥</Text>
-                  <Text style={styles.buttonText}>Manage Workers</Text>
-                </View>
-              </TouchableOpacity>
-
-              <View style={styles.buttonDivider} />
-
-              <TouchableOpacity
-                style={[styles.splitButton, styles.rightButton]}
-                onPress={() => navigation.navigate('FieldManagement')}
-              >
-                <View style={styles.buttonContent}>
-                  <Text style={styles.buttonIcon}>🌱</Text>
-                  <Text style={styles.buttonText}>Manage Fields</Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-
-            {/* Split Button 3: Generate Today's Schedule | View Latest Schedule (Green) */}
-            <View style={styles.splitButtonContainer}>
-              <TouchableOpacity
-                style={[styles.splitButton, styles.leftButton]}
-                onPress={() => navigation.navigate('AssignmentGeneration')}
-              >
-                <View style={styles.buttonContent}>
-                  <Lucide name="calendar" size={16} color="#fff" style={{ marginRight: 6 }} />
-                  <Text style={styles.buttonText}>Generate Schedule</Text>
-                </View>
-              </TouchableOpacity>
-
-              <View style={styles.buttonDivider} />
-
-              <TouchableOpacity
-                style={[styles.splitButton, styles.rightButton]}
-                onPress={() => navigation.navigate('ViewLatestSchedule')}
-              >
-                <View style={styles.buttonContent}>
-                  <Text style={styles.buttonIcon}>📋</Text>
-                  <Text style={styles.buttonText}>View Schedule</Text>
-                </View>
-              </TouchableOpacity>
+            <View style={styles.heroBadge}>
+              <Text style={styles.heroBadgeText}>🌿</Text>
             </View>
           </View>
-        ) : (
-          <View style={styles.noPlantationContainer}>
-            <Text style={styles.noPlantationTitle}>No Plantation Assigned</Text>
-            <Text style={styles.noPlantationText}>
-              You haven't been assigned to any tea plantation yet. Please
-              contact your administrator.
-            </Text>
+          <Text style={styles.heroSubtitle}>
+            Welcome back, {userProfile?.email?.split('@')[0] || 'Manager'}
+          </Text>
+
+          {plantation && (
+            <View style={styles.statsRow}>
+              <View style={styles.statPill}>
+                <Text style={styles.statPillValue}>{plantation.area}</Text>
+                <Text style={styles.statPillLabel}>ACRES</Text>
+              </View>
+              <View style={styles.statPillDivider} />
+              <View style={styles.statPill}>
+                <Text style={styles.statPillValue}>📍</Text>
+                <Text style={styles.statPillLabel}>{plantation.location}</Text>
+              </View>
+            </View>
+          )}
+        </View>
+
+        {/* No plantation assigned */}
+        {!plantation && !loading && (
+          <View style={styles.sectionContainer}>
+            <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={styles.emptyIcon}>🌿</Text>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>No Plantation Assigned</Text>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                You haven't been assigned to any tea plantation yet. Please contact your administrator.
+              </Text>
+            </View>
           </View>
         )}
+
+        {/* Action Cards Grid */}
+        {plantation && (
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionTitleGroup}>
+              <View style={styles.sectionAccent} />
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Quick Actions
+              </Text>
+            </View>
+
+            <View style={styles.cardGrid}>
+              {actionCards.map((card, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.actionCard,
+                    { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                  ]}
+                  onPress={card.onPress}
+                  activeOpacity={0.8}
+                >
+                  <View style={[styles.actionIconContainer, { backgroundColor: card.color + '22' }]}>
+                    <Text style={styles.actionIcon}>{card.icon}</Text>
+                  </View>
+                  <Text style={[styles.actionLabel, { color: colors.text }]}>{card.label}</Text>
+                  <Text style={[styles.actionSub, { color: colors.textSecondary }]}>{card.sub}</Text>
+                  <Text style={[styles.actionArrow, { color: card.color }]}>›</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Weather Card */}
+        {onNavigateToWeather && (
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionTitleGroup}>
+              <View style={[styles.sectionAccent, styles.sectionAccentAmber]} />
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Weather Forecast
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.weatherCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+              onPress={onNavigateToWeather}
+              activeOpacity={0.8}
+            >
+              <View style={styles.weatherCardInner}>
+                <View style={styles.weatherIconContainer}>
+                  <Text style={styles.weatherCardIcon}>🌤️</Text>
+                </View>
+                <View>
+                  <Text style={[styles.weatherCardTitle, { color: colors.text }]}>
+                    View Weather Forecast
+                  </Text>
+                  <Text style={[styles.weatherCardSub, { color: colors.textSecondary }]}>
+                    Tap to see current forecast
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.weatherCardArrow}>›</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <View style={styles.bottomSpacer} />
       </ScrollView>
     </View>
   );
@@ -227,210 +246,242 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
   },
   loadingText: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: 15,
   },
-  header: {
-    backgroundColor: '#28a745',
-    padding: 20,
-    paddingTop: 60,
+
+  /* Hero Header */
+  heroHeader: {
+    backgroundColor: '#0E401D',
+    paddingTop: 52,
+    paddingBottom: 28,
+    paddingHorizontal: 20,
+    position: 'relative',
+    overflow: 'hidden',
   },
-  headerContent: {
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(115, 171, 46, 0.12)',
+  },
+  heroTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    marginBottom: 6,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+  heroLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#73AB2E',
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
+  heroTitle: {
+    fontSize: 30,
+    fontWeight: '800',
     color: '#ffffff',
-    marginBottom: 5,
+    letterSpacing: -0.5,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#ffffff',
-    opacity: 0.9,
+  heroBadge: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: 'rgba(115,171,46,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(115,171,46,0.4)',
   },
-  themeSelector: {
-    alignSelf: 'flex-end',
-  },
-  plantationContainer: {
-    padding: 20,
-  },
-  plantationTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 20,
-  },
-  plantationCard: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  plantationName: {
+  heroBadgeText: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
   },
-  plantationLocation: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 8,
-  },
-  plantationArea: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 8,
-  },
-  plantationDescription: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 10,
-    fontStyle: 'italic',
-  },
-  managementSection: {
+  heroSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.7)',
     marginBottom: 20,
+  },
+
+  /* Stats Row */
+  statsRow: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+  },
+  statPill: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statPillValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#ffffff',
+  },
+  statPillLabel: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.6)',
+    marginTop: 2,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  statPillDivider: {
+    width: 1,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    marginVertical: 4,
+  },
+
+  /* Section */
+  sectionContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 24,
+  },
+  sectionTitleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 14,
+  },
+  sectionAccent: {
+    width: 4,
+    height: 20,
+    borderRadius: 2,
+    backgroundColor: '#73AB2E',
+  },
+  sectionAccentAmber: {
+    backgroundColor: '#F4B124',
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
-  managementButton: {
-    backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  managementButtonText: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
-  },
-  quickStatsSection: {
-    marginBottom: 20,
-  },
-  statsGrid: {
+
+  /* 2-column card grid */
+  cardGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    gap: 12,
   },
-  statCard: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 15,
-    width: '48%',
-    marginBottom: 10,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#28a745',
-    marginBottom: 5,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-  },
-  noPlantationContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  noPlantationTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  noPlantationText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  splitButtonContainer: {
-    backgroundColor: '#7cb342',
-    borderRadius: 10,
-    flexDirection: 'row',
-    overflow: 'hidden',
-    marginBottom: 16,
+  actionCard: {
+    width: '47.5%',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+    position: 'relative',
   },
-  yellowButton: {
-    backgroundColor: '#fbc02d',
-  },
-  splitButton: {
-    flex: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 8,
+  actionIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 10,
   },
-  leftButton: {
-    paddingRight: 8,
+  actionIcon: {
+    fontSize: 22,
   },
-  rightButton: {
-    paddingLeft: 8,
+  actionLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 3,
   },
-  buttonDivider: {
-    width: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  actionSub: {
+    fontSize: 11,
+    lineHeight: 15,
+    marginBottom: 10,
   },
-  buttonContent: {
+  actionArrow: {
+    fontSize: 22,
+    fontWeight: '300',
+    position: 'absolute',
+    bottom: 10,
+    right: 14,
+  },
+
+  /* Empty state */
+  emptyCard: {
+    borderRadius: 14,
+    padding: 28,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+  },
+  emptyIcon: {
+    fontSize: 36,
+    marginBottom: 10,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  emptyText: {
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+
+  /* Weather card */
+  weatherCard: {
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  weatherCardInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  weatherIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(244,177,36,0.15)',
     justifyContent: 'center',
+    alignItems: 'center',
   },
-  buttonIcon: {
-    fontSize: 16,
-    color: '#fff',
-    marginRight: 6,
+  weatherCardIcon: {
+    fontSize: 22,
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '600',
-    flexShrink: 1,
+  weatherCardTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 3,
   },
-  spacer: {
-    height: 40,
+  weatherCardSub: {
+    fontSize: 12,
+  },
+  weatherCardArrow: {
+    fontSize: 28,
+    color: '#F4B124',
+    fontWeight: '300',
+  },
+
+  bottomSpacer: {
+    height: 36,
   },
 });
 
