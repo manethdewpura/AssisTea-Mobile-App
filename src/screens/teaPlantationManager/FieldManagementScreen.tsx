@@ -12,13 +12,14 @@ import {
 } from 'react-native';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { useAppSelector } from '../../hooks/redux.hooks';
-import { selectAuth } from '../../store/selectors';
+import { selectAuth, selectTheme } from '../../store/selectors';
 import { fieldService } from '../../services/field.service';
 import { Field, CreateFieldInput } from '../../models/Field';
 import Slider from '@react-native-community/slider';
 
 export default function FieldManagementScreen() {
     const { userProfile } = useAppSelector(selectAuth);
+    const { colors } = useAppSelector(selectTheme);
     const [fields, setFields] = useState<Field[]>([]);
     const [loading, setLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
@@ -146,9 +147,9 @@ export default function FieldManagementScreen() {
     };
 
     const renderFieldItem = ({ item }: { item: Field }) => (
-        <View style={styles.fieldCard}>
+        <View style={[styles.fieldCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
             <View style={styles.fieldHeader}>
-                <Text style={styles.fieldName}>{item.name}</Text>
+                <Text style={[styles.fieldName, { color: colors.text }]}>{item.name}</Text>
                 <View style={styles.actions}>
                     <TouchableOpacity
                         style={styles.editButton}
@@ -167,17 +168,17 @@ export default function FieldManagementScreen() {
 
             <View style={styles.fieldDetails}>
                 <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Slope:</Text>
-                    <Text style={styles.detailValue}>{item.slope}°</Text>
+                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Slope:</Text>
+                    <Text style={[styles.detailValue, { color: colors.text }]}>{item.slope}°</Text>
                 </View>
                 <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Max Workers:</Text>
-                    <Text style={styles.detailValue}>{item.maxWorkers}</Text>
+                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Max Workers:</Text>
+                    <Text style={[styles.detailValue, { color: colors.text }]}>{item.maxWorkers}</Text>
                 </View>
                 {item.location && (
                     <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Location:</Text>
-                        <Text style={styles.detailValue}>{item.location}</Text>
+                        <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Location:</Text>
+                        <Text style={[styles.detailValue, { color: colors.text }]}>{item.location}</Text>
                     </View>
                 )}
             </View>
@@ -186,20 +187,20 @@ export default function FieldManagementScreen() {
 
     if (loading) {
         return (
-            <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color="#4CAF50" />
-                <Text style={styles.loadingText}>Loading fields...</Text>
+            <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
+                <ActivityIndicator size="large" color="#73AB2E" />
+                <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading fields...</Text>
             </View>
         );
     }
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Fields List */}
             {fields.length === 0 ? (
                 <View style={styles.emptyContainer}>
-                    <Text style={styles.emptyText}>No fields configured</Text>
-                    <Text style={styles.emptySubtext}>
+                    <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No fields configured</Text>
+                    <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
                         Add fields to start generating assignments
                     </Text>
                 </View>
@@ -212,11 +213,13 @@ export default function FieldManagementScreen() {
                 />
             )}
 
-            {/* Add Field Button - matching worker button style */}
-            <TouchableOpacity style={styles.addButton} onPress={openAddModal}>
-                <Text style={styles.addButtonIcon}>+</Text>
-                <Text style={styles.addButtonText}>Add New Field</Text>
-            </TouchableOpacity>
+            {/* Add Field Button */}
+            <View style={[styles.addButtonContainer, { borderTopColor: colors.border }]}>
+                <TouchableOpacity style={styles.addButton} onPress={openAddModal}>
+                    <Text style={styles.addButtonPlus}>＋</Text>
+                    <Text style={styles.addButtonText}>Add New Field</Text>
+                </TouchableOpacity>
+            </View>
 
             {/* Add/Edit Modal */}
             <Modal
@@ -226,23 +229,23 @@ export default function FieldManagementScreen() {
                 onRequestClose={() => setModalVisible(false)}
             >
                 <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
+                        <Text style={[styles.modalTitle, { color: colors.text }]}>
                             {editingField ? 'Edit Field' : 'Add New Field'}
                         </Text>
 
                         {/* Field Name */}
-                        <Text style={styles.inputLabel}>Field Name *</Text>
+                        <Text style={[styles.inputLabel, { color: colors.text }]}>Field Name *</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
                             value={fieldName}
                             onChangeText={setFieldName}
                             placeholder="e.g., Field A, Upper Valley"
-                            placeholderTextColor="#999"
+                            placeholderTextColor={colors.textSecondary}
                         />
 
                         {/* Slope Slider */}
-                        <Text style={styles.inputLabel}>Slope: {slope}°</Text>
+                        <Text style={[styles.inputLabel, { color: colors.text }]}>Slope: {slope}°</Text>
                         <Slider
                             style={styles.slider}
                             minimumValue={5}
@@ -250,26 +253,24 @@ export default function FieldManagementScreen() {
                             step={1}
                             value={slope}
                             onValueChange={setSlope}
-                            minimumTrackTintColor="#4CAF50"
-                            maximumTrackTintColor="#ddd"
+                            minimumTrackTintColor="#73AB2E"
+                            maximumTrackTintColor={colors.border}
                         />
                         <View style={styles.sliderLabels}>
-                            <Text style={styles.sliderLabel}>5° (Gentle)</Text>
-                            <Text style={styles.sliderLabel}>70° (Very Steep)</Text>
+                            <Text style={[styles.sliderLabel, { color: colors.textSecondary }]}>5° (Gentle)</Text>
+                            <Text style={[styles.sliderLabel, { color: colors.textSecondary }]}>70° (Very Steep)</Text>
                         </View>
 
                         {/* Max Workers */}
-                        <Text style={styles.inputLabel}>Maximum Workers *</Text>
+                        <Text style={[styles.inputLabel, { color: colors.text }]}>Maximum Workers *</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
                             value={maxWorkers.toString()}
                             onChangeText={text => setMaxWorkers(parseInt(text) || 1)}
                             placeholder="e.g., 5"
                             keyboardType="numeric"
-                            placeholderTextColor="#999"
+                            placeholderTextColor={colors.textSecondary}
                         />
-
-
 
                         {/* Buttons */}
                         <View style={styles.modalButtons}>
@@ -286,10 +287,10 @@ export default function FieldManagementScreen() {
                                 disabled={saving}
                             >
                                 {saving ? (
-                                    <ActivityIndicator color="#fff" />
+                                    <ActivityIndicator color="#F4B124" />
                                 ) : (
                                     <Text style={styles.saveButtonText}>
-                                        {editingField ? 'Update' : 'Save'}
+                                        ✓ {editingField ? 'Update' : 'Save'}
                                     </Text>
                                 )}
                             </TouchableOpacity>
@@ -304,60 +305,54 @@ export default function FieldManagementScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
     },
     centerContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f5f5f5',
     },
     loadingText: {
         marginTop: 10,
         fontSize: 16,
-        color: '#666',
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 16,
-        backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: '#e0e0e0',
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#333',
     },
-    addButton: {
-        position: 'absolute',
-        bottom: 16,
-        right: 16,
-        backgroundColor: '#7cb342',
-        borderRadius: 25,
+    addButtonContainer: {
         paddingHorizontal: 16,
         paddingVertical: 12,
+        borderTopWidth: 1,
+        alignItems: 'flex-end',
+    },
+    addButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 4,
+        gap: 6,
+        borderWidth: 1.5,
+        borderColor: '#73AB2E',
+        backgroundColor: 'transparent',
+        borderRadius: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
     },
-    addButtonIcon: {
-        fontSize: 20,
-        color: '#fff',
-        fontWeight: 'bold',
-        marginRight: 6,
+    addButtonPlus: {
+        color: '#73AB2E',
+        fontWeight: '700',
+        fontSize: 15,
+        lineHeight: 17,
     },
     addButtonText: {
-        color: '#fff',
+        color: '#73AB2E',
         fontSize: 14,
-        fontWeight: '600',
+        fontWeight: '700',
     },
     emptyContainer: {
         flex: 1,
@@ -368,22 +363,21 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#666',
         marginBottom: 8,
     },
     emptySubtext: {
         fontSize: 14,
-        color: '#999',
         textAlign: 'center',
     },
     listContainer: {
         padding: 16,
+        paddingBottom: 24,
     },
     fieldCard: {
-        backgroundColor: '#fff',
         borderRadius: 12,
         padding: 16,
         marginBottom: 12,
+        borderWidth: 1,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -399,7 +393,6 @@ const styles = StyleSheet.create({
     fieldName: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#333',
         flex: 1,
     },
     actions: {
@@ -411,7 +404,6 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
     },
     editButtonText: {
-        color: '#fff',
         fontSize: 14,
         fontWeight: '600',
     },
@@ -420,7 +412,6 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
     },
     deleteButtonText: {
-        color: '#fff',
         fontSize: 14,
         fontWeight: '600',
     },
@@ -433,21 +424,18 @@ const styles = StyleSheet.create({
     },
     detailLabel: {
         fontSize: 14,
-        color: '#666',
     },
     detailValue: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#333',
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
         justifyContent: 'center',
         alignItems: 'center',
     },
     modalContent: {
-        backgroundColor: '#fff',
         borderRadius: 16,
         padding: 24,
         width: '90%',
@@ -456,23 +444,19 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#333',
         marginBottom: 20,
     },
     inputLabel: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#333',
         marginBottom: 8,
         marginTop: 12,
     },
     input: {
         borderWidth: 1,
-        borderColor: '#ddd',
         borderRadius: 8,
         padding: 12,
-        fontSize: 16,
-        color: '#333',
+        fontSize: 15,
     },
     slider: {
         width: '100%',
@@ -485,37 +469,41 @@ const styles = StyleSheet.create({
     },
     sliderLabel: {
         fontSize: 12,
-        color: '#666',
     },
     modalButtons: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
         gap: 12,
         marginTop: 24,
+        alignItems: 'center',
     },
     cancelButton: {
-        paddingHorizontal: 20,
-        paddingVertical: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
         borderRadius: 8,
-        backgroundColor: '#f5f5f5',
+        borderWidth: 1.5,
+        borderColor: '#73AB2E',
+        backgroundColor: 'transparent',
     },
     cancelButtonText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#666',
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#73AB2E',
     },
     saveButton: {
-        paddingHorizontal: 20,
-        paddingVertical: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
         borderRadius: 8,
-        backgroundColor: '#fbc02d',
+        borderWidth: 1.5,
+        borderColor: '#F4B124',
+        backgroundColor: 'transparent',
     },
     saveButtonDisabled: {
-        opacity: 0.6,
+        opacity: 0.5,
     },
     saveButtonText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#fff',
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#F4B124',
     },
 });

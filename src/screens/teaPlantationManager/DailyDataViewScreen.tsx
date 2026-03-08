@@ -309,7 +309,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       {/* Filters */}
-      <View style={styles.filterContainer}>
+      <View style={[styles.filterContainer, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -318,6 +318,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           <TouchableOpacity
             style={[
               styles.filterButton,
+              { borderColor: '#73AB2E' },
               filterType === 'all' && styles.filterButtonActive,
             ]}
             onPress={clearFilters}
@@ -335,15 +336,15 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           <TouchableOpacity
             style={[
               styles.filterButton,
+              { borderColor: '#73AB2E' },
               filterType === 'date' && styles.filterButtonActive,
             ]}
             onPress={() => {
-              // Always allow changing date filter
               setShowDatePicker(true);
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Lucide name="calendar" size={16} color={filterType === 'date' ? '#fff' : '#1976D2'} />
+              <Lucide name="calendar" size={14} color={filterType === 'date' ? '#fff' : '#73AB2E'} />
               <Text
                 style={[
                   styles.filterButtonText,
@@ -358,15 +359,15 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           <TouchableOpacity
             style={[
               styles.filterButton,
+              { borderColor: '#73AB2E' },
               filterType === 'dateRange' && styles.filterButtonActive,
             ]}
             onPress={() => {
-              // Always allow changing date range filter
               setShowDateRangeModal(true);
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Lucide name="calendar" size={16} color={filterType === 'dateRange' ? '#fff' : '#1976D2'} />
+              <Lucide name="calendar" size={14} color={filterType === 'dateRange' ? '#fff' : '#73AB2E'} />
               <Text
                 style={[
                   styles.filterButtonText,
@@ -383,6 +384,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           <TouchableOpacity
             style={[
               styles.filterButton,
+              { borderColor: '#73AB2E' },
               filterType === 'worker' && styles.filterButtonActive,
             ]}
             onPress={() => {
@@ -399,13 +401,14 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               👤{' '}
               {selectedWorkerId
                 ? getWorkerName(selectedWorkerId)
-                : 'Select Worker'}
+                : 'Worker'}
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[
               styles.filterButton,
+              { borderColor: '#73AB2E' },
               filterType === 'field' && styles.filterButtonActive,
             ]}
             onPress={() => {
@@ -420,22 +423,22 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               ]}
             >
               🏞️{' '}
-              {selectedField || 'Select Field'}
+              {selectedField || 'Field'}
             </Text>
           </TouchableOpacity>
 
         </ScrollView>
 
         {showWorkerDropdown && (
-          <View style={styles.workerDropdown}>
+          <View style={[styles.workerDropdown, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
             <ScrollView style={styles.workerDropdownList}>
               {workers.map(worker => (
                 <TouchableOpacity
                   key={worker.id}
-                  style={styles.workerDropdownItem}
+                  style={[styles.workerDropdownItem, { borderBottomColor: colors.border }]}
                   onPress={() => handleWorkerSelect(worker.id)}
                 >
-                  <Text style={styles.workerDropdownText}>
+                  <Text style={[styles.workerDropdownText, { color: colors.text }]}>
                     {worker.name} ({worker.workerId})
                   </Text>
                 </TouchableOpacity>
@@ -445,12 +448,12 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
         )}
 
         {showFieldDropdown && (
-          <View style={styles.workerDropdown}>
+          <View style={[styles.workerDropdown, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
             <ScrollView style={styles.workerDropdownList}>
               {fields.map((field: Field) => (
                 <TouchableOpacity
                   key={field.id}
-                  style={styles.workerDropdownItem}
+                  style={[styles.workerDropdownItem, { borderBottomColor: colors.border }]}
                   onPress={() => {
                     setSelectedField(field.name);
                     setFilterType('field');
@@ -465,7 +468,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                     setSelectedWorkerId('');
                   }}
                 >
-                  <Text style={styles.workerDropdownText}>{field.name}</Text>
+                  <Text style={[styles.workerDropdownText, { color: colors.text }]}>{field.name}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -508,43 +511,43 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           }}
         >
           <View style={styles.dateRangeModalOverlay}>
-            <View style={styles.dateRangeModalContent}>
+            <View style={[styles.dateRangeModalContent, { backgroundColor: colors.cardBackground }]}>
               {/* Header */}
-              <View style={styles.dateRangeHeader}>
-                <Text style={styles.dateRangeTitle}>Select Date Range</Text>
+              <View style={[styles.dateRangeHeader, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.dateRangeTitle, { color: colors.text }]}>Select Date Range</Text>
                 <TouchableOpacity onPress={() => {
                   setShowDateRangeModal(false);
                   setActiveDatePicker(null);
                 }}>
-                  <Text style={styles.dateRangeCloseButton}>✕</Text>
+                  <Text style={[styles.dateRangeCloseButton, { color: colors.textSecondary }]}>✕</Text>
                 </TouchableOpacity>
               </View>
 
               {/* From Date Section */}
               <View style={styles.dateSection}>
-                <Text style={styles.dateSectionLabel}>From Date</Text>
+                <Text style={[styles.dateSectionLabel, { color: colors.text }]}>From Date</Text>
                 <TouchableOpacity
-                  style={styles.dateDisplayBox}
+                  style={[styles.dateDisplayBox, { backgroundColor: colors.background, borderColor: '#73AB2E' }]}
                   onPress={() => setActiveDatePicker('start')}
                 >
-                  <Text style={styles.dateDisplayText}>
+                  <Text style={[styles.dateDisplayText, { color: colors.text }]}>
                     {startDate ? startDate.toISOString().split('T')[0] : 'Tap to select start date'}
                   </Text>
-                  <Lucide name="calendar" size={18} color="#7cb342" />
+                  <Lucide name="calendar" size={18} color={colors.text} />
                 </TouchableOpacity>
               </View>
 
               {/* To Date Section */}
               <View style={styles.dateSection}>
-                <Text style={styles.dateSectionLabel}>To Date</Text>
+                <Text style={[styles.dateSectionLabel, { color: colors.text }]}>To Date</Text>
                 <TouchableOpacity
-                  style={styles.dateDisplayBox}
+                  style={[styles.dateDisplayBox, { backgroundColor: colors.background, borderColor: '#73AB2E' }]}
                   onPress={() => setActiveDatePicker('end')}
                 >
-                  <Text style={styles.dateDisplayText}>
+                  <Text style={[styles.dateDisplayText, { color: colors.text }]}>
                     {endDate ? endDate.toISOString().split('T')[0] : 'Tap to select end date'}
                   </Text>
-                  <Lucide name="calendar" size={18} color="#7cb342" />
+                  <Lucide name="calendar" size={18} color={colors.text} />
                 </TouchableOpacity>
               </View>
 
@@ -667,10 +670,10 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               key={data.id}
               style={[
                 styles.dataCard,
-                { backgroundColor: colors.cardBackground || '#fff' },
+                { backgroundColor: colors.cardBackground || '#fff', borderColor: colors.border },
               ]}
             >
-              <View style={styles.dataCardHeader}>
+              <View style={[styles.dataCardHeader, { borderBottomColor: colors.border }]}>
                 <View style={styles.dataCardHeaderLeft}>
                   <Text style={[styles.workerName, { color: colors.text }]}>
                     {getWorkerName(data.workerId)}
@@ -770,29 +773,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#2d5016',
   },
   filterContainer: {
-    backgroundColor: '#fff',
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   filterScrollContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     gap: 8,
+    alignItems: 'center',
   },
   filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
-    marginRight: 8,
+    borderWidth: 1.5,
+    backgroundColor: 'transparent',
   },
   filterButtonActive: {
-    backgroundColor: '#7cb342',
+    backgroundColor: '#73AB2E',
+    borderColor: '#73AB2E',
   },
   filterButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    color: '#666',
+    color: '#73AB2E',
   },
   filterButtonTextActive: {
     color: '#fff',
@@ -851,7 +854,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   dateRangeModalContent: {
-    backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingBottom: 20,
@@ -863,16 +865,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   dateRangeTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#333',
   },
   dateRangeCloseButton: {
     fontSize: 24,
-    color: '#666',
     fontWeight: '300',
   },
   dateSection: {
@@ -882,24 +881,20 @@ const styles = StyleSheet.create({
   dateSectionLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 8,
   },
   dateDisplayBox: {
-    backgroundColor: '#fff',
     borderRadius: 8,
     paddingVertical: 14,
     paddingHorizontal: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#7cb342',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   dateDisplayText: {
     fontSize: 15,
-    color: '#333',
     fontWeight: '500',
   },
   calendarIcon: {
@@ -914,33 +909,35 @@ const styles = StyleSheet.create({
   },
   clearDateButton: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
     borderRadius: 8,
-    paddingVertical: 14,
+    paddingVertical: 11,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#7cb342',
+    borderWidth: 1.5,
+    borderColor: '#73AB2E',
   },
   clearDateButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#7cb342',
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#73AB2E',
   },
   applyDateButton: {
     flex: 1,
-    backgroundColor: '#7cb342',
+    backgroundColor: 'transparent',
     borderRadius: 8,
-    paddingVertical: 14,
+    paddingVertical: 11,
     alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#73AB2E',
   },
   applyDateButtonDisabled: {
-    backgroundColor: '#ccc',
-    opacity: 0.6,
+    borderColor: '#ccc',
+    opacity: 0.5,
   },
   applyDateButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#73AB2E',
   },
   content: {
     flex: 1,
@@ -982,6 +979,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -995,7 +993,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   dataCardHeaderLeft: {
     flex: 1,

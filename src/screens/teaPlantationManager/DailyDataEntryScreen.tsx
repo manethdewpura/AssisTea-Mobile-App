@@ -313,11 +313,11 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
           <View
             style={[
               styles.formCard,
-              { backgroundColor: colors.cardBackground || '#fff' },
+              { backgroundColor: colors.cardBackground || '#fff', borderColor: colors.border },
             ]}
           >
             {/* Date Section */}
-            <View style={styles.dateSection}>
+            <View style={[styles.dateSection, { borderBottomColor: colors.border }]}>
               <Text style={[styles.dateLabel, { color: colors.text }]}>
                 Date: {formData.date}
               </Text>
@@ -325,7 +325,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
                 style={styles.calendarButton}
                 onPress={() => setShowDatePicker(true)}
               >
-                <Lucide name="calendar" size={24} color="#7cb342" />
+                <Lucide name="calendar" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
 
@@ -355,14 +355,14 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
 
             {/* Upload CSV Section */}
             <TouchableOpacity
-              style={styles.uploadButton}
+              style={[styles.uploadButton, (loading || uploadingCSV) && styles.uploadButtonDisabled]}
               onPress={handleUploadCSV}
               disabled={loading || uploadingCSV}
             >
               {uploadingCSV ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color="#73AB2E" />
               ) : (
-                <Text style={styles.uploadButtonText}>📄 Upload CSV File</Text>
+                <Text style={styles.uploadButtonText}>＋ Upload CSV File</Text>
               )}
             </TouchableOpacity>
 
@@ -376,7 +376,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
               <TouchableOpacity
                 style={[
                   styles.dropdownBox,
-                  { backgroundColor: colors.background },
+                  { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
                 onPress={() => setShowWorkerDropdown(!showWorkerDropdown)}
               >
@@ -420,7 +420,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
               <View
                 style={[
                   styles.inputBox,
-                  { backgroundColor: colors.background },
+                  { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
               >
                 <TextInput
@@ -444,7 +444,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
               <View
                 style={[
                   styles.inputBox,
-                  { backgroundColor: colors.background },
+                  { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
               >
                 <TextInput
@@ -468,7 +468,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
               <TouchableOpacity
                 style={[
                   styles.dropdownBox,
-                  { backgroundColor: colors.background },
+                  { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
                 onPress={() => setShowFieldDropdown(!showFieldDropdown)}
               >
@@ -504,11 +504,11 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color="#F4B124" />
               ) : (
                 <>
                   <Text style={styles.saveIcon}>✓</Text>
-                  <Text style={styles.saveButtonText}>Save</Text>
+                  <Text style={styles.saveButtonText}>Save Entry</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -568,6 +568,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginTop: 0,
     marginBottom: 20,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -595,19 +596,26 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   uploadButton: {
-    backgroundColor: '#7cb342',
-    borderRadius: 8,
-    paddingVertical: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: '#73AB2E',
+    backgroundColor: 'transparent',
+    borderRadius: 8,
+    paddingVertical: 9,
+    paddingHorizontal: 24,
     marginBottom: 15,
+    alignSelf: 'center',
   },
   uploadButtonDisabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
   uploadButtonText: {
-    color: '#fff',
+    color: '#73AB2E',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   orText: {
     textAlign: 'center',
@@ -630,9 +638,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    height: 52,
+    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#e0e0e0',
   },
   textInput: {
     fontSize: 14,
@@ -642,9 +650,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    height: 52,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -707,29 +714,28 @@ const styles = StyleSheet.create({
     color: '#7cb342',
   },
   saveButton: {
-    backgroundColor: '#fbc02d',
-    borderRadius: 8,
-    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: '#F4B124',
+    backgroundColor: 'transparent',
+    borderRadius: 8,
+    paddingVertical: 9,
+    paddingHorizontal: 32,
     marginTop: 25,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    alignSelf: 'center',
   },
   saveIcon: {
-    fontSize: 18,
-    color: '#fff',
-    marginRight: 6,
-    fontWeight: 'bold',
+    fontSize: 15,
+    color: '#F4B124',
+    fontWeight: '700',
   },
   saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: '#F4B124',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
 
