@@ -83,8 +83,7 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
             const generatedSchedule = await assignmentService.generateAssignments(
                 userProfile.plantationId,
                 today,
-                fieldData,
-                'High'
+                fieldData
             );
 
             setSchedule(generatedSchedule);
