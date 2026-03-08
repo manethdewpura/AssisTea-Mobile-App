@@ -31,11 +31,10 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
 
   // Editable form state
   const [name, setName] = useState('');
-  const [workerIdField, setWorkerIdField] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [age, setAge] = useState('');
   const [experience, setExperience] = useState('');
-  const [gender, setGender] = useState<'Male' | 'Female' | 'Other'>('Male');
+  const [gender, setGender] = useState<'Male' | 'Female'>('Male');
 
   useEffect(() => {
     loadWorkerDetails();
@@ -49,11 +48,10 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
       if (fetchedWorker) {
         setWorker(fetchedWorker);
         setName(fetchedWorker.name);
-        setWorkerIdField(fetchedWorker.workerId);
         setBirthDate(fetchedWorker.birthDate);
         setAge(String(fetchedWorker.age));
         setExperience(fetchedWorker.experience);
-        setGender(fetchedWorker.gender);
+        setGender(fetchedWorker.gender === 'Other' ? 'Male' : fetchedWorker.gender);
       } else {
         Alert.alert('Error', 'Worker not found');
         navigation.goBack();
@@ -266,7 +264,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
               <Text style={[styles.label, { color: colors.text }]}>Gender</Text>
               {editMode ? (
                 <View style={styles.genderRow}>
-                  {(['Male', 'Female', 'Other'] as const).map(option => (
+                  {(['Male', 'Female'] as const).map(option => (
                     <TouchableOpacity
                       key={option}
                       style={[
