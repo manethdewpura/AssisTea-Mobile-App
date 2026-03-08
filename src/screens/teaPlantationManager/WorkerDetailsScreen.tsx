@@ -95,7 +95,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
         <View
           style={[
             styles.detailsCard,
-            { backgroundColor: colors.cardBackground || '#fff' },
+            { backgroundColor: colors.cardBackground || '#fff', borderColor: colors.border },
           ]}
         >
           {/* Profile Avatar */}
@@ -118,7 +118,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
               <View
                 style={[
                   styles.detailBox,
-                  { backgroundColor: colors.background },
+                  { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
               >
                 <Text style={[styles.detailValue, { color: colors.text }]}>
@@ -135,7 +135,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
               <View
                 style={[
                   styles.detailBox,
-                  { backgroundColor: colors.background },
+                  { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
               >
                 <Text style={[styles.detailValue, { color: colors.text }]}>
@@ -152,7 +152,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
               <View
                 style={[
                   styles.detailBox,
-                  { backgroundColor: colors.background },
+                  { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
               >
                 <Text style={[styles.detailValue, { color: colors.text }]}>
@@ -167,7 +167,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
               <View
                 style={[
                   styles.detailBox,
-                  { backgroundColor: colors.background },
+                  { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
               >
                 <Text style={[styles.detailValue, { color: colors.text }]}>
@@ -184,7 +184,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
               <View
                 style={[
                   styles.detailBox,
-                  { backgroundColor: colors.background },
+                  { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
               >
                 <Text style={[styles.detailValue, { color: colors.text }]}>
@@ -201,7 +201,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
               <View
                 style={[
                   styles.detailBox,
-                  { backgroundColor: colors.background },
+                  { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
               >
                 <Text style={[styles.detailValue, { color: colors.text }]}>
@@ -274,6 +274,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginTop: 0,
     marginBottom: 20,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,

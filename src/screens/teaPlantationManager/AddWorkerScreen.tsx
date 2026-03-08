@@ -195,7 +195,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          <View style={[styles.formCard, { backgroundColor: colors.cardBackground || '#fff' }]}>
+          <View style={[styles.formCard, { backgroundColor: colors.cardBackground || '#fff', borderColor: colors.border }]}>
             {/* Name Input */}
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: colors.text }]}>Name</Text>
@@ -311,8 +311,8 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
                 style={[
                   styles.inputBox,
                   {
-                    borderColor: '#ddd',
-                    backgroundColor: '#f0f0f0',
+                    borderColor: colors.border,
+                    backgroundColor: colors.background,
                   },
                 ]}
               >
@@ -400,7 +400,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color="#F4B124" />
               ) : (
                 <>
                   <Text style={styles.saveIcon}>✓</Text>
@@ -464,6 +464,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginTop: 0,
     marginBottom: 20,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -483,8 +484,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 12,
-    minHeight: 48,
+    height: 52,
     justifyContent: 'center',
   },
   textInput: {
@@ -545,29 +545,28 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   saveButton: {
-    backgroundColor: '#fbc02d',
-    borderRadius: 8,
-    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: '#F4B124',
+    backgroundColor: 'transparent',
+    borderRadius: 8,
+    paddingVertical: 9,
+    paddingHorizontal: 32,
     marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    alignSelf: 'center',
   },
   saveIcon: {
-    fontSize: 18,
-    color: '#fff',
-    marginRight: 6,
-    fontWeight: 'bold',
+    fontSize: 15,
+    color: '#F4B124',
+    fontWeight: '700',
   },
   saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: '#F4B124',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
 

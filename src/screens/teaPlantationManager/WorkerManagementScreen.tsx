@@ -112,7 +112,7 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
     <TouchableOpacity
       style={[
         styles.workerCard,
-        { backgroundColor: colors.cardBackground || '#fff' },
+        { backgroundColor: colors.cardBackground || '#fff', borderColor: colors.border },
       ]}
       onPress={() => handleViewWorker(item.id)}
     >
@@ -141,15 +141,22 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Text style={styles.searchIcon}>🔍</Text>
-        <TextInput
-          style={[styles.searchInput, { color: colors.text }]}
-          placeholder="Search workers..."
-          placeholderTextColor={colors.textSecondary}
-          value={searchText}
-          onChangeText={handleSearch}
-        />
+      <View style={[styles.searchContainer, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <View style={[styles.searchInputRow, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <Lucide name="search" size={18} color={colors.textSecondary} />
+          <TextInput
+            style={[styles.searchInput, { color: colors.text }]}
+            placeholder="Search workers..."
+            placeholderTextColor={colors.textSecondary}
+            value={searchText}
+            onChangeText={handleSearch}
+          />
+          {searchText.length > 0 && (
+            <TouchableOpacity onPress={() => handleSearch('')}>
+              <Lucide name="x" size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Workers List */}
@@ -178,13 +185,16 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
       </View>
 
       {/* Add Worker Button */}
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={handleAddWorker}
-      >
-        <Text style={styles.addButtonIcon}>+</Text>
-        <Text style={styles.addButtonText}>Add New Worker</Text>
-      </TouchableOpacity>
+      <View style={[styles.addButtonContainer, { borderTopColor: colors.border }]}>
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={handleAddWorker}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.addButtonPlus}>＋</Text>
+          <Text style={styles.addButtonText}>Add New Worker</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -222,25 +232,22 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   searchContainer: {
-    backgroundColor: '#f5f5f5',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+  },
+  searchInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  searchIcon: {
-    fontSize: 20,
-    marginRight: 10,
-    color: '#666',
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   searchInput: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
     fontSize: 14,
-    color: '#333',
   },
   listContainer: {
     flex: 1,
@@ -248,7 +255,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   listContent: {
-    paddingBottom: 20,
+    paddingBottom: 90,
   },
   loadingContainer: {
     flex: 1,
@@ -273,6 +280,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -311,33 +319,33 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#f44336',
   },
-  addButton: {
-    position: 'absolute',
-    bottom: 16,
-    right: 16,
-    backgroundColor: '#7cb342',
-    borderRadius: 25,
+  addButtonContainer: {
     paddingHorizontal: 16,
     paddingVertical: 12,
+    borderTopWidth: 1,
+    alignItems: 'flex-end',
+  },
+  addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: '#73AB2E',
+    backgroundColor: 'transparent',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
-  addButtonIcon: {
-    fontSize: 20,
-    color: '#fff',
-    fontWeight: 'bold',
-    marginRight: 6,
+  addButtonPlus: {
+    color: '#73AB2E',
+    fontWeight: '700',
+    fontSize: 15,
+    lineHeight: 17,
   },
   addButtonText: {
-    color: '#fff',
+    color: '#73AB2E',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });
 
