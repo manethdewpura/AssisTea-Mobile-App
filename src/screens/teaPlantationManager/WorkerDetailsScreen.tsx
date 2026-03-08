@@ -8,10 +8,13 @@ import {
   Alert,
   ActivityIndicator,
   TextInput,
+  Platform,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppSelector } from '../../hooks';
 import { selectTheme } from '../../store/selectors';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { workerService } from '../../services';
@@ -28,6 +31,8 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
   const [worker, setWorker] = useState<Worker | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   // Editable form state
   const [name, setName] = useState('');
@@ -49,6 +54,11 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
         setWorker(fetchedWorker);
         setName(fetchedWorker.name);
         setBirthDate(fetchedWorker.birthDate);
+        // Initialise the date picker value from the stored birth date
+        const parsed = new Date(fetchedWorker.birthDate);
+        if (!isNaN(parsed.getTime())) {
+          setSelectedDate(parsed);
+        }
         setAge(String(fetchedWorker.age));
         setExperience(fetchedWorker.experience);
         setGender(fetchedWorker.gender === 'Other' ? 'Male' : fetchedWorker.gender);
@@ -66,6 +76,29 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
+  const calculateAge = (birthDateString: string): number => {
+    const bd = new Date(birthDateString);
+    const today = new Date();
+    let calculatedAge = today.getFullYear() - bd.getFullYear();
+    const monthDiff = today.getMonth() - bd.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < bd.getDate())) {
+      calculatedAge--;
+    }
+    return Math.max(0, calculatedAge);
+  };
+
+  const handleDateChange = (event: any, date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+      const dateString = date.toISOString().split('T')[0];
+      setBirthDate(dateString);
+      setAge(String(calculateAge(dateString)));
+    }
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+  };
+
   const handleUpdate = async () => {
     if (!name.trim()) {
       Alert.alert('Validation', 'Please enter a name');
@@ -76,13 +109,24 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
       Alert.alert('Validation', 'Please enter a valid age');
       return;
     }
+    const trimmedBirthDate = birthDate.trim();
+    const birthDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!trimmedBirthDate || !birthDateRegex.test(trimmedBirthDate)) {
+      Alert.alert('Validation', 'Please enter a valid birth date in the format YYYY-MM-DD');
+      return;
+    }
+    const trimmedExperience = experience.trim();
+    if (!trimmedExperience) {
+      Alert.alert('Validation', 'Please enter experience');
+      return;
+    }
     try {
       setSaving(true);
       await workerService.updateWorker(workerId, {
         name: name.trim(),
-        birthDate,
+        birthDate: trimmedBirthDate,
         age: parsedAge,
-        experience,
+        experience: trimmedExperience,
         gender,
       });
       Alert.alert('Success', 'Worker updated successfully', [
@@ -194,24 +238,52 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
             {/* Birth Date */}
             <View style={styles.detailGroup}>
               <Text style={[styles.label, { color: colors.text }]}>Birth Date</Text>
-              <View
-                style={[
-                  styles.detailBox,
-                  { backgroundColor: colors.background, borderColor: colors.border },
-                ]}
-              >
-                {editMode ? (
-                  <TextInput
-                    style={[styles.detailValue, { color: colors.text }]}
-                    value={birthDate}
-                    onChangeText={setBirthDate}
-                    placeholder="YYYY-MM-DD"
-                    placeholderTextColor="#999"
-                  />
-                ) : (
+              {editMode ? (
+                <>
+                  <TouchableOpacity
+                    style={[
+                      styles.detailBox,
+                      { backgroundColor: colors.background, borderColor: colors.border },
+                    ]}
+                    onPress={() => setShowDatePicker(true)}
+                  >
+                    <Text style={[styles.detailValue, { color: birthDate ? colors.text : '#999' }]}>
+                      {birthDate || 'Select Date'}
+                    </Text>
+                  </TouchableOpacity>
+                  <Modal
+                    visible={showDatePicker}
+                    transparent
+                    animationType="slide"
+                    onRequestClose={() => setShowDatePicker(false)}
+                  >
+                    <View style={styles.datePickerModal}>
+                      <View style={styles.datePickerHeader}>
+                        <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                          <Text style={styles.datePickerHeaderText}>Done</Text>
+                        </TouchableOpacity>
+                      </View>
+                      <DateTimePicker
+                        value={selectedDate}
+                        mode="date"
+                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                        onChange={handleDateChange}
+                        minimumDate={new Date(1940, 0, 1)}
+                        maximumDate={new Date()}
+                      />
+                    </View>
+                  </Modal>
+                </>
+              ) : (
+                <View
+                  style={[
+                    styles.detailBox,
+                    { backgroundColor: colors.background, borderColor: colors.border },
+                  ]}
+                >
                   <Text style={[styles.detailValue, { color: colors.text }]}>{worker.birthDate}</Text>
-                )}
-              </View>
+                </View>
+              )}
             </View>
 
             {/* Age */}
@@ -414,8 +486,9 @@ const styles = StyleSheet.create({
   detailBox: {
     backgroundColor: '#f9f9f9',
     borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    height: 52,
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#e0e0e0',
   },
@@ -460,6 +533,24 @@ const styles = StyleSheet.create({
     color: '#F4B124',
     fontSize: 15,
     fontWeight: '700',
+  },
+  datePickerModal: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  datePickerHeader: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    alignItems: 'flex-end',
+  },
+  datePickerHeaderText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#7cb342',
   },
   viewDataButton: {
     backgroundColor: '#7cb342',
