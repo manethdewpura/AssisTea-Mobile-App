@@ -309,7 +309,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       {/* Filters */}
-      <View style={[styles.filterContainer, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+      <View style={styles.filterContainer}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -318,7 +318,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           <TouchableOpacity
             style={[
               styles.filterButton,
-              { borderColor: '#73AB2E' },
+              { borderColor: colors.border, backgroundColor: colors.cardBackground },
               filterType === 'all' && styles.filterButtonActive,
             ]}
             onPress={clearFilters}
@@ -326,6 +326,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
             <Text
               style={[
                 styles.filterButtonText,
+                { color: colors.text },
                 filterType === 'all' && styles.filterButtonTextActive,
               ]}
             >
@@ -336,55 +337,51 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           <TouchableOpacity
             style={[
               styles.filterButton,
-              { borderColor: '#73AB2E' },
+              { borderColor: colors.border, backgroundColor: colors.cardBackground },
               filterType === 'date' && styles.filterButtonActive,
             ]}
             onPress={() => {
               setShowDatePicker(true);
             }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Lucide name="calendar" size={14} color={filterType === 'date' ? '#fff' : '#73AB2E'} />
-              <Text
-                style={[
-                  styles.filterButtonText,
-                  filterType === 'date' && styles.filterButtonTextActive,
-                ]}
-              >
-                {dateFilter || 'Select Date'}
-              </Text>
-            </View>
+            <Text
+              style={[
+                styles.filterButtonText,
+                { color: colors.text },
+                filterType === 'date' && styles.filterButtonTextActive,
+              ]}
+            >
+              {dateFilter || 'Select Date'}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[
               styles.filterButton,
-              { borderColor: '#73AB2E' },
+              { borderColor: colors.border, backgroundColor: colors.cardBackground },
               filterType === 'dateRange' && styles.filterButtonActive,
             ]}
             onPress={() => {
               setShowDateRangeModal(true);
             }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Lucide name="calendar" size={14} color={filterType === 'dateRange' ? '#fff' : '#73AB2E'} />
-              <Text
-                style={[
-                  styles.filterButtonText,
-                  filterType === 'dateRange' && styles.filterButtonTextActive,
-                ]}
-              >
-                {startDateFilter && endDateFilter
-                  ? `${startDateFilter} to ${endDateFilter}`
-                  : 'Date Range'}
-              </Text>
-            </View>
+            <Text
+              style={[
+                styles.filterButtonText,
+                { color: colors.text },
+                filterType === 'dateRange' && styles.filterButtonTextActive,
+              ]}
+            >
+              {startDateFilter && endDateFilter
+                ? `${startDateFilter} to ${endDateFilter}`
+                : 'Date Range'}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[
               styles.filterButton,
-              { borderColor: '#73AB2E' },
+              { borderColor: colors.border, backgroundColor: colors.cardBackground },
               filterType === 'worker' && styles.filterButtonActive,
             ]}
             onPress={() => {
@@ -395,10 +392,10 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
             <Text
               style={[
                 styles.filterButtonText,
+                { color: colors.text },
                 filterType === 'worker' && styles.filterButtonTextActive,
               ]}
             >
-              👤{' '}
               {selectedWorkerId
                 ? getWorkerName(selectedWorkerId)
                 : 'Worker'}
@@ -408,7 +405,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           <TouchableOpacity
             style={[
               styles.filterButton,
-              { borderColor: '#73AB2E' },
+              { borderColor: colors.border, backgroundColor: colors.cardBackground },
               filterType === 'field' && styles.filterButtonActive,
             ]}
             onPress={() => {
@@ -419,10 +416,10 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
             <Text
               style={[
                 styles.filterButtonText,
+                { color: colors.text },
                 filterType === 'field' && styles.filterButtonTextActive,
               ]}
             >
-              🏞️{' '}
               {selectedField || 'Field'}
             </Text>
           </TouchableOpacity>
@@ -774,7 +771,6 @@ const styles = StyleSheet.create({
   },
   filterContainer: {
     paddingVertical: 10,
-    borderBottomWidth: 1,
   },
   filterScrollContent: {
     paddingHorizontal: 14,
@@ -785,7 +781,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 20,
-    borderWidth: 1.5,
+    borderWidth: 1,
     backgroundColor: 'transparent',
   },
   filterButtonActive: {
@@ -795,7 +791,7 @@ const styles = StyleSheet.create({
   filterButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#73AB2E',
+    color: '#333',
   },
   filterButtonTextActive: {
     color: '#fff',

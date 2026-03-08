@@ -75,6 +75,10 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
     navigation.navigate('WorkerDetails', { workerId });
   };
 
+  const handleEditWorker = (workerId: string) => {
+    navigation.navigate('WorkerDetails', { workerId, editMode: true });
+  };
+
   const handleDeleteWorker = (workerId: string, workerName: string) => {
     Alert.alert(
       'Delete Worker',
@@ -126,6 +130,12 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
       </View>
 
       <View style={styles.workerActions}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => handleEditWorker(item.id)}
+        >
+          <Lucide name="pencil" size={20} color="#F4B124" />
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.actionButton}
           onPress={() => handleDeleteWorker(item.id, item.name)}

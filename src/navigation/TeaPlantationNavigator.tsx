@@ -19,7 +19,7 @@ interface TeaPlantationNavigatorProps {
 export type TeaPlantationStackParamList = {
   TeaPlantationHome: undefined;
   WorkerManagement: undefined;
-  WorkerDetails: { workerId: string };
+  WorkerDetails: { workerId: string; editMode?: boolean };
   AddWorker: undefined;
   DailyDataEntry: undefined;
   DailyDataView: { workerId?: string } | undefined;
