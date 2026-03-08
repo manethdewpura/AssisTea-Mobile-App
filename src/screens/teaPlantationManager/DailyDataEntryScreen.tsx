@@ -19,9 +19,10 @@ import { selectAuth, selectTheme } from '../../store/selectors';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
-import { workerService, dailyDataService } from '../../services';
+import { workerService, dailyDataService, fieldService } from '../../services';
 import { handleFirebaseError, logError, parseCSVFile, formatValidationErrors } from '../../utils';
 import type { Worker } from '../../models/Worker';
+import type { Field } from '../../models/Field';
 import { pick, types } from '@react-native-documents/picker';
 
 type Props = NativeStackScreenProps<
@@ -29,23 +30,13 @@ type Props = NativeStackScreenProps<
   'DailyDataEntry'
 >;
 
-interface FieldArea {
-  id: string;
-  name: string;
-}
-
-const MOCK_FIELD_AREAS: FieldArea[] = [
-  { id: '1', name: 'Field A' },
-  { id: '2', name: 'Field B' },
-  { id: '3', name: 'Field C' },
-];
-
 const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppSelector(selectTheme);
   const { userProfile } = useAppSelector(selectAuth);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [workers, setWorkers] = useState<Worker[]>([]);
+  const [fields, setFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploadingCSV, setUploadingCSV] = useState(false);
 
@@ -62,6 +53,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
 
   React.useEffect(() => {
     loadWorkers();
+    loadFields();
   }, []);
 
   const loadWorkers = async () => {
@@ -83,6 +75,22 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
+  const loadFields = async () => {
+    if (!userProfile?.plantationId) {
+      return;
+    }
+
+    try {
+      const fetchedFields = await fieldService.getFieldsByPlantation(
+        userProfile.plantationId
+      );
+      setFields(fetchedFields);
+    } catch (error: any) {
+      const appError = handleFirebaseError(error);
+      logError(appError, 'DailyDataEntryScreen - LoadFields');
+    }
+  };
+
   const handleDateChange = (event: any, date: Date | undefined) => {
     if (date) {
       setSelectedDate(date);
@@ -101,7 +109,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const getFieldName = (fieldId: string) => {
-    const field = MOCK_FIELD_AREAS.find(f => f.id === fieldId);
+    const field = fields.find(f => f.id === fieldId);
     return field ? field.name : 'Select Field Area';
   };
 
@@ -387,7 +395,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
               </TouchableOpacity>
 
               {showWorkerDropdown && (
-                <View style={styles.dropdownList}>
+                <View style={[styles.dropdownList, { backgroundColor: colors.cardBackground || '#fff', borderColor: colors.border }]}>
                   <ScrollView
                     style={styles.dropdownScrollView}
                     nestedScrollEnabled={true}
@@ -396,13 +404,13 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
                     {workers.map(worker => (
                       <TouchableOpacity
                         key={worker.id}
-                        style={styles.dropdownItem}
+                        style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
                         onPress={() => {
                           setFormData({ ...formData, workerId: worker.id });
                           setShowWorkerDropdown(false);
                         }}
                       >
-                        <Text style={styles.dropdownItemText}>
+                        <Text style={[styles.dropdownItemText, { color: colors.text }]}>
                           {worker.name} ({worker.workerId})
                         </Text>
                       </TouchableOpacity>
@@ -479,19 +487,25 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
               </TouchableOpacity>
 
               {showFieldDropdown && (
-                <View style={styles.dropdownList}>
-                  {MOCK_FIELD_AREAS.map(field => (
-                    <TouchableOpacity
-                      key={field.id}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setFormData({ ...formData, fieldArea: field.id });
-                        setShowFieldDropdown(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>{field.name}</Text>
-                    </TouchableOpacity>
-                  ))}
+                <View style={[styles.dropdownList, { backgroundColor: colors.cardBackground || '#fff', borderColor: colors.border }]}>
+                  <ScrollView
+                    style={styles.dropdownScrollView}
+                    nestedScrollEnabled={true}
+                    showsVerticalScrollIndicator={true}
+                  >
+                    {fields.map(field => (
+                      <TouchableOpacity
+                        key={field.id}
+                        style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
+                        onPress={() => {
+                          setFormData({ ...formData, fieldArea: field.id });
+                          setShowFieldDropdown(false);
+                        }}
+                      >
+                        <Text style={[styles.dropdownItemText, { color: colors.text }]}>{field.name}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
                 </View>
               )}
             </View>
@@ -626,7 +640,6 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     marginBottom: 16,
-    position: 'relative',
   },
   label: {
     fontSize: 14,
@@ -671,16 +684,6 @@ const styles = StyleSheet.create({
     borderColor: '#e0e0e0',
     marginTop: 4,
     maxHeight: 200,
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    zIndex: 1000,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
   },
   dropdownScrollView: {
     maxHeight: 200,
