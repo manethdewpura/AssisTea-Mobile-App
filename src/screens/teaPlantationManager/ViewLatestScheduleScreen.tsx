@@ -115,7 +115,7 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
         <View
           style={[
             styles.headerCard,
-            { backgroundColor: colors.cardBackground || '#fff' },
+            { backgroundColor: colors.cardBackground || '#fff', borderColor: colors.border },
           ]}
         >
           <View style={styles.dateSection}>
@@ -139,7 +139,7 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
               key={fieldName}
               style={[
                 styles.fieldCard,
-                { backgroundColor: colors.cardBackground || '#fff' },
+                { backgroundColor: colors.cardBackground || '#fff', borderColor: colors.border },
               ]}
             >
               <View style={styles.fieldHeader}>
@@ -278,6 +278,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -310,6 +311,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
