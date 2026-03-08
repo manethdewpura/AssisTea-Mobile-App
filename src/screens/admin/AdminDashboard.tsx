@@ -20,7 +20,6 @@ import { UserProfile } from '../../models';
 import type { TeaPlantation } from '../../common/interfaces';
 import Input from '../../components/atoms/Input';
 import PasswordInput from '../../components/atoms/PasswordInput';
-import Button from '../../components/atoms/Button';
 import {
   handleFirebaseError,
   logError,
@@ -1085,12 +1084,6 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 8,
     backgroundColor: 'transparent',
-  },
-  deletePlantationBtnPlus: {
-    color: '#E53935',
-    fontWeight: '700',
-    fontSize: 16,
-    lineHeight: 16,
   },
   deletePlantationBtnText: {
     color: '#E53935',

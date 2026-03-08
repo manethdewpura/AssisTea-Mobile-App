@@ -18,7 +18,6 @@ import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantation
 
 interface TeaPlantationManagerScreenProps {
   onNavigateToWeather?: () => void;
-  onNavigateToSensors?: () => void;
 }
 
 const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({

@@ -355,7 +355,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
 
             {/* Upload CSV Section */}
             <TouchableOpacity
-              style={styles.uploadButton}
+              style={[styles.uploadButton, (loading || uploadingCSV) && styles.uploadButtonDisabled]}
               onPress={handleUploadCSV}
               disabled={loading || uploadingCSV}
             >
@@ -504,7 +504,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color="#F4B124" />
               ) : (
                 <>
                   <Text style={styles.saveIcon}>✓</Text>
