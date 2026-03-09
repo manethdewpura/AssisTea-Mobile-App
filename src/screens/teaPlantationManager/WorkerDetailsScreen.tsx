@@ -19,6 +19,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { workerService } from '../../services';
 import { handleFirebaseError, logError } from '../../utils';
+import { checkNetworkConnection } from '../../utils/network.util';
 import type { Worker } from '../../models/Worker';
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
@@ -122,16 +123,29 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
     }
     try {
       setSaving(true);
-      await workerService.updateWorker(workerId, {
+      const { isConnected } = await checkNetworkConnection();
+      const updates = {
         name: name.trim(),
         birthDate: trimmedBirthDate,
         age: parsedAge,
         experience: trimmedExperience,
         gender,
-      });
-      Alert.alert('Success', 'Worker updated successfully', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      };
+
+      if (!isConnected) {
+        // Firebase offline persistence queues this — resolves silently when back online
+        workerService.updateWorker(workerId, updates).catch((error: any) => {
+          logError(handleFirebaseError(error), 'WorkerDetailsScreen - UpdateWorker (offline sync)');
+        });
+        Alert.alert('Saved Locally', 'Worker updated on this device. Changes will sync automatically when you\'re back online.', [
+          { text: 'OK', onPress: () => navigation.goBack() },
+        ]);
+      } else {
+        await workerService.updateWorker(workerId, updates);
+        Alert.alert('Success', 'Worker updated successfully', [
+          { text: 'OK', onPress: () => navigation.goBack() },
+        ]);
+      }
     } catch (error: any) {
       const appError = handleFirebaseError(error);
       logError(appError, 'WorkerDetailsScreen - UpdateWorker');
