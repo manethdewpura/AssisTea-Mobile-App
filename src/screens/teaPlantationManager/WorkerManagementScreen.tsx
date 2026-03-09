@@ -91,7 +91,9 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            try {
+            const workersSnapshot = workers;
+              const filteredSnapshot = filteredWorkers;
+              try {
               const { isConnected } = await checkNetworkConnection();
               // Optimistically remove from UI immediately
               setWorkers(prev => prev.filter(w => w.id !== workerId));
@@ -108,6 +110,9 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
             } catch (error: any) {
               const appError = handleFirebaseError(error);
               logError(appError, 'WorkerManagementScreen - DeleteWorker');
+              // Rollback optimistic removal on failure
+              setWorkers(workersSnapshot);
+              setFilteredWorkers(filteredSnapshot);
               showAlert('Error', appError.userMessage, undefined, 'high');
             }
           },

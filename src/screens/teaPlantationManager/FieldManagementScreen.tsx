@@ -157,15 +157,17 @@ export default function FieldManagementScreen() {
                     onPress: async () => {
                         try {
                             const { isConnected } = await checkNetworkConnection();
-                            // Optimistically remove from UI immediately
-                            setFields(prev => prev.filter(f => f.id !== field.id));
                             if (!isConnected) {
+                                // Optimistically remove from UI while offline; backend delete will sync later
+                                setFields(prev => prev.filter(f => f.id !== field.id));
                                 fieldService.deleteField(field.id).catch((err: any) => {
                                     logError(handleFirebaseError(err), 'FieldManagementScreen - DeleteField (offline sync)');
                                 });
                                 showAlert('Deleted Locally', 'Field removed on this device. Changes will sync when you\'re back online.', undefined, 'low');
                             } else {
+                                // When online, only update UI after successful backend deletion
                                 await fieldService.deleteField(field.id);
+                                setFields(prev => prev.filter(f => f.id !== field.id));
                                 showAlert('Success', 'Field deleted successfully', undefined, 'low');
                             }
                         } catch (error: any) {

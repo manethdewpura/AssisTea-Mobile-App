@@ -150,42 +150,21 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
-  if (loading) {
-    return (
-      <View
-        style={[
-          styles.loadingContainer,
-          { backgroundColor: colors.background },
-        ]}
-      >
-        <ActivityIndicator size="large" color="#7cb342" />
-        <CustomAlert visible={alertState.visible} title={alertState.title} message={alertState.message} buttons={alertState.buttons} onDismiss={hideAlert} severity={alertState.severity} />
-      </View>
-    );
-  }
-
-  if (!worker) {
-    return (
-      <View
-        style={[
-          styles.loadingContainer,
-          { backgroundColor: colors.background },
-        ]}
-      >
-        <Text style={[styles.errorText, { color: colors.text }]}>
-          Worker not found
-        </Text>
-        <CustomAlert visible={alertState.visible} title={alertState.title} message={alertState.message} buttons={alertState.buttons} onDismiss={hideAlert} severity={alertState.severity} />
-      </View>
-    );
-  }
-
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
     >
-
-      {/* Content */}
+      {loading ? (
+        <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+          <ActivityIndicator size="large" color="#7cb342" />
+        </View>
+      ) : !worker ? (
+        <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+          <Text style={[styles.errorText, { color: colors.text }]}>
+            Worker not found
+          </Text>
+        </View>
+      ) : (
       <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
@@ -397,6 +376,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
         </View>
       </ScrollView>
+      )}
       <CustomAlert visible={alertState.visible} title={alertState.title} message={alertState.message} buttons={alertState.buttons} onDismiss={hideAlert} severity={alertState.severity} />
     </SafeAreaView>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -54,6 +54,11 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
   const [startDateFilter, setStartDateFilter] = useState<string>('');
   const [endDateFilter, setEndDateFilter] = useState<string>('');
   const { showAlert, hideAlert, alertState } = useThemedAlert();
+
+  const fieldNameMap = useMemo(
+    () => Object.fromEntries(fields.map(f => [f.id, f.name])),
+    [fields]
+  );
 
   // Check if workerId is passed from route params (from WorkerDetailsScreen)
   useEffect(() => {
@@ -721,7 +726,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                     Field Area:
                   </Text>
                   <Text style={[styles.dataValue, { color: colors.text }]}>
-                    {fields.find(f => f.id === data.fieldArea)?.name ?? data.fieldArea}
+                    {fieldNameMap[data.fieldArea] ?? data.fieldArea}
                   </Text>
                 </View>
 

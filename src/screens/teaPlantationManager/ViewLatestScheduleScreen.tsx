@@ -134,6 +134,8 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
     );
   }
 
+  if (!displayedSchedule) return null;
+
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
@@ -181,11 +183,11 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
             <Lucide name="calendar" size={32} color="#7cb342" style={{ marginRight: 12 }} />
             <View style={styles.dateInfo}>
               <Text style={[styles.dateText, { color: colors.text }]}>
-                Schedule for {new Date(displayedSchedule!.date).toLocaleDateString()}
+                Schedule for {new Date(displayedSchedule.date).toLocaleDateString()}
               </Text>
               <Text style={[styles.statsText, { color: colors.textSecondary }]}>
-                {displayedSchedule!.totalWorkers} workers • {displayedSchedule!.totalFields} fields
-                • Avg: {displayedSchedule!.averageEfficiency.toFixed(1)} kg/hr
+                {displayedSchedule.totalWorkers} workers • {displayedSchedule.totalFields} fields
+                • Avg: {displayedSchedule.averageEfficiency.toFixed(1)} kg/hr
               </Text>
             </View>
           </View>
