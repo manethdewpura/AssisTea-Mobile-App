@@ -719,7 +719,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                     Field Area:
                   </Text>
                   <Text style={[styles.dataValue, { color: colors.text }]}>
-                    {data.fieldArea}
+                    {fields.find(f => f.id === data.fieldArea)?.name ?? data.fieldArea}
                   </Text>
                 </View>
 

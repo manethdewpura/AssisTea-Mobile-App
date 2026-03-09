@@ -20,6 +20,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { workerService } from '../../services';
 import { handleFirebaseError, logError, validateRequired } from '../../utils';
+import { checkNetworkConnection } from '../../utils/network.util';
 
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
@@ -140,39 +141,41 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
 
     try {
       setLoading(true);
-
-      // Check if worker ID already exists in this plantation
-      const exists = await workerService.checkWorkerIdExists(
-        formData.workerId,
-        userProfile.plantationId,
-      );
-
-      if (exists) {
-        setErrors(prev => ({
-          ...prev,
-          workerId: 'This Worker ID already exists in your plantation',
-        }));
-        return;
-      }
-
-      // Create worker
-      await workerService.createWorker(userProfile.plantationId, {
+      const { isConnected } = await checkNetworkConnection();
+      const workerData = {
         name: formData.name.trim(),
         workerId: formData.workerId.trim(),
         birthDate: formData.birthDate,
         age: parseInt(formData.age, 10),
         experience: formData.experience.trim(),
         gender: formData.gender,
-      });
+      };
 
-      Alert.alert('Success', 'Worker added successfully', [
-        {
-          text: 'OK',
-          onPress: () => {
-            navigation.goBack();
-          },
-        },
-      ]);
+      if (!isConnected) {
+        // Skip duplicate ID check offline — Firebase queues the write
+        workerService.createWorker(userProfile.plantationId, workerData).catch((error: any) => {
+          logError(handleFirebaseError(error), 'AddWorkerScreen (offline sync)');
+        });
+        Alert.alert('Saved Locally', 'Worker added on this device. Changes will sync automatically when you\'re back online.', [
+          { text: 'OK', onPress: () => navigation.goBack() },
+        ]);
+      } else {
+        const exists = await workerService.checkWorkerIdExists(
+          formData.workerId,
+          userProfile.plantationId,
+        );
+        if (exists) {
+          setErrors(prev => ({
+            ...prev,
+            workerId: 'This Worker ID already exists in your plantation',
+          }));
+          return;
+        }
+        await workerService.createWorker(userProfile.plantationId, workerData);
+        Alert.alert('Success', 'Worker added successfully', [
+          { text: 'OK', onPress: () => navigation.goBack() },
+        ]);
+      }
     } catch (error: any) {
       const appError = handleFirebaseError(error);
       logError(appError, 'AddWorkerScreen');

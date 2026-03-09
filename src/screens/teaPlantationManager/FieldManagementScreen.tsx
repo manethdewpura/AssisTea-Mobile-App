@@ -15,6 +15,8 @@ import { useAppSelector } from '../../hooks/redux.hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import { fieldService } from '../../services/field.service';
 import { Field, CreateFieldInput } from '../../models/Field';
+import { checkNetworkConnection } from '../../utils/network.util';
+import { handleFirebaseError, logError } from '../../utils';
 import Slider from '@react-native-community/slider';
 
 export default function FieldManagementScreen() {
@@ -95,6 +97,7 @@ export default function FieldManagementScreen() {
 
         try {
             setSaving(true);
+            const { isConnected } = await checkNetworkConnection();
 
             const fieldData: CreateFieldInput = {
                 name: fieldName.trim(),
@@ -102,21 +105,39 @@ export default function FieldManagementScreen() {
                 maxWorkers,
             };
 
-            if (editingField) {
-                // Update existing field
-                await fieldService.updateField(editingField.id, fieldData);
-                Alert.alert('Success', 'Field updated successfully');
+            if (!isConnected) {
+                if (editingField) {
+                    fieldService.updateField(editingField.id, fieldData).catch((err: any) => {
+                        logError(handleFirebaseError(err), 'FieldManagementScreen - UpdateField (offline sync)');
+                    });
+                    // Optimistically update local list
+                    setFields(prev => prev.map(f =>
+                        f.id === editingField.id ? { ...f, ...fieldData } : f
+                    ));
+                    Alert.alert('Saved Locally', 'Field updated on this device. Changes will sync when you\'re back online.');
+                } else {
+                    fieldService.createField(userProfile.plantationId, fieldData).catch((err: any) => {
+                        logError(handleFirebaseError(err), 'FieldManagementScreen - CreateField (offline sync)');
+                    });
+                    Alert.alert('Saved Locally', 'Field added on this device. Changes will sync when you\'re back online.');
+                }
+                setModalVisible(false);
+                loadFields();
             } else {
-                // Create new field
-                await fieldService.createField(userProfile.plantationId, fieldData);
-                Alert.alert('Success', 'Field created successfully');
+                if (editingField) {
+                    await fieldService.updateField(editingField.id, fieldData);
+                    Alert.alert('Success', 'Field updated successfully');
+                } else {
+                    await fieldService.createField(userProfile.plantationId, fieldData);
+                    Alert.alert('Success', 'Field created successfully');
+                }
+                setModalVisible(false);
+                loadFields();
             }
-
-            setModalVisible(false);
-            loadFields();
-        } catch (error) {
-            console.error('Error saving field:', error);
-            Alert.alert('Error', 'Failed to save field');
+        } catch (error: any) {
+            const appError = handleFirebaseError(error);
+            logError(appError, 'FieldManagementScreen - SaveField');
+            Alert.alert('Error', appError.userMessage);
         } finally {
             setSaving(false);
         }
@@ -133,12 +154,22 @@ export default function FieldManagementScreen() {
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            await fieldService.deleteField(field.id);
-                            Alert.alert('Success', 'Field deleted successfully');
-                            loadFields();
-                        } catch (error) {
-                            console.error('Error deleting field:', error);
-                            Alert.alert('Error', 'Failed to delete field');
+                            const { isConnected } = await checkNetworkConnection();
+                            // Optimistically remove from UI immediately
+                            setFields(prev => prev.filter(f => f.id !== field.id));
+                            if (!isConnected) {
+                                fieldService.deleteField(field.id).catch((err: any) => {
+                                    logError(handleFirebaseError(err), 'FieldManagementScreen - DeleteField (offline sync)');
+                                });
+                                Alert.alert('Deleted Locally', 'Field removed on this device. Changes will sync when you\'re back online.');
+                            } else {
+                                await fieldService.deleteField(field.id);
+                                Alert.alert('Success', 'Field deleted successfully');
+                            }
+                        } catch (error: any) {
+                            const appError = handleFirebaseError(error);
+                            logError(appError, 'FieldManagementScreen - DeleteField');
+                            Alert.alert('Error', appError.userMessage);
                         }
                     },
                 },

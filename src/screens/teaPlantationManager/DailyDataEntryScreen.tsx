@@ -21,6 +21,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { workerService, dailyDataService, fieldService } from '../../services';
 import { handleFirebaseError, logError, parseCSVFile, formatValidationErrors } from '../../utils';
+import { checkNetworkConnection } from '../../utils/network.util';
 import type { Worker } from '../../models/Worker';
 import type { Field } from '../../models/Field';
 import { pick, types } from '@react-native-documents/picker';
@@ -266,36 +267,39 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
 
     try {
       setLoading(true);
-      await dailyDataService.createDailyData(userProfile.plantationId, {
+      const { isConnected } = await checkNetworkConnection();
+      const dailyData = {
         workerId: formData.workerId,
         date: formData.date,
         teaPluckedKg: parseFloat(formData.teaPluckedKg),
         timeSpentHours: parseFloat(formData.timeSpentHours),
         fieldArea: formData.fieldArea,
-      });
+      };
+      const resetForm = () => {
+        setFormData({
+          date: new Date().toISOString().split('T')[0],
+          workerId: '',
+          teaPluckedKg: '',
+          timeSpentHours: '',
+          fieldArea: '',
+        });
+        setSelectedDate(new Date());
+      };
 
-      Alert.alert('Success', 'Daily data saved successfully', [
-        {
-          text: 'View All Data',
-          onPress: () => {
-            navigation.navigate('DailyDataView');
-          },
-        },
-        {
-          text: 'OK',
-          onPress: () => {
-            // Reset form
-            setFormData({
-              date: new Date().toISOString().split('T')[0],
-              workerId: '',
-              teaPluckedKg: '',
-              timeSpentHours: '',
-              fieldArea: '',
-            });
-            setSelectedDate(new Date());
-          },
-        },
-      ]);
+      if (!isConnected) {
+        dailyDataService.createDailyData(userProfile.plantationId, dailyData).catch((error: any) => {
+          logError(handleFirebaseError(error), 'DailyDataEntryScreen - SaveData (offline sync)');
+        });
+        Alert.alert('Saved Locally', 'Data saved on this device. Changes will sync automatically when you\'re back online.', [
+          { text: 'OK', onPress: resetForm },
+        ]);
+      } else {
+        await dailyDataService.createDailyData(userProfile.plantationId, dailyData);
+        Alert.alert('Success', 'Daily data saved successfully', [
+          { text: 'View All Data', onPress: () => navigation.navigate('DailyDataView') },
+          { text: 'OK', onPress: resetForm },
+        ]);
+      }
     } catch (error: any) {
       const appError = handleFirebaseError(error);
       logError(appError, 'DailyDataEntryScreen - SaveData');

@@ -18,6 +18,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { workerService } from '../../services';
 import { handleFirebaseError, logError } from '../../utils';
+import { checkNetworkConnection } from '../../utils/network.util';
 import type { Worker } from '../../models/Worker';
 
 type Props = NativeStackScreenProps<
@@ -93,10 +94,19 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
           style: 'destructive',
           onPress: async () => {
             try {
-              await workerService.deleteWorker(workerId);
-              setWorkers(workers.filter(w => w.id !== workerId));
-              setFilteredWorkers(filteredWorkers.filter(w => w.id !== workerId));
-              Alert.alert('Success', 'Worker deleted successfully');
+              const { isConnected } = await checkNetworkConnection();
+              // Optimistically remove from UI immediately
+              setWorkers(prev => prev.filter(w => w.id !== workerId));
+              setFilteredWorkers(prev => prev.filter(w => w.id !== workerId));
+              if (!isConnected) {
+                workerService.deleteWorker(workerId).catch((error: any) => {
+                  logError(handleFirebaseError(error), 'WorkerManagementScreen - DeleteWorker (offline sync)');
+                });
+                Alert.alert('Deleted Locally', 'Worker removed on this device. Changes will sync automatically when you\'re back online.');
+              } else {
+                await workerService.deleteWorker(workerId);
+                Alert.alert('Success', 'Worker deleted successfully');
+              }
             } catch (error: any) {
               const appError = handleFirebaseError(error);
               logError(appError, 'WorkerManagementScreen - DeleteWorker');

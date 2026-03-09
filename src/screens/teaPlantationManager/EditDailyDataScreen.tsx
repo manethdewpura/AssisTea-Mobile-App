@@ -19,25 +19,16 @@ import { selectAuth, selectTheme } from '../../store/selectors';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
-import { workerService, dailyDataService } from '../../services';
+import { workerService, dailyDataService, fieldService } from '../../services';
 import { handleFirebaseError, logError } from '../../utils';
+import { checkNetworkConnection } from '../../utils/network.util';
 import type { Worker } from '../../models/Worker';
+import type { Field } from '../../models/Field';
 
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
   'EditDailyData'
 >;
-
-interface FieldArea {
-  id: string;
-  name: string;
-}
-
-const MOCK_FIELD_AREAS: FieldArea[] = [
-  { id: '1', name: 'Field A' },
-  { id: '2', name: 'Field B' },
-  { id: '3', name: 'Field C' },
-];
 
 const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
   const { colors } = useAppSelector(selectTheme);
@@ -46,6 +37,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [workers, setWorkers] = useState<Worker[]>([]);
+  const [fields, setFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -62,6 +54,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
 
   useEffect(() => {
     loadWorkers();
+    loadFields();
     loadDailyData();
   }, [dataId]);
 
@@ -78,6 +71,19 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
     } catch (error: any) {
       const appError = handleFirebaseError(error);
       logError(appError, 'EditDailyDataScreen - LoadWorkers');
+    }
+  };
+
+  const loadFields = async () => {
+    if (!userProfile?.plantationId) return;
+    try {
+      const fetchedFields = await fieldService.getFieldsByPlantation(
+        userProfile.plantationId,
+      );
+      setFields(fetchedFields);
+    } catch (error: any) {
+      const appError = handleFirebaseError(error);
+      logError(appError, 'EditDailyDataScreen - LoadFields');
     }
   };
 
@@ -136,8 +142,8 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const getFieldName = (fieldId: string) => {
-    const field = MOCK_FIELD_AREAS.find(f => f.id === fieldId);
-    return field ? field.name : 'Select Field Area';
+    const field = fields.find(f => f.id === fieldId);
+    return field ? field.name : (fieldId || 'Select Field Area');
   };
 
   const handleSaveData = async () => {
@@ -153,22 +159,28 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
 
     try {
       setSaving(true);
-      await dailyDataService.updateDailyData(dataId, {
+      const { isConnected } = await checkNetworkConnection();
+      const updates = {
         workerId: formData.workerId,
         date: formData.date,
         teaPluckedKg: parseFloat(formData.teaPluckedKg),
         timeSpentHours: parseFloat(formData.timeSpentHours),
         fieldArea: formData.fieldArea,
-      });
+      };
 
-      Alert.alert('Success', 'Daily data updated successfully', [
-        {
-          text: 'OK',
-          onPress: () => {
-            navigation.goBack();
-          },
-        },
-      ]);
+      if (!isConnected) {
+        dailyDataService.updateDailyData(dataId, updates).catch((error: any) => {
+          logError(handleFirebaseError(error), 'EditDailyDataScreen - SaveData (offline sync)');
+        });
+        Alert.alert('Saved Locally', 'Data updated on this device. Changes will sync automatically when you\'re back online.', [
+          { text: 'OK', onPress: () => navigation.goBack() },
+        ]);
+      } else {
+        await dailyDataService.updateDailyData(dataId, updates);
+        Alert.alert('Success', 'Daily data updated successfully', [
+          { text: 'OK', onPress: () => navigation.goBack() },
+        ]);
+      }
     } catch (error: any) {
       const appError = handleFirebaseError(error);
       logError(appError, 'EditDailyDataScreen - SaveData');
@@ -359,7 +371,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
               {showFieldDropdown && (
                 <View style={[styles.dropdownList, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
                   <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={false}>
-                    {MOCK_FIELD_AREAS.map(field => (
+                    {fields.map((field: Field) => (
                       <TouchableOpacity
                         key={field.id}
                         style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
