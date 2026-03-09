@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   Platform,
   KeyboardAvoidingView,
@@ -13,13 +12,15 @@ import {
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppSelector } from '../../hooks';
+import { useAppSelector, useThemedAlert } from '../../hooks';
+import CustomAlert from '../../components/molecule/CustomAlert';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { workerService } from '../../services';
 import { handleFirebaseError, logError, validateRequired } from '../../utils';
+import { checkNetworkConnection } from '../../utils/network.util';
 
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
@@ -32,6 +33,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const { showAlert, hideAlert, alertState } = useThemedAlert();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -134,49 +136,51 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
     }
 
     if (!userProfile?.plantationId) {
-      Alert.alert('Error', 'Plantation information not found');
+      showAlert('Error', 'Plantation information not found', undefined, 'high');
       return;
     }
 
     try {
       setLoading(true);
-
-      // Check if worker ID already exists in this plantation
-      const exists = await workerService.checkWorkerIdExists(
-        formData.workerId,
-        userProfile.plantationId,
-      );
-
-      if (exists) {
-        setErrors(prev => ({
-          ...prev,
-          workerId: 'This Worker ID already exists in your plantation',
-        }));
-        return;
-      }
-
-      // Create worker
-      await workerService.createWorker(userProfile.plantationId, {
+      const { isConnected } = await checkNetworkConnection();
+      const workerData = {
         name: formData.name.trim(),
         workerId: formData.workerId.trim(),
         birthDate: formData.birthDate,
         age: parseInt(formData.age, 10),
         experience: formData.experience.trim(),
         gender: formData.gender,
-      });
+      };
 
-      Alert.alert('Success', 'Worker added successfully', [
-        {
-          text: 'OK',
-          onPress: () => {
-            navigation.goBack();
-          },
-        },
-      ]);
+      if (!isConnected) {
+        // Skip duplicate ID check offline — Firebase queues the write
+        workerService.createWorker(userProfile.plantationId, workerData).catch((error: any) => {
+          logError(handleFirebaseError(error), 'AddWorkerScreen (offline sync)');
+        });
+        showAlert('Saved Locally', 'Worker added on this device. Changes will sync automatically when you\'re back online.', [
+          { text: 'OK', style: 'default', onPress: () => navigation.goBack() },
+        ], 'low');
+      } else {
+        const exists = await workerService.checkWorkerIdExists(
+          formData.workerId,
+          userProfile.plantationId,
+        );
+        if (exists) {
+          setErrors(prev => ({
+            ...prev,
+            workerId: 'This Worker ID already exists in your plantation',
+          }));
+          return;
+        }
+        await workerService.createWorker(userProfile.plantationId, workerData);
+        showAlert('Success', 'Worker added successfully', [
+          { text: 'OK', style: 'default', onPress: () => navigation.goBack() },
+        ], 'low');
+      }
     } catch (error: any) {
       const appError = handleFirebaseError(error);
       logError(appError, 'AddWorkerScreen');
-      Alert.alert('Error', appError.userMessage);
+      showAlert('Error', appError.userMessage, undefined, 'high');
     } finally {
       setLoading(false);
     }
@@ -411,6 +415,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </ScrollView>
       </SafeAreaView>
+      <CustomAlert visible={alertState.visible} title={alertState.title} message={alertState.message} buttons={alertState.buttons} onDismiss={hideAlert} severity={alertState.severity} />
     </KeyboardAvoidingView>
   );
 };

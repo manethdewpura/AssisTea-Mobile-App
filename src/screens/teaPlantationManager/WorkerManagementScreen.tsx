@@ -6,18 +6,19 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppSelector } from '../../hooks';
+import { useAppSelector, useThemedAlert } from '../../hooks';
+import CustomAlert from '../../components/molecule/CustomAlert';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { workerService } from '../../services';
 import { handleFirebaseError, logError } from '../../utils';
+import { checkNetworkConnection } from '../../utils/network.util';
 import type { Worker } from '../../models/Worker';
 
 type Props = NativeStackScreenProps<
@@ -32,6 +33,7 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
   const [filteredWorkers, setFilteredWorkers] = useState<Worker[]>([]);
   const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(false);
+  const { showAlert, hideAlert, alertState } = useThemedAlert();
 
   useFocusEffect(
     useCallback(() => {
@@ -41,7 +43,7 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
 
   const loadWorkers = async () => {
     if (!userProfile?.plantationId) {
-      Alert.alert('Error', 'Plantation information not found');
+      showAlert('Error', 'Plantation information not found', undefined, 'high');
       return;
     }
 
@@ -55,7 +57,7 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
     } catch (error: any) {
       const appError = handleFirebaseError(error);
       logError(appError, 'WorkerManagementScreen - LoadWorkers');
-      Alert.alert('Error', appError.userMessage);
+      showAlert('Error', appError.userMessage, undefined, 'high');
     } finally {
       setLoading(false);
     }
@@ -80,31 +82,43 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleDeleteWorker = (workerId: string, workerName: string) => {
-    Alert.alert(
+    showAlert(
       'Delete Worker',
       `Are you sure you want to delete ${workerName}?`,
       [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
+        { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            try {
-              await workerService.deleteWorker(workerId);
-              setWorkers(workers.filter(w => w.id !== workerId));
-              setFilteredWorkers(filteredWorkers.filter(w => w.id !== workerId));
-              Alert.alert('Success', 'Worker deleted successfully');
+            const workersSnapshot = workers;
+              const filteredSnapshot = filteredWorkers;
+              try {
+              const { isConnected } = await checkNetworkConnection();
+              // Optimistically remove from UI immediately
+              setWorkers(prev => prev.filter(w => w.id !== workerId));
+              setFilteredWorkers(prev => prev.filter(w => w.id !== workerId));
+              if (!isConnected) {
+                workerService.deleteWorker(workerId).catch((error: any) => {
+                  logError(handleFirebaseError(error), 'WorkerManagementScreen - DeleteWorker (offline sync)');
+                });
+                showAlert('Deleted Locally', 'Worker removed on this device. Changes will sync automatically when you\'re back online.', undefined, 'low');
+              } else {
+                await workerService.deleteWorker(workerId);
+                showAlert('Success', 'Worker deleted successfully', undefined, 'low');
+              }
             } catch (error: any) {
               const appError = handleFirebaseError(error);
               logError(appError, 'WorkerManagementScreen - DeleteWorker');
-              Alert.alert('Error', appError.userMessage);
+              // Rollback optimistic removal on failure
+              setWorkers(workersSnapshot);
+              setFilteredWorkers(filteredSnapshot);
+              showAlert('Error', appError.userMessage, undefined, 'high');
             }
           },
         },
-      ]
+      ],
+      'high'
     );
   };
 
@@ -205,6 +219,7 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.addButtonText}>Add New Worker</Text>
         </TouchableOpacity>
       </View>
+      <CustomAlert visible={alertState.visible} title={alertState.title} message={alertState.message} buttons={alertState.buttons} onDismiss={hideAlert} severity={alertState.severity} />
     </SafeAreaView>
   );
 };

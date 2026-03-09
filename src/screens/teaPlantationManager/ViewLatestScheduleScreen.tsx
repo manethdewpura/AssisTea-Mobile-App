@@ -6,11 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppSelector } from '../../hooks';
+import { useAppSelector, useThemedAlert } from '../../hooks';
+import CustomAlert from '../../components/molecule/CustomAlert';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
@@ -27,6 +29,11 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
   const { userProfile } = useAppSelector(selectAuth);
   const [loading, setLoading] = useState(true);
   const [schedule, setSchedule] = useState<SavedSchedule | null>(null);
+  const [viewingSchedule, setViewingSchedule] = useState<SavedSchedule | null>(null);
+  const [showPreviousModal, setShowPreviousModal] = useState(false);
+  const [previousSchedules, setPreviousSchedules] = useState<SavedSchedule[]>([]);
+  const [loadingPrevious, setLoadingPrevious] = useState(false);
+  const { showAlert, hideAlert, alertState } = useThemedAlert();
 
   useEffect(() => {
     loadLatestSchedule();
@@ -46,21 +53,47 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
       setSchedule(latestSchedule);
     } catch (error) {
       console.error('Error loading schedule:', error);
-      Alert.alert('Error', 'Failed to load schedule');
+      showAlert('Error', 'Failed to load schedule', undefined, 'high');
     } finally {
       setLoading(false);
     }
   };
 
+  const loadPreviousSchedules = async () => {
+    if (!userProfile?.plantationId) return;
+    try {
+      setLoadingPrevious(true);
+      const schedules = await assignmentStorageService.getRecentSchedules(
+        userProfile.plantationId,
+        20,
+      );
+      setPreviousSchedules(schedules);
+    } catch (error) {
+      console.error('Error loading previous schedules:', error);
+      showAlert('Error', 'Failed to load previous schedules', undefined, 'high');
+    } finally {
+      setLoadingPrevious(false);
+    }
+  };
+
+  const handleOpenPreviousSchedules = () => {
+    setShowPreviousModal(true);
+    if (previousSchedules.length === 0) {
+      loadPreviousSchedules();
+    }
+  };
+
+  const displayedSchedule = viewingSchedule ?? schedule;
+
   // Group assignments by field
-  const groupedAssignments = schedule?.assignments.reduce((acc, assignment) => {
+  const groupedAssignments = displayedSchedule?.assignments.reduce((acc, assignment) => {
     const fieldName = assignment.fieldName;
     if (!acc[fieldName]) {
       acc[fieldName] = [];
     }
     acc[fieldName].push(assignment);
     return acc;
-  }, {} as Record<string, typeof schedule.assignments>);
+  }, {} as Record<string, SavedSchedule['assignments']>);
 
   if (loading) {
     return (
@@ -101,6 +134,8 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
     );
   }
 
+  if (!displayedSchedule) return null;
+
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
@@ -111,6 +146,32 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        {/* Viewing Past Schedule Banner */}
+        {viewingSchedule && (
+          <View style={styles.pastBanner}>
+            <Lucide name="clock" size={16} color="#fff" style={{ marginRight: 8 }} />
+            <Text style={styles.pastBannerText}>Viewing past schedule</Text>
+            <TouchableOpacity
+              onPress={() => setViewingSchedule(null)}
+              style={styles.backToLatestBtn}
+            >
+              <Text style={styles.backToLatestText}>Back to Latest</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* View Previous Schedules Button */}
+        {!viewingSchedule && (
+          <TouchableOpacity
+            style={[styles.previousBtn, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+            onPress={handleOpenPreviousSchedules}
+          >
+            <Lucide name="history" size={18} color="#7cb342" style={{ marginRight: 8 }} />
+            <Text style={[styles.previousBtnText, { color: colors.text }]}>View Previous Schedules</Text>
+            <Lucide name="chevron-right" size={18} color="#7cb342" />
+          </TouchableOpacity>
+        )}
+
         {/* Date Header */}
         <View
           style={[
@@ -122,11 +183,11 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
             <Lucide name="calendar" size={32} color="#7cb342" style={{ marginRight: 12 }} />
             <View style={styles.dateInfo}>
               <Text style={[styles.dateText, { color: colors.text }]}>
-                Schedule for {new Date(schedule.date).toLocaleDateString()}
+                Schedule for {new Date(displayedSchedule.date).toLocaleDateString()}
               </Text>
               <Text style={[styles.statsText, { color: colors.textSecondary }]}>
-                {schedule.totalWorkers} workers • {schedule.totalFields} fields
-                • Avg: {schedule.averageEfficiency.toFixed(1)} kg/hr
+                {displayedSchedule.totalWorkers} workers • {displayedSchedule.totalFields} fields
+                • Avg: {displayedSchedule.averageEfficiency.toFixed(1)} kg/hr
               </Text>
             </View>
           </View>
@@ -184,6 +245,92 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
             </View>
           ))}
       </ScrollView>
+
+      {/* Previous Schedules Modal */}
+      <Modal
+        visible={showPreviousModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowPreviousModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContainer, { backgroundColor: colors.cardBackground || '#fff' }]}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Previous Schedules</Text>
+              <TouchableOpacity onPress={() => setShowPreviousModal(false)}>
+                <Lucide name="x" size={22} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            {loadingPrevious ? (
+              <View style={styles.modalLoading}>
+                <ActivityIndicator size="large" color="#7cb342" />
+                <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+                  Loading schedules...
+                </Text>
+              </View>
+            ) : previousSchedules.length === 0 ? (
+              <View style={styles.modalLoading}>
+                <Lucide name="calendar-x" size={48} color="#ccc" />
+                <Text style={[styles.emptyText, { color: colors.textSecondary, marginTop: 12 }]}>
+                  No previous schedules found
+                </Text>
+              </View>
+            ) : (
+              <FlatList
+                data={previousSchedules}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.modalList}
+                renderItem={({ item }) => {
+                  const isActive = (viewingSchedule?.id ?? schedule?.id) === item.id;
+                  return (
+                    <TouchableOpacity
+                      style={[
+                        styles.scheduleItem,
+                        { borderColor: colors.border },
+                        isActive && styles.scheduleItemActive,
+                      ]}
+                      onPress={() => {
+                        setViewingSchedule(item);
+                        setShowPreviousModal(false);
+                      }}
+                    >
+                      <View style={styles.scheduleItemLeft}>
+                        <Lucide
+                          name="calendar"
+                          size={20}
+                          color={isActive ? '#fff' : '#7cb342'}
+                          style={{ marginRight: 10 }}
+                        />
+                        <View>
+                          <Text style={[styles.scheduleItemDate, isActive && { color: '#fff' }, !isActive && { color: colors.text }]}>
+                            {new Date(item.date).toLocaleDateString('en-US', {
+                              weekday: 'short',
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </Text>
+                          <Text style={[styles.scheduleItemSub, isActive && { color: '#d4edda' }, !isActive && { color: colors.textSecondary }]}>
+                            {item.totalWorkers} workers • {item.totalFields} fields
+                          </Text>
+                        </View>
+                      </View>
+                      <Lucide
+                        name="chevron-right"
+                        size={18}
+                        color={isActive ? '#fff' : colors.textSecondary}
+                      />
+                    </TouchableOpacity>
+                  );
+                }}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
+      <CustomAlert visible={alertState.visible} title={alertState.title} message={alertState.message} buttons={alertState.buttons} onDismiss={hideAlert} severity={alertState.severity} />
     </SafeAreaView>
   );
 };
@@ -370,6 +517,109 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 16,
+  },
+  // Previous schedules button
+  previousBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  previousBtnText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  // Past schedule banner
+  pastBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#7cb342',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 12,
+  },
+  pastBannerText: {
+    flex: 1,
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  backToLatestBtn: {
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  backToLatestText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '75%',
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  modalLoading: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  modalList: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  scheduleItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 10,
+  },
+  scheduleItemActive: {
+    backgroundColor: '#7cb342',
+    borderColor: '#7cb342',
+  },
+  scheduleItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  scheduleItemDate: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  scheduleItemSub: {
+    fontSize: 12,
   },
 });
 

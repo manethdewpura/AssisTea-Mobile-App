@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   Platform,
   KeyboardAvoidingView,
@@ -14,13 +13,15 @@ import {
 } from 'react-native';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppSelector } from '../../hooks';
+import { useAppSelector, useThemedAlert } from '../../hooks';
+import CustomAlert from '../../components/molecule/CustomAlert';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { workerService, dailyDataService, fieldService } from '../../services';
 import { handleFirebaseError, logError, parseCSVFile, formatValidationErrors } from '../../utils';
+import { checkNetworkConnection } from '../../utils/network.util';
 import type { Worker } from '../../models/Worker';
 import type { Field } from '../../models/Field';
 import { pick, types } from '@react-native-documents/picker';
@@ -39,6 +40,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
   const [fields, setFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploadingCSV, setUploadingCSV] = useState(false);
+  const { showAlert, hideAlert, alertState } = useThemedAlert();
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -115,7 +117,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleUploadCSV = async () => {
     if (!userProfile?.plantationId) {
-      Alert.alert('Error', 'Plantation ID not found');
+      showAlert('Error', 'Plantation ID not found', undefined, 'high');
       return;
     }
 
@@ -145,20 +147,20 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
       if (!parseResult.success) {
         if (parseResult.errors && parseResult.errors.length > 0) {
           const errorMessage = formatValidationErrors(parseResult.errors);
-          Alert.alert('Validation Errors', errorMessage);
+          showAlert('Validation Errors', errorMessage, undefined, 'high');
         } else {
-          Alert.alert('Error', parseResult.message || 'Failed to parse CSV file');
+          showAlert('Error', parseResult.message || 'Failed to parse CSV file', undefined, 'high');
         }
         return;
       }
 
       if (!parseResult.data || parseResult.data.length === 0) {
-        Alert.alert('Error', 'No valid data found in CSV file');
+        showAlert('Error', 'No valid data found in CSV file', undefined, 'high');
         return;
       }
 
       // Confirm upload
-      Alert.alert(
+      showAlert(
         'Confirm Upload',
         `Found ${parseResult.data.length} valid record(s). Do you want to upload them?`,
         [
@@ -172,7 +174,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
               try {
                 // Upload to Firebase
                 if (!userProfile?.plantationId) {
-                  Alert.alert('Error', 'Plantation ID not found');
+                  showAlert('Error', 'Plantation ID not found', undefined, 'high');
                   return;
                 }
 
@@ -200,9 +202,11 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
 
                 // Check if any workers were not found
                 if (missingWorkers.length > 0) {
-                  Alert.alert(
+                  showAlert(
                     'Workers Not Found',
                     `The following worker IDs were not found in the system:\n${missingWorkers.join(', ')}\n\nPlease add these workers first or correct the worker IDs in your CSV file.`,
+                    undefined,
+                    'high',
                   );
                   return;
                 }
@@ -213,7 +217,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
                   dataWithFirebaseIds,
                 );
 
-                Alert.alert(
+                showAlert(
                   'Success',
                   `Successfully uploaded ${dataWithFirebaseIds.length} record(s)`,
                   [
@@ -221,17 +225,19 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
                       text: 'View Data',
                       onPress: () => navigation.navigate('DailyDataView'),
                     },
-                    { text: 'OK' },
+                    { text: 'OK', style: 'default' },
                   ],
+                  'low',
                 );
               } catch (error: any) {
                 const appError = handleFirebaseError(error);
                 logError(appError, 'DailyDataEntryScreen - CSV Upload');
-                Alert.alert('Upload Error', appError.userMessage);
+                showAlert('Upload Error', appError.userMessage, undefined, 'high');
               }
             },
           },
         ],
+        'medium',
       );
     } catch (error: any) {
       // Check if user cancelled - the new package throws a specific error
@@ -242,7 +248,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
 
       const appError = handleFirebaseError(error);
       logError(appError, 'DailyDataEntryScreen - CSV Upload');
-      Alert.alert('Error', 'Failed to read CSV file. Please try again.');
+      showAlert('Error', 'Failed to read CSV file. Please try again.', undefined, 'high');
     } finally {
       setUploadingCSV(false);
     }
@@ -255,51 +261,54 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
       !formData.timeSpentHours ||
       !formData.fieldArea
     ) {
-      Alert.alert('Validation', 'Please fill in all fields');
+      showAlert('Validation', 'Please fill in all fields', undefined, 'low');
       return;
     }
 
     if (!userProfile?.plantationId) {
-      Alert.alert('Error', 'Plantation ID not found');
+      showAlert('Error', 'Plantation ID not found', undefined, 'high');
       return;
     }
 
     try {
       setLoading(true);
-      await dailyDataService.createDailyData(userProfile.plantationId, {
+      const { isConnected } = await checkNetworkConnection();
+      const dailyData = {
         workerId: formData.workerId,
         date: formData.date,
         teaPluckedKg: parseFloat(formData.teaPluckedKg),
         timeSpentHours: parseFloat(formData.timeSpentHours),
         fieldArea: formData.fieldArea,
-      });
+      };
+      const resetForm = () => {
+        setFormData({
+          date: new Date().toISOString().split('T')[0],
+          workerId: '',
+          teaPluckedKg: '',
+          timeSpentHours: '',
+          fieldArea: '',
+        });
+        setSelectedDate(new Date());
+      };
 
-      Alert.alert('Success', 'Daily data saved successfully', [
-        {
-          text: 'View All Data',
-          onPress: () => {
-            navigation.navigate('DailyDataView');
-          },
-        },
-        {
-          text: 'OK',
-          onPress: () => {
-            // Reset form
-            setFormData({
-              date: new Date().toISOString().split('T')[0],
-              workerId: '',
-              teaPluckedKg: '',
-              timeSpentHours: '',
-              fieldArea: '',
-            });
-            setSelectedDate(new Date());
-          },
-        },
-      ]);
+      if (!isConnected) {
+        dailyDataService.createDailyData(userProfile.plantationId, dailyData).catch((error: any) => {
+          logError(handleFirebaseError(error), 'DailyDataEntryScreen - SaveData (offline sync)');
+        });
+        showAlert('Saved Locally', 'Data saved on this device. Changes will sync automatically when you\'re back online.', [
+          { text: 'OK', style: 'default', onPress: resetForm },
+        ], 'low');
+      } else {
+        await dailyDataService.createDailyData(userProfile.plantationId, dailyData);
+        showAlert('Success', 'Daily data saved successfully', [
+          { text: 'View All Data', onPress: () => navigation.navigate('DailyDataView') },
+          { text: 'OK', style: 'default', onPress: resetForm },
+        ], 'low');
+      }
     } catch (error: any) {
       const appError = handleFirebaseError(error);
       logError(appError, 'DailyDataEntryScreen - SaveData');
-      Alert.alert('Error', appError.userMessage);
+      showAlert('Error', appError.userMessage, undefined, 'high');
     } finally {
       setLoading(false);
     }
@@ -529,6 +538,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </ScrollView>
       </SafeAreaView>
+      <CustomAlert visible={alertState.visible} title={alertState.title} message={alertState.message} buttons={alertState.buttons} onDismiss={hideAlert} severity={alertState.severity} />
     </KeyboardAvoidingView>
   );
 };

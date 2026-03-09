@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   Platform,
   Modal,
@@ -13,7 +12,8 @@ import {
 } from 'react-native';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppSelector } from '../../hooks';
+import { useAppSelector, useThemedAlert } from '../../hooks';
+import CustomAlert from '../../components/molecule/CustomAlert';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import { useFocusEffect } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -53,6 +53,12 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
   const [dateFilter, setDateFilter] = useState<string>('');
   const [startDateFilter, setStartDateFilter] = useState<string>('');
   const [endDateFilter, setEndDateFilter] = useState<string>('');
+  const { showAlert, hideAlert, alertState } = useThemedAlert();
+
+  const fieldNameMap = useMemo(
+    () => Object.fromEntries(fields.map(f => [f.id, f.name])),
+    [fields]
+  );
 
   // Check if workerId is passed from route params (from WorkerDetailsScreen)
   useEffect(() => {
@@ -185,7 +191,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
         errorMessage = 'Request timed out. Please try again.';
       }
 
-      Alert.alert('Error', errorMessage);
+      showAlert('Error', errorMessage, undefined, 'high');
     } finally {
       setLoading(false);
     }
@@ -240,7 +246,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const handleDelete = (data: DailyData) => {
-    Alert.alert(
+    showAlert(
       'Delete Entry',
       `Are you sure you want to delete this entry for ${getWorkerName(data.workerId)} on ${data.date}?`,
       [
@@ -251,16 +257,17 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           onPress: async () => {
             try {
               await dailyDataService.deleteDailyData(data.id);
-              Alert.alert('Success', 'Entry deleted successfully');
+              showAlert('Success', 'Entry deleted successfully', undefined, 'low');
               loadDailyData();
             } catch (error: any) {
               const appError = handleFirebaseError(error);
               logError(appError, 'DailyDataViewScreen - DeleteData');
-              Alert.alert('Error', appError.userMessage);
+              showAlert('Error', appError.userMessage, undefined, 'high');
             }
           },
         },
       ],
+      'high'
     );
   };
 
@@ -719,7 +726,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                     Field Area:
                   </Text>
                   <Text style={[styles.dataValue, { color: colors.text }]}>
-                    {data.fieldArea}
+                    {fieldNameMap[data.fieldArea] ?? data.fieldArea}
                   </Text>
                 </View>
 
@@ -728,6 +735,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           ))
         )}
       </ScrollView>
+      <CustomAlert visible={alertState.visible} title={alertState.title} message={alertState.message} buttons={alertState.buttons} onDismiss={hideAlert} severity={alertState.severity} />
     </SafeAreaView>
   );
 };

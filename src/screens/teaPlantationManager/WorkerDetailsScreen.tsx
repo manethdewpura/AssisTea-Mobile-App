@@ -5,20 +5,21 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   TextInput,
   Platform,
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppSelector } from '../../hooks';
+import { useAppSelector, useThemedAlert } from '../../hooks';
 import { selectTheme } from '../../store/selectors';
+import CustomAlert from '../../components/molecule/CustomAlert';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { workerService } from '../../services';
 import { handleFirebaseError, logError } from '../../utils';
+import { checkNetworkConnection } from '../../utils/network.util';
 import type { Worker } from '../../models/Worker';
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
@@ -40,6 +41,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
   const [age, setAge] = useState('');
   const [experience, setExperience] = useState('');
   const [gender, setGender] = useState<'Male' | 'Female'>('Male');
+  const { showAlert, hideAlert, alertState } = useThemedAlert();
 
   useEffect(() => {
     loadWorkerDetails();
@@ -63,14 +65,12 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
         setExperience(fetchedWorker.experience);
         setGender(fetchedWorker.gender === 'Other' ? 'Male' : fetchedWorker.gender);
       } else {
-        Alert.alert('Error', 'Worker not found');
-        navigation.goBack();
+        showAlert('Error', 'Worker not found', [{ text: 'OK', style: 'default', onPress: () => navigation.goBack() }], 'high');
       }
     } catch (error: any) {
       const appError = handleFirebaseError(error);
       logError(appError, 'WorkerDetailsScreen - LoadWorkerDetails');
-      Alert.alert('Error', appError.userMessage);
-      navigation.goBack();
+      showAlert('Error', appError.userMessage, [{ text: 'OK', style: 'default', onPress: () => navigation.goBack() }], 'high');
     } finally {
       setLoading(false);
     }
@@ -101,80 +101,70 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const handleUpdate = async () => {
     if (!name.trim()) {
-      Alert.alert('Validation', 'Please enter a name');
+      showAlert('Validation', 'Please enter a name', undefined, 'low');
       return;
     }
     const parsedAge = parseInt(age, 10);
     if (isNaN(parsedAge) || parsedAge <= 0) {
-      Alert.alert('Validation', 'Please enter a valid age');
+      showAlert('Validation', 'Please enter a valid age', undefined, 'low');
       return;
     }
     const trimmedBirthDate = birthDate.trim();
     const birthDateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!trimmedBirthDate || !birthDateRegex.test(trimmedBirthDate)) {
-      Alert.alert('Validation', 'Please enter a valid birth date in the format YYYY-MM-DD');
+      showAlert('Validation', 'Please enter a valid birth date in the format YYYY-MM-DD', undefined, 'low');
       return;
     }
     const trimmedExperience = experience.trim();
     if (!trimmedExperience) {
-      Alert.alert('Validation', 'Please enter experience');
+      showAlert('Validation', 'Please enter experience', undefined, 'low');
       return;
     }
     try {
       setSaving(true);
-      await workerService.updateWorker(workerId, {
+      const { isConnected } = await checkNetworkConnection();
+      const updates = {
         name: name.trim(),
         birthDate: trimmedBirthDate,
         age: parsedAge,
         experience: trimmedExperience,
         gender,
-      });
-      Alert.alert('Success', 'Worker updated successfully', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      };
+
+      if (!isConnected) {
+        // Firebase offline persistence queues this — resolves silently when back online
+        workerService.updateWorker(workerId, updates).catch((error: any) => {
+          logError(handleFirebaseError(error), 'WorkerDetailsScreen - UpdateWorker (offline sync)');
+        });
+        showAlert('Saved Locally', 'Worker updated on this device. Changes will sync automatically when you\'re back online.', [{ text: 'OK', style: 'default', onPress: () => navigation.goBack() }], 'low');
+      } else {
+        await workerService.updateWorker(workerId, updates);
+        showAlert('Success', 'Worker updated successfully', [{ text: 'OK', style: 'default', onPress: () => navigation.goBack() }], 'low');
+      }
     } catch (error: any) {
       const appError = handleFirebaseError(error);
       logError(appError, 'WorkerDetailsScreen - UpdateWorker');
-      Alert.alert('Error', appError.userMessage);
+      showAlert('Error', appError.userMessage, undefined, 'high');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) {
-    return (
-      <View
-        style={[
-          styles.loadingContainer,
-          { backgroundColor: colors.background },
-        ]}
-      >
-        <ActivityIndicator size="large" color="#7cb342" />
-      </View>
-    );
-  }
-
-  if (!worker) {
-    return (
-      <View
-        style={[
-          styles.loadingContainer,
-          { backgroundColor: colors.background },
-        ]}
-      >
-        <Text style={[styles.errorText, { color: colors.text }]}>
-          Worker not found
-        </Text>
-      </View>
-    );
-  }
-
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
     >
-
-      {/* Content */}
+      {loading ? (
+        <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+          <ActivityIndicator size="large" color="#7cb342" />
+        </View>
+      ) : !worker ? (
+        <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+          <Text style={[styles.errorText, { color: colors.text }]}>
+            Worker not found
+          </Text>
+        </View>
+      ) : (
       <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
@@ -386,6 +376,8 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
         </View>
       </ScrollView>
+      )}
+      <CustomAlert visible={alertState.visible} title={alertState.title} message={alertState.message} buttons={alertState.buttons} onDismiss={hideAlert} severity={alertState.severity} />
     </SafeAreaView>
   );
 };

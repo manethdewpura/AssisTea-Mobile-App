@@ -6,7 +6,6 @@ import {
     TouchableOpacity,
     ScrollView,
     ActivityIndicator,
-    Alert,
 } from 'react-native';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,8 +17,9 @@ import { unifiedScheduleService } from '../../services/unifiedSchedule.service';
 import { workerService } from '../../services/worker.Service';
 import { workerSQLiteService } from '../../services/sqlite/workerSQLite.service';
 import { AssignmentSchedule, WorkerAssignment } from '../../models/MLPrediction';
-import { useAppSelector } from '../../hooks';
+import { useAppSelector, useThemedAlert } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
+import CustomAlert from '../../components/molecule/CustomAlert';
 
 type Props = NativeStackScreenProps<TeaPlantationStackParamList, 'AssignmentGeneration'>;
 
@@ -28,10 +28,11 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
     const { userProfile } = useAppSelector(selectAuth);
     const [loading, setLoading] = useState(false);
     const [schedule, setSchedule] = useState<AssignmentSchedule | null>(null);
+    const { showAlert, hideAlert, alertState } = useThemedAlert();
 
     const handleGenerateSchedule = async () => {
         if (!userProfile?.plantationId) {
-            Alert.alert('Error', 'No plantation ID found');
+            showAlert('Error', 'No plantation ID found', undefined, 'high');
             return;
         }
 
@@ -55,7 +56,7 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
             const fields = await unifiedFieldService.getFields(userProfile.plantationId);
 
             if (fields.length === 0) {
-                Alert.alert(
+                showAlert(
                     'No Fields Configured',
                     'Please add fields before generating assignments.',
                     [
@@ -64,7 +65,8 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
                             onPress: () => navigation.navigate('FieldManagement'),
                         },
                         { text: 'Cancel', style: 'cancel' },
-                    ]
+                    ],
+                    'medium'
                 );
                 setLoading(false);
                 return;
@@ -104,13 +106,15 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
                 console.error('Failed to save schedule:', saveError);
             }
 
-            Alert.alert(
+            showAlert(
                 'Success!',
-                `Generated and saved ${generatedSchedule.assignments.length} assignments with average efficiency ${generatedSchedule.averagePredictedEfficiency.toFixed(2)} kg/hour`
+                `Generated and saved ${generatedSchedule.assignments.length} assignments with average efficiency ${generatedSchedule.averagePredictedEfficiency.toFixed(2)} kg/hour`,
+                undefined,
+                'low'
             );
         } catch (error) {
             console.error('Assignment generation error:', error);
-            Alert.alert('Error', `Failed to generate schedule: ${error}`);
+            showAlert('Error', `Failed to generate schedule: ${error}`, undefined, 'high');
         } finally {
             setLoading(false);
         }
@@ -247,6 +251,7 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
                     </View>
                 )}
             </ScrollView>
+            <CustomAlert visible={alertState.visible} title={alertState.title} message={alertState.message} buttons={alertState.buttons} onDismiss={hideAlert} severity={alertState.severity} />
         </SafeAreaView>
     );
 };
