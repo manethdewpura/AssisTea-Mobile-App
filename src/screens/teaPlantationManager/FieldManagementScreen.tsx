@@ -7,17 +7,18 @@ import {
     TouchableOpacity,
     Modal,
     TextInput,
-    Alert,
     ActivityIndicator,
 } from 'react-native';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { useAppSelector } from '../../hooks/redux.hooks';
+import { useThemedAlert } from '../../hooks/useThemedAlert';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import { fieldService } from '../../services/field.service';
 import { Field, CreateFieldInput } from '../../models/Field';
 import { checkNetworkConnection } from '../../utils/network.util';
 import { handleFirebaseError, logError } from '../../utils';
 import Slider from '@react-native-community/slider';
+import CustomAlert from '../../components/molecule/CustomAlert';
 
 export default function FieldManagementScreen() {
     const { userProfile } = useAppSelector(selectAuth);
@@ -33,6 +34,7 @@ export default function FieldManagementScreen() {
     const [maxWorkers, setMaxWorkers] = useState(5);
 
     const [saving, setSaving] = useState(false);
+    const { showAlert, hideAlert, alertState } = useThemedAlert();
 
     // Load fields on mount
     useEffect(() => {
@@ -50,7 +52,7 @@ export default function FieldManagementScreen() {
             setFields(fetchedFields);
         } catch (error) {
             console.error('Error loading fields:', error);
-            Alert.alert('Error', 'Failed to load fields');
+            showAlert('Error', 'Failed to load fields', undefined, 'high');
         } finally {
             setLoading(false);
         }
@@ -76,22 +78,22 @@ export default function FieldManagementScreen() {
 
     const handleSave = async () => {
         if (!userProfile?.plantationId) {
-            Alert.alert('Error', 'User profile not found');
+            showAlert('Error', 'User profile not found', undefined, 'high');
             return;
         }
 
         if (!fieldName.trim()) {
-            Alert.alert('Error', 'Please enter a field name');
+            showAlert('Error', 'Please enter a field name', undefined, 'low');
             return;
         }
 
         if (slope < 5 || slope > 70) {
-            Alert.alert('Error', 'Slope must be between 5° and 70°');
+            showAlert('Error', 'Slope must be between 5° and 70°', undefined, 'low');
             return;
         }
 
         if (maxWorkers < 1 || maxWorkers > 20) {
-            Alert.alert('Error', 'Max workers must be between 1 and 20');
+            showAlert('Error', 'Max workers must be between 1 and 20', undefined, 'low');
             return;
         }
 
@@ -114,22 +116,22 @@ export default function FieldManagementScreen() {
                     setFields(prev => prev.map(f =>
                         f.id === editingField.id ? { ...f, ...fieldData } : f
                     ));
-                    Alert.alert('Saved Locally', 'Field updated on this device. Changes will sync when you\'re back online.');
+                    showAlert('Saved Locally', 'Field updated on this device. Changes will sync when you\'re back online.', undefined, 'low');
                 } else {
                     fieldService.createField(userProfile.plantationId, fieldData).catch((err: any) => {
                         logError(handleFirebaseError(err), 'FieldManagementScreen - CreateField (offline sync)');
                     });
-                    Alert.alert('Saved Locally', 'Field added on this device. Changes will sync when you\'re back online.');
+                    showAlert('Saved Locally', 'Field added on this device. Changes will sync when you\'re back online.', undefined, 'low');
                 }
                 setModalVisible(false);
                 loadFields();
             } else {
                 if (editingField) {
                     await fieldService.updateField(editingField.id, fieldData);
-                    Alert.alert('Success', 'Field updated successfully');
+                    showAlert('Success', 'Field updated successfully', undefined, 'low');
                 } else {
                     await fieldService.createField(userProfile.plantationId, fieldData);
-                    Alert.alert('Success', 'Field created successfully');
+                    showAlert('Success', 'Field created successfully', undefined, 'low');
                 }
                 setModalVisible(false);
                 loadFields();
@@ -137,14 +139,14 @@ export default function FieldManagementScreen() {
         } catch (error: any) {
             const appError = handleFirebaseError(error);
             logError(appError, 'FieldManagementScreen - SaveField');
-            Alert.alert('Error', appError.userMessage);
+            showAlert('Error', appError.userMessage, undefined, 'high');
         } finally {
             setSaving(false);
         }
     };
 
     const handleDelete = (field: Field) => {
-        Alert.alert(
+        showAlert(
             'Delete Field',
             `Are you sure you want to delete "${field.name}"?`,
             [
@@ -161,19 +163,20 @@ export default function FieldManagementScreen() {
                                 fieldService.deleteField(field.id).catch((err: any) => {
                                     logError(handleFirebaseError(err), 'FieldManagementScreen - DeleteField (offline sync)');
                                 });
-                                Alert.alert('Deleted Locally', 'Field removed on this device. Changes will sync when you\'re back online.');
+                                showAlert('Deleted Locally', 'Field removed on this device. Changes will sync when you\'re back online.', undefined, 'low');
                             } else {
                                 await fieldService.deleteField(field.id);
-                                Alert.alert('Success', 'Field deleted successfully');
+                                showAlert('Success', 'Field deleted successfully', undefined, 'low');
                             }
                         } catch (error: any) {
                             const appError = handleFirebaseError(error);
                             logError(appError, 'FieldManagementScreen - DeleteField');
-                            Alert.alert('Error', appError.userMessage);
+                            showAlert('Error', appError.userMessage, undefined, 'high');
                         }
                     },
                 },
-            ]
+            ],
+            'high'
         );
     };
 
@@ -329,6 +332,7 @@ export default function FieldManagementScreen() {
                     </View>
                 </View>
             </Modal>
+            <CustomAlert visible={alertState.visible} title={alertState.title} message={alertState.message} buttons={alertState.buttons} onDismiss={hideAlert} severity={alertState.severity} />
         </View>
     );
 }

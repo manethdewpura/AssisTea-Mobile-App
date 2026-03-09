@@ -6,13 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   Modal,
   FlatList,
 } from 'react-native';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppSelector } from '../../hooks';
+import { useAppSelector, useThemedAlert } from '../../hooks';
+import CustomAlert from '../../components/molecule/CustomAlert';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
@@ -33,6 +33,7 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
   const [showPreviousModal, setShowPreviousModal] = useState(false);
   const [previousSchedules, setPreviousSchedules] = useState<SavedSchedule[]>([]);
   const [loadingPrevious, setLoadingPrevious] = useState(false);
+  const { showAlert, hideAlert, alertState } = useThemedAlert();
 
   useEffect(() => {
     loadLatestSchedule();
@@ -52,7 +53,7 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
       setSchedule(latestSchedule);
     } catch (error) {
       console.error('Error loading schedule:', error);
-      Alert.alert('Error', 'Failed to load schedule');
+      showAlert('Error', 'Failed to load schedule', undefined, 'high');
     } finally {
       setLoading(false);
     }
@@ -69,7 +70,7 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
       setPreviousSchedules(schedules);
     } catch (error) {
       console.error('Error loading previous schedules:', error);
-      Alert.alert('Error', 'Failed to load previous schedules');
+      showAlert('Error', 'Failed to load previous schedules', undefined, 'high');
     } finally {
       setLoadingPrevious(false);
     }
@@ -327,6 +328,7 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </View>
       </Modal>
+      <CustomAlert visible={alertState.visible} title={alertState.title} message={alertState.message} buttons={alertState.buttons} onDismiss={hideAlert} severity={alertState.severity} />
     </SafeAreaView>
   );
 };
