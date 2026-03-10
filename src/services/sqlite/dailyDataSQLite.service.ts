@@ -6,9 +6,19 @@ class DailyDataSQLiteService {
     /**
      * Bulk insert or replace daily data records from Firebase sync.
      * Using INSERT OR REPLACE to handle re-syncs gracefully.
+     *
+     * Note: We store the DailyData.fieldArea value in the SQLite
+     *       column "fieldId" so that offline consumers can still
+     *       resolve the worked field area, even though the schema
+     *       predates the fieldArea property.
      */
     async insertOrReplaceBatch(records: DailyData[]): Promise<void> {
         if (records.length === 0) return;
+
+        console.log(
+            '[DailyDataSQLite] insertOrReplaceBatch called with records:',
+            records.length,
+        );
 
         const query = `
             INSERT OR REPLACE INTO daily_data (
@@ -18,25 +28,60 @@ class DailyDataSQLiteService {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?)
         `;
 
-        const queries = records.map(record => {
-            const enrichedRecord = record as DailyData & {
-                fieldId?: string | null;
-                date?: string | null;
-                fieldSlope?: number | null;
-            };
+        const queries = records.map((record, index) => {
+            const anyRecord = record as any;
+            const rawCreated = anyRecord.createdAt;
+            const rawUpdated = anyRecord.updatedAt;
+
+            const createdAt =
+                typeof rawCreated === 'number'
+                    ? rawCreated
+                    : rawCreated?.toMillis?.() ?? Date.now();
+
+            const updatedAt =
+                typeof rawUpdated === 'number'
+                    ? rawUpdated
+                    : rawUpdated?.toMillis?.() ?? createdAt;
+
+            const teaPlucked =
+                typeof record.teaPluckedKg === 'string'
+                    ? parseFloat(record.teaPluckedKg)
+                    : record.teaPluckedKg;
+
+            const timeSpent =
+                typeof record.timeSpentHours === 'string'
+                    ? parseFloat(record.timeSpentHours)
+                    : record.timeSpentHours;
+
+            if (index < 5) {
+                console.log('[DailyDataSQLite] Sample record to insert:', {
+                    index,
+                    id: record.id,
+                    workerId: record.workerId,
+                    plantationId: record.plantationId,
+                    date: anyRecord.date,
+                    teaPluckedKg: teaPlucked,
+                    timeSpentHours: timeSpent,
+                    fieldArea: anyRecord.fieldArea,
+                    createdAt,
+                    updatedAt,
+                });
+            }
+
             return {
                 query,
                 params: [
                     record.id,
                     record.workerId,
-                    enrichedRecord.fieldId ?? null,
+                    // Persist fieldArea string in fieldId column for offline use
+                    anyRecord.fieldArea ?? null,
                     record.plantationId,
-                    enrichedRecord.date ?? null,
-                    record.teaPluckedKg,
-                    record.timeSpentHours,
-                    enrichedRecord.fieldSlope ?? null,
-                    record.createdAt,
-                    record.updatedAt,
+                    anyRecord.date ?? null,
+                    teaPlucked,
+                    timeSpent,
+                    anyRecord.fieldSlope ?? null,
+                    createdAt,
+                    updatedAt,
                 ],
             };
         });
@@ -45,7 +90,7 @@ class DailyDataSQLiteService {
     }
 
     /**
-     * Get all daily data records for a plantation (for schedule generation).
+     * Get all daily data records for a plantation (for schedule generation and UI).
      */
     async getByPlantation(plantationId: string): Promise<DailyData[]> {
         const query = `
@@ -73,9 +118,9 @@ class DailyDataSQLiteService {
             timeSpentHours: row.timeSpentHours,
             createdAt: row.createdAt,
             updatedAt: row.updatedAt,
-            // extra fields used for ML historical stats (not in Firestore DailyData)
-            ...(row.fieldId ? { fieldId: row.fieldId } : {}),
             ...(row.date ? { date: row.date } : {}),
+            // Rehydrate fieldArea from the stored fieldId column
+            ...(row.fieldId ? { fieldArea: row.fieldId } : {}),
             ...(row.fieldSlope !== null ? { fieldSlope: row.fieldSlope } : {}),
         } as DailyData;
     }

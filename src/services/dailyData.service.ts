@@ -238,10 +238,23 @@ class DailyDataService {
    */
   async syncToSQLite(plantationId: string): Promise<void> {
     try {
+      console.log(
+        '[DailyDataService] Starting syncToSQLite for plantation:',
+        plantationId,
+      );
       const records = await this.getDailyDataByPlantation(plantationId);
+      console.log(records)
       if (records.length > 0) {
         await dailyDataSQLiteService.insertOrReplaceBatch(records);
-        console.log(`✅ Synced ${records.length} daily records to SQLite`);
+        const countAfter = await dailyDataSQLiteService.getCount(plantationId);
+        console.log(
+          `✅ Synced ${records.length} daily records to SQLite (daily_data count for plantation=${plantationId}: ${countAfter})`,
+        );
+      } else {
+        console.log(
+          '[DailyDataService] No daily data records found in Firestore for plantation:',
+          plantationId,
+        );
       }
     } catch (error) {
       console.warn('⚠️ Could not sync daily data to SQLite:', error);
