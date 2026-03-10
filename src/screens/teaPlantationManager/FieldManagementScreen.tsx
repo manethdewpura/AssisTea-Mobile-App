@@ -14,6 +14,7 @@ import { useAppSelector } from '../../hooks/redux.hooks';
 import { useThemedAlert } from '../../hooks/useThemedAlert';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import { fieldService } from '../../services/field.service';
+import { fieldSQLiteService } from '../../services/sqlite/fieldSQLite.service';
 import { Field, CreateFieldInput } from '../../models/Field';
 import { checkNetworkConnection } from '../../utils/network.util';
 import { handleFirebaseError, logError } from '../../utils';
@@ -48,10 +49,12 @@ export default function FieldManagementScreen() {
 
         try {
             setLoading(true);
-            const fetchedFields = await fieldService.getFieldsByPlantation(userProfile.plantationId);
+            // Read from SQLite so the list is always correct online and offline.
+            const fetchedFields = await fieldSQLiteService.getAllFields(userProfile.plantationId);
+            console.log(`[FieldManagement] loadFields → loaded ${fetchedFields.length} fields from SQLite`);
             setFields(fetchedFields);
         } catch (error) {
-            console.error('Error loading fields:', error);
+            console.error('[FieldManagement] loadFields error:', error);
             showAlert('Error', 'Failed to load fields', undefined, 'high');
         } finally {
             setLoading(false);
@@ -107,36 +110,26 @@ export default function FieldManagementScreen() {
                 maxWorkers,
             };
 
-            if (!isConnected) {
-                if (editingField) {
-                    fieldService.updateField(editingField.id, fieldData).catch((err: any) => {
-                        logError(handleFirebaseError(err), 'FieldManagementScreen - UpdateField (offline sync)');
-                    });
-                    // Optimistically update local list
-                    setFields(prev => prev.map(f =>
-                        f.id === editingField.id ? { ...f, ...fieldData } : f
-                    ));
-                    showAlert('Saved Locally', 'Field updated on this device. Changes will sync when you\'re back online.', undefined, 'low');
-                } else {
-                    fieldService.createField(userProfile.plantationId, fieldData).catch((err: any) => {
-                        logError(handleFirebaseError(err), 'FieldManagementScreen - CreateField (offline sync)');
-                    });
-                    showAlert('Saved Locally', 'Field added on this device. Changes will sync when you\'re back online.', undefined, 'low');
-                }
-                setModalVisible(false);
-                loadFields();
+            console.log(`[FieldManagement] handleSave → isConnected=${isConnected} editingField=${editingField?.id ?? 'null'}`, JSON.stringify(fieldData));
+
+            if (editingField) {
+                await fieldService.updateField(editingField.id, fieldData, isConnected);
+                console.log(`[FieldManagement] updateField resolved for fieldId=${editingField.id}`);
+                showAlert(isConnected ? 'Success' : 'Saved Locally',
+                    isConnected ? 'Field updated successfully' : 'Field updated on this device. Changes will sync when you\'re back online.',
+                    undefined, 'low');
             } else {
-                if (editingField) {
-                    await fieldService.updateField(editingField.id, fieldData);
-                    showAlert('Success', 'Field updated successfully', undefined, 'low');
-                } else {
-                    await fieldService.createField(userProfile.plantationId, fieldData);
-                    showAlert('Success', 'Field created successfully', undefined, 'low');
-                }
-                setModalVisible(false);
-                loadFields();
+                await fieldService.createField(userProfile.plantationId, fieldData, isConnected);
+                console.log('[FieldManagement] createField resolved');
+                showAlert(isConnected ? 'Success' : 'Saved Locally',
+                    isConnected ? 'Field created successfully' : 'Field added on this device. Changes will sync when you\'re back online.',
+                    undefined, 'low');
             }
+
+            setModalVisible(false);
+            loadFields();
         } catch (error: any) {
+            console.error('[FieldManagement] handleSave threw an error:', error?.code, error?.message, error);
             const appError = handleFirebaseError(error);
             logError(appError, 'FieldManagementScreen - SaveField');
             showAlert('Error', appError.userMessage, undefined, 'high');
@@ -157,22 +150,22 @@ export default function FieldManagementScreen() {
                     onPress: async () => {
                         try {
                             const { isConnected } = await checkNetworkConnection();
-                            if (!isConnected) {
-                                // Optimistically remove from UI while offline; backend delete will sync later
-                                setFields(prev => prev.filter(f => f.id !== field.id));
-                                fieldService.deleteField(field.id).catch((err: any) => {
-                                    logError(handleFirebaseError(err), 'FieldManagementScreen - DeleteField (offline sync)');
-                                });
-                                showAlert('Deleted Locally', 'Field removed on this device. Changes will sync when you\'re back online.', undefined, 'low');
-                            } else {
-                                // When online, only update UI after successful backend deletion
-                                await fieldService.deleteField(field.id);
-                                setFields(prev => prev.filter(f => f.id !== field.id));
-                                showAlert('Success', 'Field deleted successfully', undefined, 'low');
-                            }
+                            console.log(`[FieldManagement] handleDelete → fieldId=${field.id} isConnected=${isConnected}`);
+                            // Optimistically remove from UI right away
+                            setFields(prev => prev.filter(f => f.id !== field.id));
+                            await fieldService.deleteField(field.id, isConnected);
+                            console.log(`[FieldManagement] deleteField resolved for fieldId=${field.id}`);
+                            showAlert(
+                                isConnected ? 'Success' : 'Deleted Locally',
+                                isConnected ? 'Field deleted successfully' : 'Field removed on this device. Changes will sync when you\'re back online.',
+                                undefined, 'low'
+                            );
                         } catch (error: any) {
+                            console.error('[FieldManagement] handleDelete threw an error:', error?.code, error?.message, error);
                             const appError = handleFirebaseError(error);
                             logError(appError, 'FieldManagementScreen - DeleteField');
+                            // Rollback optimistic removal on failure
+                            loadFields();
                             showAlert('Error', appError.userMessage, undefined, 'high');
                         }
                     },

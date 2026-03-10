@@ -30,9 +30,35 @@ class FieldSQLiteService {
     }
 
     /**
+     * Insert or replace a field (safe for online mirror and re-syncs).
+     */
+    async upsertField(field: Field, syncStatus: 'synced' | 'pending' = 'synced'): Promise<void> {
+        const query = `
+      INSERT OR REPLACE INTO fields (
+        id, name, slope, maxWorkers, location, plantationId,
+        createdAt, updatedAt, syncStatus
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+        const params = [
+            field.id,
+            field.name,
+            field.slope,
+            field.maxWorkers,
+            field.location || null,
+            field.plantationId,
+            field.createdAt.toISOString(),
+            field.updatedAt.toISOString(),
+            syncStatus,
+        ];
+        console.log(`[FieldSQLite] upsertField → id=${field.id} name=${field.name} syncStatus=${syncStatus}`);
+        const result = await databaseService.executeSql(query, params);
+        console.log(`[FieldSQLite] upsertField done → rowsAffected=${(result as any)?.rowsAffected ?? 'unknown'} for id=${field.id}`);
+    }
+
+    /**
      * Update an existing field
      */
-    async updateField(id: string, updates: Partial<Field>): Promise<void> {
+    async updateField(id: string, updates: Partial<Field>, syncStatus: 'synced' | 'pending' = 'synced'): Promise<void> {
         const setClauses: string[] = [];
         const params: any[] = [];
 
@@ -57,27 +83,27 @@ class FieldSQLiteService {
         setClauses.push('updatedAt = ?');
         params.push(new Date().toISOString());
         setClauses.push('syncStatus = ?');
-        params.push('pending');
+        params.push(syncStatus);
 
         params.push(id);
 
-        const query = `
+        const sql = `
       UPDATE fields 
       SET ${setClauses.join(', ')}
       WHERE id = ?
     `;
-
-        await databaseService.executeSql(query, params);
-        console.log(`✅ Field updated in SQLite: ${id}`);
+        console.log(`[FieldSQLite] updateField → SQL: "${sql.trim()}" params:`, JSON.stringify(params));
+        const result = await databaseService.executeSql(sql, params);
+        console.log(`[FieldSQLite] updateField done → rowsAffected=${(result as any)?.rowsAffected ?? 'unknown'} for id=${id}`);
     }
 
     /**
      * Delete a field
      */
     async deleteField(id: string): Promise<void> {
-        const query = 'DELETE FROM fields WHERE id = ?';
-        await databaseService.executeSql(query, [id]);
-        console.log(`✅ Field deleted from SQLite: ${id}`);
+        console.log(`[FieldSQLite] deleteField → id=${id}`);
+        const result = await databaseService.executeSql('DELETE FROM fields WHERE id = ?', [id]);
+        console.log(`[FieldSQLite] deleteField done → rowsAffected=${(result as any)?.rowsAffected ?? 'unknown'} for id=${id}`);
     }
 
     /**
