@@ -280,6 +280,8 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
         timeSpentHours: parseFloat(formData.timeSpentHours),
         fieldArea: formData.fieldArea,
       };
+      console.log(`[DailyDataEntry] handleSaveData → isConnected=${isConnected}`, JSON.stringify(dailyData));
+
       const resetForm = () => {
         setFormData({
           date: new Date().toISOString().split('T')[0],
@@ -291,21 +293,23 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
         setSelectedDate(new Date());
       };
 
+      await dailyDataService.createDailyData(userProfile.plantationId, dailyData, isConnected);
+      console.log('[DailyDataEntry] createDailyData resolved successfully');
+
       if (!isConnected) {
-        dailyDataService.createDailyData(userProfile.plantationId, dailyData).catch((error: any) => {
-          logError(handleFirebaseError(error), 'DailyDataEntryScreen - SaveData (offline sync)');
-        });
+        console.log('[DailyDataEntry] Offline path: showing "Saved Locally" alert');
         showAlert('Saved Locally', 'Data saved on this device. Changes will sync automatically when you\'re back online.', [
           { text: 'OK', style: 'default', onPress: resetForm },
         ], 'low');
       } else {
-        await dailyDataService.createDailyData(userProfile.plantationId, dailyData);
+        console.log('[DailyDataEntry] Online path: showing "Success" alert');
         showAlert('Success', 'Daily data saved successfully', [
           { text: 'View All Data', onPress: () => navigation.navigate('DailyDataView') },
           { text: 'OK', style: 'default', onPress: resetForm },
         ], 'low');
       }
     } catch (error: any) {
+      console.error('[DailyDataEntry] handleSaveData threw an error:', error?.code, error?.message, error);
       const appError = handleFirebaseError(error);
       logError(appError, 'DailyDataEntryScreen - SaveData');
       showAlert('Error', appError.userMessage, undefined, 'high');

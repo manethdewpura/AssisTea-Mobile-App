@@ -146,6 +146,71 @@ class DailyDataSQLiteService {
             [plantationId]
         );
     }
+
+    /**
+     * Update specific fields of an existing daily data record in SQLite.
+     * Called after every Firestore update so the local cache stays in sync.
+     * Stores fieldArea in the "fieldId" column to match the schema convention.
+     */
+    async updateRecord(
+        dataId: string,
+        updates: Partial<{
+            workerId: string;
+            date: string;
+            teaPluckedKg: number | string;
+            timeSpentHours: number | string;
+            fieldArea: string;
+            updatedAt: number;
+        }>,
+    ): Promise<void> {
+        const sets: string[] = [];
+        const params: any[] = [];
+
+        if (updates.workerId !== undefined) {
+            sets.push('workerId = ?');
+            params.push(updates.workerId);
+        }
+        if (updates.date !== undefined) {
+            sets.push('date = ?');
+            params.push(updates.date);
+        }
+        if (updates.teaPluckedKg !== undefined) {
+            sets.push('teaPluckedKg = ?');
+            params.push(
+                typeof updates.teaPluckedKg === 'string'
+                    ? parseFloat(updates.teaPluckedKg)
+                    : updates.teaPluckedKg,
+            );
+        }
+        if (updates.timeSpentHours !== undefined) {
+            sets.push('timeSpentHours = ?');
+            params.push(
+                typeof updates.timeSpentHours === 'string'
+                    ? parseFloat(updates.timeSpentHours)
+                    : updates.timeSpentHours,
+            );
+        }
+        if (updates.fieldArea !== undefined) {
+            // fieldArea is persisted in the fieldId column (schema convention)
+            sets.push('fieldId = ?');
+            params.push(updates.fieldArea);
+        }
+        if (updates.updatedAt !== undefined) {
+            sets.push('updatedAt = ?');
+            params.push(updates.updatedAt);
+        }
+
+        if (sets.length === 0) {
+            console.warn('[DailyDataSQLite] updateRecord called but no fields to update, skipping.');
+            return;
+        }
+
+        params.push(dataId);
+        const sql = `UPDATE daily_data SET ${sets.join(', ')} WHERE id = ?`;
+        console.log(`[DailyDataSQLite] updateRecord → SQL: "${sql}" params:`, JSON.stringify(params));
+        const result = await databaseService.executeSql(sql, params);
+        console.log(`[DailyDataSQLite] updateRecord done → rowsAffected=${(result as any)?.rowsAffected ?? 'unknown'} for dataId=${dataId}`);
+    }
 }
 
 export const dailyDataSQLiteService = new DailyDataSQLiteService();

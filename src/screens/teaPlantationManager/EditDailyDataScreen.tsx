@@ -159,6 +159,8 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
     try {
       setSaving(true);
       const { isConnected } = await checkNetworkConnection();
+      console.log(`[EditDailyData] handleSaveData → dataId=${dataId} isConnected=${isConnected}`);
+
       const updates = {
         workerId: formData.workerId,
         date: formData.date,
@@ -166,21 +168,24 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
         timeSpentHours: parseFloat(formData.timeSpentHours),
         fieldArea: formData.fieldArea,
       };
+      console.log('[EditDailyData] updates payload:', JSON.stringify(updates));
+
+      await dailyDataService.updateDailyData(dataId, updates, isConnected);
+      console.log('[EditDailyData] updateDailyData resolved successfully');
 
       if (!isConnected) {
-        dailyDataService.updateDailyData(dataId, updates).catch((error: any) => {
-          logError(handleFirebaseError(error), 'EditDailyDataScreen - SaveData (offline sync)');
-        });
+        console.log('[EditDailyData] Offline path: showing "Saved Locally" alert');
         showAlert('Saved Locally', 'Data updated on this device. Changes will sync automatically when you\'re back online.', [
           { text: 'OK', style: 'default', onPress: () => navigation.goBack() },
         ], 'low');
       } else {
-        await dailyDataService.updateDailyData(dataId, updates);
+        console.log('[EditDailyData] Online path: showing "Success" alert');
         showAlert('Success', 'Daily data updated successfully', [
           { text: 'OK', style: 'default', onPress: () => navigation.goBack() },
         ], 'low');
       }
     } catch (error: any) {
+      console.error('[EditDailyData] handleSaveData threw an error:', error?.code, error?.message, error);
       const appError = handleFirebaseError(error);
       logError(appError, 'EditDailyDataScreen - SaveData');
       showAlert('Error', appError.userMessage, undefined, 'high');
