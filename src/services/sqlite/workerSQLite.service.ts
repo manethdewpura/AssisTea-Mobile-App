@@ -90,6 +90,48 @@ class WorkerSQLiteService {
     }
 
     /**
+     * Update specific fields of an existing worker record in SQLite.
+     * Called after every Firestore update so the local cache stays in sync.
+     */
+    async updateRecord(
+        workerId: string,
+        updates: Partial<Pick<Worker, 'name' | 'birthDate' | 'age' | 'experience' | 'gender' | 'updatedAt'>>,
+    ): Promise<void> {
+        const sets: string[] = [];
+        const params: any[] = [];
+
+        if (updates.name !== undefined) { sets.push('name = ?'); params.push(updates.name); }
+        if (updates.birthDate !== undefined) { sets.push('birthDate = ?'); params.push(updates.birthDate); }
+        if (updates.age !== undefined) { sets.push('age = ?'); params.push(updates.age); }
+        if (updates.experience !== undefined) { sets.push('experience = ?'); params.push(updates.experience); }
+        if (updates.gender !== undefined) { sets.push('gender = ?'); params.push(updates.gender); }
+        if (updates.updatedAt !== undefined) { sets.push('updatedAt = ?'); params.push(updates.updatedAt); }
+
+        if (sets.length === 0) {
+            console.warn('[WorkerSQLite] updateRecord called with no fields, skipping.');
+            return;
+        }
+
+        params.push(workerId);
+        const sql = `UPDATE workers SET ${sets.join(', ')} WHERE id = ?`;
+        console.log(`[WorkerSQLite] updateRecord → SQL: "${sql}" params:`, JSON.stringify(params));
+        const result = await databaseService.executeSql(sql, params);
+        console.log(`[WorkerSQLite] updateRecord done → rowsAffected=${(result as any)?.rowsAffected ?? 'unknown'} for workerId=${workerId}`);
+    }
+
+    /**
+     * Delete a worker record from SQLite.
+     */
+    async deleteRecord(workerId: string): Promise<void> {
+        console.log(`[WorkerSQLite] deleteRecord → workerId=${workerId}`);
+        const result = await databaseService.executeSql(
+            'DELETE FROM workers WHERE id = ?',
+            [workerId],
+        );
+        console.log(`[WorkerSQLite] deleteRecord done → rowsAffected=${(result as any)?.rowsAffected ?? 'unknown'} for workerId=${workerId}`);
+    }
+
+    /**
      * Map database row to Worker object
      */
     private mapRowToWorker(row: any): Worker {

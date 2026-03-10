@@ -98,16 +98,16 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
               // Optimistically remove from UI immediately
               setWorkers(prev => prev.filter(w => w.id !== workerId));
               setFilteredWorkers(prev => prev.filter(w => w.id !== workerId));
+              console.log(`[WorkerManagement] deleteWorker → workerId=${workerId} isConnected=${isConnected}`);
+              await workerService.deleteWorker(workerId, isConnected);
+              console.log(`[WorkerManagement] deleteWorker resolved for workerId=${workerId}`);
               if (!isConnected) {
-                workerService.deleteWorker(workerId).catch((error: any) => {
-                  logError(handleFirebaseError(error), 'WorkerManagementScreen - DeleteWorker (offline sync)');
-                });
                 showAlert('Deleted Locally', 'Worker removed on this device. Changes will sync automatically when you\'re back online.', undefined, 'low');
               } else {
-                await workerService.deleteWorker(workerId);
                 showAlert('Success', 'Worker deleted successfully', undefined, 'low');
               }
             } catch (error: any) {
+              console.error('[WorkerManagement] deleteWorker threw an error:', error?.code, error?.message, error);
               const appError = handleFirebaseError(error);
               logError(appError, 'WorkerManagementScreen - DeleteWorker');
               // Rollback optimistic removal on failure
