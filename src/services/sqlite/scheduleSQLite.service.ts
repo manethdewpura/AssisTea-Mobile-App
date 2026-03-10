@@ -59,8 +59,9 @@ class ScheduleSQLiteService {
             });
         }
 
+        console.log(`💾 [ScheduleSQLite.saveSchedule] Running transaction: 1 schedule row + ${schedule.assignments.length} assignment rows for date=${schedule.date}`);
         await databaseService.executeTransaction(queries);
-        console.log(`✅ Schedule saved to SQLite: ${schedule.date}`);
+        console.log(`✅ [ScheduleSQLite.saveSchedule] Transaction complete — id=${schedule.id}, date=${schedule.date}, assignments=${schedule.assignments.length}`);
     }
 
     /**
