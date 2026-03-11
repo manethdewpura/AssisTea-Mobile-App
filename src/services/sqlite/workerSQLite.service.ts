@@ -86,17 +86,14 @@ class WorkerSQLiteService {
      * Used for offline CSV import where we cannot query Firestore.
      */
     async getWorkerByCustomId(workerId: string, plantationId: string): Promise<Worker | null> {
-        console.log(`[WorkerSQLite] getWorkerByCustomId → workerId="${workerId}", plantationId=${plantationId}`);
         const result = await databaseService.executeSql(
             'SELECT * FROM workers WHERE workerId = ? AND plantationId = ? LIMIT 1',
             [workerId, plantationId],
         );
         if (result.rows.length === 0) {
-            console.log(`[WorkerSQLite] getWorkerByCustomId → NOT FOUND for workerId="${workerId}"`);
             return null;
         }
         const worker = this.mapRowToWorker(result.rows.item(0));
-        console.log(`[WorkerSQLite] getWorkerByCustomId → found id=${worker.id} for workerId="${workerId}"`);
         return worker;
     }
 
@@ -133,21 +130,17 @@ class WorkerSQLiteService {
 
         params.push(workerId);
         const sql = `UPDATE workers SET ${sets.join(', ')} WHERE id = ?`;
-        console.log(`[WorkerSQLite] updateRecord → SQL: "${sql}" params:`, JSON.stringify(params));
         const result = await databaseService.executeSql(sql, params);
-        console.log(`[WorkerSQLite] updateRecord done → rowsAffected=${(result as any)?.rowsAffected ?? 'unknown'} for workerId=${workerId}`);
     }
 
     /**
      * Delete a worker record from SQLite.
      */
     async deleteRecord(workerId: string): Promise<void> {
-        console.log(`[WorkerSQLite] deleteRecord → workerId=${workerId}`);
         const result = await databaseService.executeSql(
             'DELETE FROM workers WHERE id = ?',
             [workerId],
         );
-        console.log(`[WorkerSQLite] deleteRecord done → rowsAffected=${(result as any)?.rowsAffected ?? 'unknown'} for workerId=${workerId}`);
     }
 
     /**

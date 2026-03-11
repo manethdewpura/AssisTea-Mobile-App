@@ -26,7 +26,6 @@ class FieldSQLiteService {
         ];
 
         await databaseService.executeSql(query, params);
-        console.log(`✅ Field inserted into SQLite: ${field.name}`);
     }
 
     /**
@@ -50,9 +49,7 @@ class FieldSQLiteService {
             field.updatedAt.toISOString(),
             syncStatus,
         ];
-        console.log(`[FieldSQLite] upsertField → id=${field.id} name=${field.name} syncStatus=${syncStatus}`);
         const result = await databaseService.executeSql(query, params);
-        console.log(`[FieldSQLite] upsertField done → rowsAffected=${(result as any)?.rowsAffected ?? 'unknown'} for id=${field.id}`);
     }
 
     /**
@@ -92,18 +89,14 @@ class FieldSQLiteService {
       SET ${setClauses.join(', ')}
       WHERE id = ?
     `;
-        console.log(`[FieldSQLite] updateField → SQL: "${sql.trim()}" params:`, JSON.stringify(params));
         const result = await databaseService.executeSql(sql, params);
-        console.log(`[FieldSQLite] updateField done → rowsAffected=${(result as any)?.rowsAffected ?? 'unknown'} for id=${id}`);
     }
 
     /**
      * Delete a field
      */
     async deleteField(id: string): Promise<void> {
-        console.log(`[FieldSQLite] deleteField → id=${id}`);
         const result = await databaseService.executeSql('DELETE FROM fields WHERE id = ?', [id]);
-        console.log(`[FieldSQLite] deleteField done → rowsAffected=${(result as any)?.rowsAffected ?? 'unknown'} for id=${id}`);
     }
 
     /**
@@ -167,7 +160,6 @@ class FieldSQLiteService {
     async markAsSynced(id: string): Promise<void> {
         const query = 'UPDATE fields SET syncStatus = ? WHERE id = ?';
         await databaseService.executeSql(query, ['synced', id]);
-        console.log(`✅ Field marked as synced: ${id}`);
     }
 
     /**
@@ -176,7 +168,6 @@ class FieldSQLiteService {
     async markForSync(id: string): Promise<void> {
         const query = 'UPDATE fields SET syncStatus = ? WHERE id = ?';
         await databaseService.executeSql(query, ['pending', id]);
-        console.log(`📤 Field marked for sync: ${id}`);
     }
 
     /**

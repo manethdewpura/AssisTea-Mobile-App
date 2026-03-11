@@ -98,9 +98,7 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
               // Optimistically remove from UI immediately
               setWorkers(prev => prev.filter(w => w.id !== workerId));
               setFilteredWorkers(prev => prev.filter(w => w.id !== workerId));
-              console.log(`[WorkerManagement] deleteWorker → workerId=${workerId} isConnected=${isConnected}`);
               await workerService.deleteWorker(workerId, isConnected);
-              console.log(`[WorkerManagement] deleteWorker resolved for workerId=${workerId}`);
               if (!isConnected) {
                 showAlert('Deleted Locally', 'Worker removed on this device. Changes will sync automatically when you\'re back online.', undefined, 'low');
               } else {

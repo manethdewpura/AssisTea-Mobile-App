@@ -15,10 +15,7 @@ class DailyDataSQLiteService {
     async insertOrReplaceBatch(records: DailyData[]): Promise<void> {
         if (records.length === 0) return;
 
-        console.log(
-            '[DailyDataSQLite] insertOrReplaceBatch called with records:',
-            records.length,
-        );
+
 
         const query = `
             INSERT OR REPLACE INTO daily_data (
@@ -54,18 +51,7 @@ class DailyDataSQLiteService {
                     : record.timeSpentHours;
 
             if (index < 5) {
-                console.log('[DailyDataSQLite] Sample record to insert:', {
-                    index,
-                    id: record.id,
-                    workerId: record.workerId,
-                    plantationId: record.plantationId,
-                    date: anyRecord.date,
-                    teaPluckedKg: teaPlucked,
-                    timeSpentHours: timeSpent,
-                    fieldArea: anyRecord.fieldArea,
-                    createdAt,
-                    updatedAt,
-                });
+
             }
 
             return {
@@ -207,9 +193,7 @@ class DailyDataSQLiteService {
 
         params.push(dataId);
         const sql = `UPDATE daily_data SET ${sets.join(', ')} WHERE id = ?`;
-        console.log(`[DailyDataSQLite] updateRecord → SQL: "${sql}" params:`, JSON.stringify(params));
         const result = await databaseService.executeSql(sql, params);
-        console.log(`[DailyDataSQLite] updateRecord done → rowsAffected=${(result as any)?.rowsAffected ?? 'unknown'} for dataId=${dataId}`);
     }
 }
 

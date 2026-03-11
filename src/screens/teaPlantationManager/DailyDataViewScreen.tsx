@@ -174,22 +174,15 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
 
     try {
       setSyncing(true);
-      console.log(
-        '[DailyDataViewScreen] Manual sync requested for plantation:',
-        userProfile.plantationId,
-      );
+
       const { isConnected } = await checkNetworkConnection();
       if (!isConnected) {
-        console.log(
-          '[DailyDataViewScreen] Manual sync aborted: device is offline.',
-        );
+
         showAlert('Offline', 'Connect to the internet to sync daily data.', undefined, 'medium');
         return;
       }
 
-      console.log('[DailyDataViewScreen] Calling dailyDataService.syncToSQLite...');
       await dailyDataService.syncToSQLite(userProfile.plantationId);
-      console.log('[DailyDataViewScreen] Reloading daily data from SQLite after sync...');
       await loadDailyData();
       showAlert('Synced', 'Daily data has been synced from the server.', undefined, 'low');
     } catch (error: any) {

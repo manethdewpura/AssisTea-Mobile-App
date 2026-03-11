@@ -49,7 +49,6 @@ class ActivityLogsSQLiteService {
         ];
 
         await databaseService.executeSql(query, params);
-        console.log(`✅ Activity log saved to SQLite: ${log.id}`);
     }
 
     /**
@@ -90,7 +89,6 @@ class ActivityLogsSQLiteService {
         }));
 
         await databaseService.executeTransaction(queries);
-        console.log(`✅ ${logs.length} activity logs saved to SQLite`);
     }
 
     /**
@@ -173,7 +171,6 @@ class ActivityLogsSQLiteService {
             WHERE id = ?
         `;
         await databaseService.executeSql(query, ['synced', new Date().toISOString(), logId]);
-        console.log(`✅ Activity log marked as synced: ${logId}`);
     }
 
     /**
@@ -190,7 +187,6 @@ class ActivityLogsSQLiteService {
         }));
 
         await databaseService.executeTransaction(queries);
-        console.log(`✅ ${logIds.length} activity logs marked as synced`);
     }
 
     /**
@@ -203,7 +199,6 @@ class ActivityLogsSQLiteService {
         
         const query = 'DELETE FROM activity_logs WHERE timestamp < ?';
         const result = await databaseService.executeSql(query, [cutoffDate.toISOString()]);
-        console.log(`✅ Deleted old activity logs before ${cutoffDate.toISOString()}`);
     }
 
     /**

@@ -159,7 +159,6 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
     try {
       setSaving(true);
       const { isConnected } = await checkNetworkConnection();
-      console.log(`[EditDailyData] handleSaveData → dataId=${dataId} isConnected=${isConnected}`);
 
       const updates = {
         workerId: formData.workerId,
@@ -168,18 +167,14 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
         timeSpentHours: parseFloat(formData.timeSpentHours),
         fieldArea: formData.fieldArea,
       };
-      console.log('[EditDailyData] updates payload:', JSON.stringify(updates));
 
       await dailyDataService.updateDailyData(dataId, updates, isConnected);
-      console.log('[EditDailyData] updateDailyData resolved successfully');
 
       if (!isConnected) {
-        console.log('[EditDailyData] Offline path: showing "Saved Locally" alert');
         showAlert('Saved Locally', 'Data updated on this device. Changes will sync automatically when you\'re back online.', [
           { text: 'OK', style: 'default', onPress: () => navigation.goBack() },
         ], 'low');
       } else {
-        console.log('[EditDailyData] Online path: showing "Success" alert');
         showAlert('Success', 'Daily data updated successfully', [
           { text: 'OK', style: 'default', onPress: () => navigation.goBack() },
         ], 'low');

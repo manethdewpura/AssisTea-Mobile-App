@@ -123,30 +123,23 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
     }
 
     try {
-      console.log('[CSVUpload] Opening file picker...');
       const result = await pick({
         type: [types.csv, types.plainText],
         copyTo: 'cachesDirectory',
       });
 
       if (!result || result.length === 0) {
-        console.log('[CSVUpload] No file selected.');
         return;
       }
 
       const file = result[0];
-      console.log(`[CSVUpload] File selected: name=${file.name}, uri=${file.uri}`);
 
       setUploadingCSV(true);
 
-      console.log('[CSVUpload] Reading file content via fetch...');
       const response = await fetch(file.uri);
       const fileContent = await response.text();
-      console.log(`[CSVUpload] File read: ${fileContent.length} chars. First 300: ${fileContent.slice(0, 300)}`);
 
-      console.log(`[CSVUpload] Parsing CSV with fallbackDate=${formData.date}...`);
       const parseResult = await parseCSVFile(fileContent, formData.date);
-      console.log(`[CSVUpload] Parse result: success=${parseResult.success}, records=${parseResult.data?.length ?? 0}, errors=${parseResult.errors?.length ?? 0}${parseResult.message ? `, message=${parseResult.message}` : ''}`);
 
       if (!parseResult.success) {
         if (parseResult.errors && parseResult.errors.length > 0) {
@@ -166,7 +159,6 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
       // Check connectivity once — used for both worker lookup and bulk create
       const networkResult = await checkNetworkConnection();
       const isConnected = !!networkResult?.isConnected;
-      console.log(`[CSVUpload] Connectivity check: isConnected=${isConnected}`);
 
       showAlert(
         'Confirm Upload',
@@ -186,13 +178,11 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
                   return;
                 }
 
-                console.log(`[CSVUpload] Resolving worker IDs for ${parseResult.data!.length} records (isConnected=${isConnected})...`);
 
                 const dataWithFirebaseIds: typeof parseResult.data = [];
                 const missingWorkers: string[] = [];
 
                 for (const record of parseResult.data!) {
-                  console.log(`[CSVUpload] Looking up worker customId="${record.workerId}"...`);
                   let worker = null;
 
                   if (isConnected) {
@@ -201,14 +191,12 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
                       record.workerId,
                       userProfile.plantationId,
                     );
-                    console.log(`[CSVUpload] Firestore lookup "${record.workerId}": ${worker ? `found → docId=${worker.id}` : 'NOT FOUND'}`);
                   } else {
                     // Offline: fall back to SQLite cache
                     worker = await workerSQLiteService.getWorkerByCustomId(
                       record.workerId,
                       userProfile.plantationId,
                     );
-                    console.log(`[CSVUpload] SQLite lookup "${record.workerId}": ${worker ? `found → docId=${worker.id}` : 'NOT FOUND'}`);
                   }
 
                   if (!worker) {
@@ -221,7 +209,6 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
                   }
                 }
 
-                console.log(`[CSVUpload] Worker resolution done: matched=${dataWithFirebaseIds!.length}, missing=${missingWorkers.length}${missingWorkers.length > 0 ? ` [${missingWorkers.join(', ')}]` : ''}`);
 
                 if (missingWorkers.length > 0) {
                   showAlert(
@@ -233,13 +220,11 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
                   return;
                 }
 
-                console.log(`[CSVUpload] Calling createBulkDailyData: ${dataWithFirebaseIds!.length} records, isConnected=${isConnected}...`);
                 await dailyDataService.createBulkDailyData(
                   userProfile.plantationId,
                   dataWithFirebaseIds!,
                   isConnected,
                 );
-                console.log(`[CSVUpload] createBulkDailyData completed successfully`);
 
                 const successMsg = isConnected
                   ? `Successfully uploaded ${dataWithFirebaseIds!.length} record(s)`
@@ -258,7 +243,6 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
                   'low',
                 );
               } catch (error: any) {
-                console.error('[CSVUpload] Upload failed:', error?.code, error?.message, error);
                 const appError = handleFirebaseError(error);
                 logError(appError, 'DailyDataEntryScreen - CSV Upload');
                 showAlert('Upload Error', appError.userMessage, undefined, 'high');
@@ -272,10 +256,8 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
       );
     } catch (error: any) {
       if (error?.message === 'User canceled document picker') {
-        console.log('[CSVUpload] User cancelled file picker.');
         return;
       }
-      console.error('[CSVUpload] File pick/read error:', error?.message, error);
       const appError = handleFirebaseError(error);
       logError(appError, 'DailyDataEntryScreen - CSV Upload');
       showAlert('Error', 'Failed to read CSV file. Please try again.', undefined, 'high');
@@ -310,7 +292,6 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
         timeSpentHours: parseFloat(formData.timeSpentHours),
         fieldArea: formData.fieldArea,
       };
-      console.log(`[DailyDataEntry] handleSaveData → isConnected=${isConnected}`, JSON.stringify(dailyData));
 
       const resetForm = () => {
         setFormData({
@@ -324,22 +305,18 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
       };
 
       await dailyDataService.createDailyData(userProfile.plantationId, dailyData, isConnected);
-      console.log('[DailyDataEntry] createDailyData resolved successfully');
 
       if (!isConnected) {
-        console.log('[DailyDataEntry] Offline path: showing "Saved Locally" alert');
         showAlert('Saved Locally', 'Data saved on this device. Changes will sync automatically when you\'re back online.', [
           { text: 'OK', style: 'default', onPress: resetForm },
         ], 'low');
       } else {
-        console.log('[DailyDataEntry] Online path: showing "Success" alert');
         showAlert('Success', 'Daily data saved successfully', [
           { text: 'View All Data', onPress: () => navigation.navigate('DailyDataView') },
           { text: 'OK', style: 'default', onPress: resetForm },
         ], 'low');
       }
     } catch (error: any) {
-      console.error('[DailyDataEntry] handleSaveData threw an error:', error?.code, error?.message, error);
       const appError = handleFirebaseError(error);
       logError(appError, 'DailyDataEntryScreen - SaveData');
       showAlert('Error', appError.userMessage, undefined, 'high');

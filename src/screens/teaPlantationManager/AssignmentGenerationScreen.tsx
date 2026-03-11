@@ -46,9 +46,7 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
                 for (const worker of firebaseWorkers) {
                     await workerSQLiteService.insertWorker(worker);
                 }
-                console.log(`✅ ${firebaseWorkers.length} workers synced to SQLite`);
             } catch (err) {
-                console.warn('⚠️ Worker sync failed (using cached):', err);
             }
 
             // 2. Load fields from SQLite (offline-first)
@@ -83,7 +81,6 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
             // Use local date (not UTC) to avoid off-by-one errors in timezones ahead of UTC (e.g. UTC+5:30)
             const nowLocal = new Date();
             const today = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
-            console.log(`📅 [AssignmentGeneration] Using local date: ${today} (UTC was: ${new Date().toISOString().split('T')[0]})`);
 
             // 3. Generate assignments (ML runs offline!)
             const generatedSchedule = await assignmentService.generateAssignments(
@@ -96,7 +93,6 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
 
             // 4. Save to SQLite first (offline-safe), then fire-and-forget to Firebase
             try {
-                console.log(`💾 [AssignmentGeneration] Saving schedule for date=${today}, workers=${generatedSchedule.totalWorkers}, fields=${generatedSchedule.totalFields}...`);
                 await unifiedScheduleService.saveSchedule({
                     plantationId: userProfile.plantationId,
                     date: today,
@@ -105,7 +101,6 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
                     averageEfficiency: generatedSchedule.averagePredictedEfficiency,
                     assignments: generatedSchedule.assignments,
                 });
-                console.log(`✅ [AssignmentGeneration] Schedule saved successfully for ${today}`);
             } catch (saveError) {
                 console.error('❌ [AssignmentGeneration] Failed to save schedule:', saveError);
             }

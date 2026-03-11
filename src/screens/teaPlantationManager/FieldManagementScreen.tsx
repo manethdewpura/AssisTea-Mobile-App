@@ -51,7 +51,6 @@ export default function FieldManagementScreen() {
             setLoading(true);
             // Read from SQLite so the list is always correct online and offline.
             const fetchedFields = await fieldSQLiteService.getAllFields(userProfile.plantationId);
-            console.log(`[FieldManagement] loadFields → loaded ${fetchedFields.length} fields from SQLite`);
             setFields(fetchedFields);
         } catch (error) {
             console.error('[FieldManagement] loadFields error:', error);
@@ -110,17 +109,14 @@ export default function FieldManagementScreen() {
                 maxWorkers,
             };
 
-            console.log(`[FieldManagement] handleSave → isConnected=${isConnected} editingField=${editingField?.id ?? 'null'}`, JSON.stringify(fieldData));
 
             if (editingField) {
                 await fieldService.updateField(editingField.id, fieldData, isConnected);
-                console.log(`[FieldManagement] updateField resolved for fieldId=${editingField.id}`);
                 showAlert(isConnected ? 'Success' : 'Saved Locally',
                     isConnected ? 'Field updated successfully' : 'Field updated on this device. Changes will sync when you\'re back online.',
                     undefined, 'low');
             } else {
                 await fieldService.createField(userProfile.plantationId, fieldData, isConnected);
-                console.log('[FieldManagement] createField resolved');
                 showAlert(isConnected ? 'Success' : 'Saved Locally',
                     isConnected ? 'Field created successfully' : 'Field added on this device. Changes will sync when you\'re back online.',
                     undefined, 'low');
@@ -150,11 +146,9 @@ export default function FieldManagementScreen() {
                     onPress: async () => {
                         try {
                             const { isConnected } = await checkNetworkConnection();
-                            console.log(`[FieldManagement] handleDelete → fieldId=${field.id} isConnected=${isConnected}`);
                             // Optimistically remove from UI right away
                             setFields(prev => prev.filter(f => f.id !== field.id));
                             await fieldService.deleteField(field.id, isConnected);
-                            console.log(`[FieldManagement] deleteField resolved for fieldId=${field.id}`);
                             showAlert(
                                 isConnected ? 'Success' : 'Deleted Locally',
                                 isConnected ? 'Field deleted successfully' : 'Field removed on this device. Changes will sync when you\'re back online.',

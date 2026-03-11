@@ -154,9 +154,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
 
       if (!isConnected) {
         // Skip duplicate ID check offline — Firebase queues the write
-        console.log(`[AddWorker] OFFLINE – calling createWorker for plantation=${userProfile.plantationId}`, JSON.stringify(workerData));
         await workerService.createWorker(userProfile.plantationId, workerData, false);
-        console.log('[AddWorker] createWorker resolved (offline)');
         showAlert('Saved Locally', 'Worker added on this device. Changes will sync automatically when you\'re back online.', [
           { text: 'OK', style: 'default', onPress: () => navigation.goBack() },
         ], 'low');
@@ -172,9 +170,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
           }));
           return;
         }
-        console.log(`[AddWorker] ONLINE – calling createWorker for plantation=${userProfile.plantationId}`, JSON.stringify(workerData));
         await workerService.createWorker(userProfile.plantationId, workerData, true);
-        console.log('[AddWorker] createWorker resolved (online)');
         showAlert('Success', 'Worker added successfully', [
           { text: 'OK', style: 'default', onPress: () => navigation.goBack() },
         ], 'low');
