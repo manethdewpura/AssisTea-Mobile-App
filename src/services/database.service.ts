@@ -38,6 +38,33 @@ class DatabaseService {
         try {
             console.log('📋 Creating tables...');
 
+            // Users table — cache for logged-in user and related profiles
+            await this.db.executeSql(`
+        CREATE TABLE IF NOT EXISTS users (
+          uid TEXT PRIMARY KEY,
+          email TEXT NOT NULL,
+          role TEXT NOT NULL,
+          name TEXT,
+          displayName TEXT,
+          plantationId TEXT,
+          plantationName TEXT,
+          createdAt TEXT NOT NULL,
+          lastLoginAt TEXT NOT NULL
+        );
+      `);
+
+            // Plantations table — cache for plantations related to the logged-in user
+            await this.db.executeSql(`
+        CREATE TABLE IF NOT EXISTS plantations (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          location TEXT NOT NULL,
+          area REAL NOT NULL,
+          description TEXT,
+          adminId TEXT NOT NULL
+        );
+      `);
+
             // Fields table
             await this.db.executeSql(`
         CREATE TABLE IF NOT EXISTS fields (
@@ -234,15 +261,22 @@ class DatabaseService {
             throw new Error('Database not initialized');
         }
 
-        try {
-            await this.db.transaction(async (tx) => {
-                for (const { query, params = [] } of queries) {
-                    await tx.executeSql(query, params);
-                }
+        // NOTE:
+        // Using a single explicit transaction with async/await and the
+        // promise-based API of react-native-sqlite-storage has proven
+        // unreliable (only the first statement was actually executed).
+        // For our use case (batches of a few hundred inserts max), it's
+        // safer and clearer to execute the statements sequentially using
+        // the existing executeSql wrapper, which already logs errors.
+        for (let i = 0; i < queries.length; i++) {
+            const { query, params = [] } = queries[i];
+            console.log('[DatabaseService] Executing batched query', {
+                index: i,
+                total: queries.length,
+                query,
+                params,
             });
-        } catch (error) {
-            console.error('❌ Transaction Error:', error);
-            throw error;
+            await this.executeSql(query, params);
         }
     }
 

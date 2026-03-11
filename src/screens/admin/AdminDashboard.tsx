@@ -15,6 +15,8 @@ import {
 import { useAppSelector } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import { teaPlantationService, userService } from '../../services';
+import { plantationSQLiteService } from '../../services/sqlite/plantationSQLite.service';
+import { userSQLiteService } from '../../services/sqlite/userSQLite.service';
 import type { UserRole } from '../../common/types';
 import { UserProfile } from '../../models';
 import type { TeaPlantation } from '../../common/interfaces';
@@ -27,9 +29,9 @@ import {
   validatePassword,
   validateRequired,
   validateNumeric,
-  ensureNetworkConnection,
   isNetworkError,
 } from '../../utils';
+import { checkNetworkConnection } from '../../utils/network.util';
 import CustomAlert, {
   type AlertButton,
 } from '../../components/molecule/CustomAlert';
@@ -94,35 +96,57 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
     area: '',
   });
 
+  const loadFromCache = useCallback(async () => {
+    if (!userProfile?.plantationId) {
+      setPlantations([]);
+      setUsers([]);
+      return;
+    }
+
+    const localPlantation = await plantationSQLiteService.getPlantation(
+      userProfile.plantationId,
+    );
+    setPlantations(localPlantation ? [localPlantation as any] : []);
+    const localManagers = await userSQLiteService.getManagersByPlantationId(
+      userProfile.plantationId,
+    );
+    setUsers(localManagers as any);
+  }, [userProfile?.plantationId]);
+
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      await ensureNetworkConnection();
-
       if (!userProfile?.uid) {
         throw new Error('User profile not found');
       }
 
-      const [plantationData, managersData] = await Promise.all([
-        teaPlantationService.getPlantationByAdminId(userProfile.uid),
-        userProfile.plantationId
-          ? userService.getManagersByPlantationId(userProfile.plantationId)
-          : Promise.resolve([]),
-      ]);
+      const { isConnected } = await checkNetworkConnection();
 
-      setPlantations(plantationData ? [plantationData] : []);
-      setUsers(managersData);
+      if (isConnected) {
+        const [plantationData, managersData] = await Promise.all([
+          teaPlantationService.getPlantationByAdminId(userProfile.uid),
+          userProfile.plantationId
+            ? userService.getManagersByPlantationId(userProfile.plantationId)
+            : Promise.resolve([]),
+        ]);
+
+        setPlantations(plantationData ? [plantationData] : []);
+        setUsers(managersData);
+        return;
+      }
+
+      // Offline: use cached data if available
+      await loadFromCache();
     } catch (error: any) {
       const appError = handleFirebaseError(error);
       logError(appError, 'AdminDashboard - LoadData');
 
       if (isNetworkError(error)) {
-        showCustomAlert('Network Error', appError.userMessage, {
-          severity: 'high',
-          buttons: [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Retry', onPress: () => loadData() },
-          ],
+        // For offline state, prefer cached data and a softer warning.
+        await loadFromCache();
+        showCustomAlert('Offline Mode', appError.userMessage, {
+          severity: 'medium',
+          buttons: [{ text: 'OK', style: 'default' }],
         });
       } else {
         showCustomAlert(
@@ -138,7 +162,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
     } finally {
       setLoading(false);
     }
-  }, [userProfile?.uid, userProfile?.plantationId]);
+  }, [userProfile?.uid, userProfile?.plantationId, loadFromCache]);
 
   useEffect(() => {
     loadData();

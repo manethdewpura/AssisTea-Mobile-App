@@ -5,6 +5,7 @@ import { useAppDispatch } from '../../hooks';
 import { setLoading, setUser, setUserProfile } from '../slices';
 import { handleFirebaseError, logError } from '../../utils';
 import { errorLogger } from '../../utils/errorLogger.util';
+import { offlineBootstrapService } from '../../services/offlineBootstrap.service';
 
 const AuthListener: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -64,6 +65,14 @@ const AuthListener: React.FC<{ children: React.ReactNode }> = ({
                 };
 
                 dispatch(setUserProfile(userProfile));
+
+                // Kick off offline bootstrap in the background:
+                // cache user, plantation, workers, fields, schedules, and daily data into SQLite.
+                offlineBootstrapService
+                  .syncAllForUser(userProfile as any)
+                  .catch(err =>
+                    console.warn('⚠️ Failed to bootstrap offline data:', err),
+                  );
                 errorLogger.setUserContext(
                   firebaseUser.uid,
                   profileData?.role || 'admin',

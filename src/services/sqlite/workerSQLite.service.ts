@@ -82,11 +82,65 @@ class WorkerSQLiteService {
     }
 
     /**
+     * Look up a worker by their custom workerId field (employee number, not Firebase doc ID).
+     * Used for offline CSV import where we cannot query Firestore.
+     */
+    async getWorkerByCustomId(workerId: string, plantationId: string): Promise<Worker | null> {
+        const result = await databaseService.executeSql(
+            'SELECT * FROM workers WHERE workerId = ? AND plantationId = ? LIMIT 1',
+            [workerId, plantationId],
+        );
+        if (result.rows.length === 0) {
+            return null;
+        }
+        const worker = this.mapRowToWorker(result.rows.item(0));
+        return worker;
+    }
+
+    /**
      * Clear all workers (for re-sync)
      */
     async clearWorkers(plantationId: string): Promise<void> {
         const query = 'DELETE FROM workers WHERE plantationId = ?';
         await databaseService.executeSql(query, [plantationId]);
+    }
+
+    /**
+     * Update specific fields of an existing worker record in SQLite.
+     * Called after every Firestore update so the local cache stays in sync.
+     */
+    async updateRecord(
+        workerId: string,
+        updates: Partial<Pick<Worker, 'name' | 'birthDate' | 'age' | 'experience' | 'gender' | 'updatedAt'>>,
+    ): Promise<void> {
+        const sets: string[] = [];
+        const params: any[] = [];
+
+        if (updates.name !== undefined) { sets.push('name = ?'); params.push(updates.name); }
+        if (updates.birthDate !== undefined) { sets.push('birthDate = ?'); params.push(updates.birthDate); }
+        if (updates.age !== undefined) { sets.push('age = ?'); params.push(updates.age); }
+        if (updates.experience !== undefined) { sets.push('experience = ?'); params.push(updates.experience); }
+        if (updates.gender !== undefined) { sets.push('gender = ?'); params.push(updates.gender); }
+        if (updates.updatedAt !== undefined) { sets.push('updatedAt = ?'); params.push(updates.updatedAt); }
+
+        if (sets.length === 0) {
+            console.warn('[WorkerSQLite] updateRecord called with no fields, skipping.');
+            return;
+        }
+
+        params.push(workerId);
+        const sql = `UPDATE workers SET ${sets.join(', ')} WHERE id = ?`;
+        const result = await databaseService.executeSql(sql, params);
+    }
+
+    /**
+     * Delete a worker record from SQLite.
+     */
+    async deleteRecord(workerId: string): Promise<void> {
+        const result = await databaseService.executeSql(
+            'DELETE FROM workers WHERE id = ?',
+            [workerId],
+        );
     }
 
     /**

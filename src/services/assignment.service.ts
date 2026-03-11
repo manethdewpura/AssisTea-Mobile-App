@@ -5,6 +5,7 @@ import { dailyDataService } from './dailyData.service';
 import { dailyDataSQLiteService } from './sqlite/dailyDataSQLite.service';
 import { MLInput, WorkerAssignment, AssignmentSchedule, WorkerHistoricalStats } from '../models/MLPrediction';
 import { Worker } from '../models/Worker';
+import { checkNetworkConnection } from '../utils/network.util';
 
 const SLOPE_WINDOW = 5.0; // ±degrees around target slope for slope-specific efficiency lookup
 const RECENT_N = 5;       // number of most recent work sessions for calculating recent efficiency trends
@@ -87,30 +88,57 @@ class AssignmentService {
         let workers: Worker[] = [];
         let dailyRecords: DailyRecord[] = [];
         let fetchedOnline = false;
+        let usedSQLiteCache = false;
 
-        // ── Try online (Firebase) ─────────────────────────────
+        // Detect network status explicitly instead of relying on Firebase
+        // to throw when offline. Firestore often serves from its own cache
+        // without errors, which would skip our SQLite fallback.
+        let isConnected = true;
         try {
-            const [firebaseWorkers, firebaseDailyData] = await Promise.all([
-                workerService.getWorkersByPlantation(plantationId),
-                dailyDataService.getDailyDataByPlantation(plantationId),
-            ]);
+            const result = await checkNetworkConnection();
+            isConnected = !!result?.isConnected;
+        } catch (netErr) {
+            console.warn('⚠️ Could not determine network status, assuming online:', netErr);
+        }
 
-            workers = firebaseWorkers;
-            dailyRecords = firebaseDailyData as DailyRecord[];
-            fetchedOnline = true;
+        if (isConnected) {
+            // ── Online (or unknown) path — try Firebase first ────────────────
+            try {
+                const [firebaseWorkers, firebaseDailyData] = await Promise.all([
+                    workerService.getWorkersByPlantation(plantationId),
+                    dailyDataService.getDailyDataByPlantation(plantationId),
+                ]);
 
-            // Cache to SQLite in background so next offline attempt works
-            Promise.all([
-                dailyDataSQLiteService.insertOrReplaceBatch(dailyRecords as any),
-                workerSQLiteService.insertOrReplaceBatch(firebaseWorkers),
-            ]).catch(err => console.warn('⚠️ Background SQLite cache failed:', err));
+                workers = firebaseWorkers;
+                dailyRecords = firebaseDailyData as DailyRecord[];
+                fetchedOnline = true;
 
-            console.log(`🌐 Online: ${workers.length} workers, ${dailyRecords.length} daily records`);
-        } catch (error) {
-            // ── Fall back to SQLite (offline) ─────────────────
-            console.warn('Failed to fetch from Firebase, falling back to SQLite:', error);
-            console.log('📴 Offline mode — reading from SQLite cache...');
+                // Cache to SQLite in background so next offline attempt works
+                Promise.all([
+                    dailyDataSQLiteService.insertOrReplaceBatch(dailyRecords as any),
+                    workerSQLiteService.insertOrReplaceBatch(firebaseWorkers),
+                ]).catch(err => console.warn('⚠️ Background SQLite cache failed:', err));
 
+                console.log(`🌐 Online: ${workers.length} workers, ${dailyRecords.length} daily records`);
+            } catch (error) {
+                // API failed even though we think we're online — fall back to SQLite cache.
+                console.warn('Failed to fetch from Firebase, falling back to SQLite:', error);
+                console.log('📴 Using SQLite cache due to Firebase error...');
+
+                const [sqliteWorkers, sqliteDailyData] = await Promise.all([
+                    workerSQLiteService.getAllWorkers(plantationId),
+                    dailyDataSQLiteService.getByPlantation(plantationId),
+                ]);
+
+                workers = sqliteWorkers;
+                dailyRecords = sqliteDailyData;
+                usedSQLiteCache = true;
+
+                console.log(`📦 SQLite (fallback): ${workers.length} workers, ${dailyRecords.length} daily records`);
+            }
+        } else {
+            // ── Explicit offline path — go straight to SQLite ────────────────
+            console.log('📴 Device offline — reading from SQLite cache...');
             const [sqliteWorkers, sqliteDailyData] = await Promise.all([
                 workerSQLiteService.getAllWorkers(plantationId),
                 dailyDataSQLiteService.getByPlantation(plantationId),
@@ -118,16 +146,21 @@ class AssignmentService {
 
             workers = sqliteWorkers;
             dailyRecords = sqliteDailyData;
+            usedSQLiteCache = true;
 
-            console.log(`📦 SQLite: ${workers.length} workers, ${dailyRecords.length} daily records`);
+            console.log(`📦 SQLite (offline): ${workers.length} workers, ${dailyRecords.length} daily records`);
         }
 
         if (workers.length === 0) {
-            throw new Error(
-                fetchedOnline
-                    ? 'No workers found for this plantation'
-                    : 'No workers found — please connect to the internet at least once to cache data'
-            );
+            if (!fetchedOnline && usedSQLiteCache) {
+                // We are offline or using cache, but have no local data.
+                throw new Error(
+                    'No workers found — please connect to the internet at least once so data can be cached for offline use',
+                );
+            }
+
+            // Online but plantation truly has no workers.
+            throw new Error('No workers found for this plantation');
         }
 
         return { workers, dailyRecords };

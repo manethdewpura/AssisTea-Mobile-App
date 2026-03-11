@@ -60,7 +60,6 @@ class ScheduleSQLiteService {
         }
 
         await databaseService.executeTransaction(queries);
-        console.log(`✅ Schedule saved to SQLite: ${schedule.date}`);
     }
 
     /**
@@ -164,7 +163,6 @@ class ScheduleSQLiteService {
             { query: 'DELETE FROM schedule_assignments WHERE scheduleId = ?', params: [id] },
             { query: 'DELETE FROM saved_schedules WHERE id = ?', params: [id] },
         ]);
-        console.log(`✅ Schedule deleted from SQLite: ${id}`);
     }
 
     /**
@@ -173,7 +171,6 @@ class ScheduleSQLiteService {
     async archiveSchedule(id: string): Promise<void> {
         const query = 'UPDATE saved_schedules SET status = ?, syncStatus = ? WHERE id = ?';
         await databaseService.executeSql(query, ['archived', 'pending', id]);
-        console.log(`📦 Schedule archived in SQLite: ${id}`);
     }
 
     /**
@@ -203,7 +200,6 @@ class ScheduleSQLiteService {
     async markAsSynced(id: string): Promise<void> {
         const query = 'UPDATE saved_schedules SET syncStatus = ? WHERE id = ?';
         await databaseService.executeSql(query, ['synced', id]);
-        console.log(`✅ Schedule marked as synced: ${id}`);
     }
 
     /**

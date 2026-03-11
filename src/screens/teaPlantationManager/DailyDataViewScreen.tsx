@@ -21,6 +21,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { dailyDataService, workerService, fieldService } from '../../services';
 import { handleFirebaseError, logError } from '../../utils';
+import { checkNetworkConnection } from '../../utils/network.util';
+import { dailyDataSQLiteService } from '../../services/sqlite/dailyDataSQLite.service';
 import type { DailyData } from '../../models/DailyData';
 import type { Worker } from '../../models/Worker';
 import type { Field } from '../../models/Field';
@@ -54,6 +56,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
   const [startDateFilter, setStartDateFilter] = useState<string>('');
   const [endDateFilter, setEndDateFilter] = useState<string>('');
   const { showAlert, hideAlert, alertState } = useThemedAlert();
+  const [syncing, setSyncing] = useState(false);
 
   const fieldNameMap = useMemo(
     () => Object.fromEntries(fields.map(f => [f.id, f.name])),
@@ -131,69 +134,69 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
     try {
       setLoading(true);
 
-      // Always fetch all data first for filtering
-      const allData = await dailyDataService.getDailyDataByPlantation(
+      // Always read from SQLite so UI reflects true offline data.
+      const allData = await dailyDataSQLiteService.getByPlantation(
         userProfile.plantationId,
       );
 
-      // Now apply filtering based on filterType
-      let data: DailyData[] = [];
+      // Now apply filtering based on filterType (all in-memory)
+      let data: DailyData[] = allData;
 
       if (filterType === 'date' && dateFilter) {
-        data = await dailyDataService.getDailyDataByPlantation(
-          userProfile.plantationId,
-          dateFilter,
-          dateFilter,
-        );
+        data = allData.filter(d => d.date === dateFilter);
       } else if (filterType === 'dateRange' && startDateFilter && endDateFilter) {
-        data = await dailyDataService.getDailyDataByPlantation(
-          userProfile.plantationId,
-          startDateFilter,
-          endDateFilter,
-        );
+        data = allData.filter(d => d.date >= startDateFilter && d.date <= endDateFilter);
       } else if (filterType === 'worker' && selectedWorkerId) {
-        data = await dailyDataService.getDailyDataByWorker(
-          selectedWorkerId,
-          startDateFilter || undefined,
-          endDateFilter || undefined,
-        );
+        data = allData.filter(d => {
+          if (d.workerId !== selectedWorkerId) return false;
+          if (startDateFilter && d.date < startDateFilter) return false;
+          if (endDateFilter && d.date > endDateFilter) return false;
+          return true;
+        });
       } else if (filterType === 'field' && selectedField) {
         data = allData.filter(d => d.fieldArea === selectedField);
-      } else {
-        // Show all data
-        data = allData;
       }
 
       setDailyData(data);
     } catch (error: any) {
-      // Log the actual error for debugging
-      console.error('DailyDataViewScreen - LoadDailyData Error:', {
-        code: error.code,
-        message: error.message,
-        error: error,
-      });
+      console.error('DailyDataViewScreen - LoadDailyData Error (SQLite):', error);
 
       const appError = handleFirebaseError(error);
-      logError(appError, 'DailyDataViewScreen - LoadDailyData');
-
-      // Show more specific error message
-      let errorMessage = appError.userMessage;
-      const errorCode = error.code || '';
-      const errorMsg = error.message || '';
-
-      if (errorCode === 'failed-precondition' || errorMsg.includes('index') || errorMsg.includes('Index')) {
-        errorMessage = 'Database index required. The query has been optimized to work without indexes. Please try again.';
-      } else if (errorCode === 'permission-denied' || errorCode === 'firestore/permission-denied') {
-        errorMessage = 'You do not have permission to view this data.';
-      } else if (errorCode === 'unavailable' || errorCode === 'firestore/unavailable') {
-        errorMessage = 'Service temporarily unavailable. Please check your connection and try again.';
-      } else if (errorCode === 'deadline-exceeded' || errorCode === 'firestore/deadline-exceeded') {
-        errorMessage = 'Request timed out. Please try again.';
-      }
-
-      showAlert('Error', errorMessage, undefined, 'high');
+      logError(appError, 'DailyDataViewScreen - LoadDailyData (SQLite)');
+      showAlert('Error', appError.userMessage, undefined, 'high');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSyncNow = async () => {
+    if (!userProfile?.plantationId || syncing) return;
+
+    try {
+      setSyncing(true);
+
+      const { isConnected } = await checkNetworkConnection();
+      if (!isConnected) {
+
+        showAlert('Offline', 'Connect to the internet to sync daily data.', undefined, 'medium');
+        return;
+      }
+
+      await dailyDataService.syncToSQLite(userProfile.plantationId);
+      await loadDailyData();
+      showAlert('Synced', 'Daily data has been synced from the server.', undefined, 'low');
+    } catch (error: any) {
+      console.error(
+        '[DailyDataViewScreen] Manual sync failed:',
+        error?.code,
+        error?.message,
+        error,
+      );
+      const appError = handleFirebaseError(error);
+      logError(appError, 'DailyDataViewScreen - ManualSync');
+      showAlert('Sync Failed', appError.userMessage, undefined, 'high');
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -429,6 +432,28 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
             >
               {selectedField || 'Field'}
             </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.filterButton,
+              { borderColor: colors.border, backgroundColor: colors.cardBackground },
+            ]}
+            onPress={handleSyncNow}
+            disabled={syncing}
+          >
+            {syncing ? (
+              <ActivityIndicator size="small" color={colors.text} />
+            ) : (
+              <Text
+                style={[
+                  styles.filterButtonText,
+                  { color: colors.text },
+                ]}
+              >
+                Sync
+              </Text>
+            )}
           </TouchableOpacity>
 
         </ScrollView>
