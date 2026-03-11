@@ -82,6 +82,25 @@ class WorkerSQLiteService {
     }
 
     /**
+     * Look up a worker by their custom workerId field (employee number, not Firebase doc ID).
+     * Used for offline CSV import where we cannot query Firestore.
+     */
+    async getWorkerByCustomId(workerId: string, plantationId: string): Promise<Worker | null> {
+        console.log(`[WorkerSQLite] getWorkerByCustomId → workerId="${workerId}", plantationId=${plantationId}`);
+        const result = await databaseService.executeSql(
+            'SELECT * FROM workers WHERE workerId = ? AND plantationId = ? LIMIT 1',
+            [workerId, plantationId],
+        );
+        if (result.rows.length === 0) {
+            console.log(`[WorkerSQLite] getWorkerByCustomId → NOT FOUND for workerId="${workerId}"`);
+            return null;
+        }
+        const worker = this.mapRowToWorker(result.rows.item(0));
+        console.log(`[WorkerSQLite] getWorkerByCustomId → found id=${worker.id} for workerId="${workerId}"`);
+        return worker;
+    }
+
+    /**
      * Clear all workers (for re-sync)
      */
     async clearWorkers(plantationId: string): Promise<void> {

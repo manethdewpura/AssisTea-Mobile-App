@@ -20,6 +20,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { workerService, dailyDataService, fieldService } from '../../services';
+import { workerSQLiteService } from '../../services/sqlite/workerSQLite.service';
 import { handleFirebaseError, logError, parseCSVFile, formatValidationErrors } from '../../utils';
 import { checkNetworkConnection } from '../../utils/network.util';
 import type { Worker } from '../../models/Worker';
@@ -122,27 +123,30 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
     }
 
     try {
-      // Pick CSV file
+      console.log('[CSVUpload] Opening file picker...');
       const result = await pick({
         type: [types.csv, types.plainText],
         copyTo: 'cachesDirectory',
       });
 
       if (!result || result.length === 0) {
+        console.log('[CSVUpload] No file selected.');
         return;
       }
 
       const file = result[0];
+      console.log(`[CSVUpload] File selected: name=${file.name}, uri=${file.uri}`);
 
-      // Read file content
       setUploadingCSV(true);
 
-      // Read the file using fetch - the uri property contains the file path
+      console.log('[CSVUpload] Reading file content via fetch...');
       const response = await fetch(file.uri);
       const fileContent = await response.text();
+      console.log(`[CSVUpload] File read: ${fileContent.length} chars. First 300: ${fileContent.slice(0, 300)}`);
 
-      // Parse and validate CSV (using date from UI date picker)
+      console.log(`[CSVUpload] Parsing CSV with fallbackDate=${formData.date}...`);
       const parseResult = await parseCSVFile(fileContent, formData.date);
+      console.log(`[CSVUpload] Parse result: success=${parseResult.success}, records=${parseResult.data?.length ?? 0}, errors=${parseResult.errors?.length ?? 0}${parseResult.message ? `, message=${parseResult.message}` : ''}`);
 
       if (!parseResult.success) {
         if (parseResult.errors && parseResult.errors.length > 0) {
@@ -159,7 +163,11 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
         return;
       }
 
-      // Confirm upload
+      // Check connectivity once — used for both worker lookup and bulk create
+      const networkResult = await checkNetworkConnection();
+      const isConnected = !!networkResult?.isConnected;
+      console.log(`[CSVUpload] Connectivity check: isConnected=${isConnected}`);
+
       showAlert(
         'Confirm Upload',
         `Found ${parseResult.data.length} valid record(s). Do you want to upload them?`,
@@ -171,36 +179,50 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
           {
             text: 'Upload',
             onPress: async () => {
+              setUploadingCSV(true);
               try {
-                // Upload to Firebase
                 if (!userProfile?.plantationId) {
                   showAlert('Error', 'Plantation ID not found', undefined, 'high');
                   return;
                 }
 
-                // Convert custom worker IDs to Firebase document IDs
-                const dataWithFirebaseIds = [];
-                const missingWorkers = [];
+                console.log(`[CSVUpload] Resolving worker IDs for ${parseResult.data!.length} records (isConnected=${isConnected})...`);
+
+                const dataWithFirebaseIds: typeof parseResult.data = [];
+                const missingWorkers: string[] = [];
 
                 for (const record of parseResult.data!) {
-                  // Look up worker by custom workerId field
-                  const worker = await workerService.getWorkerByWorkerId(
-                    record.workerId,
-                    userProfile.plantationId,
-                  );
+                  console.log(`[CSVUpload] Looking up worker customId="${record.workerId}"...`);
+                  let worker = null;
+
+                  if (isConnected) {
+                    // Online: query Firestore by custom workerId field
+                    worker = await workerService.getWorkerByWorkerId(
+                      record.workerId,
+                      userProfile.plantationId,
+                    );
+                    console.log(`[CSVUpload] Firestore lookup "${record.workerId}": ${worker ? `found → docId=${worker.id}` : 'NOT FOUND'}`);
+                  } else {
+                    // Offline: fall back to SQLite cache
+                    worker = await workerSQLiteService.getWorkerByCustomId(
+                      record.workerId,
+                      userProfile.plantationId,
+                    );
+                    console.log(`[CSVUpload] SQLite lookup "${record.workerId}": ${worker ? `found → docId=${worker.id}` : 'NOT FOUND'}`);
+                  }
 
                   if (!worker) {
                     missingWorkers.push(record.workerId);
                   } else {
-                    // Replace custom workerId with Firebase document ID
-                    dataWithFirebaseIds.push({
+                    dataWithFirebaseIds!.push({
                       ...record,
-                      workerId: worker.id, // Use Firebase document ID
+                      workerId: worker.id, // swap custom ID → Firebase doc ID
                     });
                   }
                 }
 
-                // Check if any workers were not found
+                console.log(`[CSVUpload] Worker resolution done: matched=${dataWithFirebaseIds!.length}, missing=${missingWorkers.length}${missingWorkers.length > 0 ? ` [${missingWorkers.join(', ')}]` : ''}`);
+
                 if (missingWorkers.length > 0) {
                   showAlert(
                     'Workers Not Found',
@@ -211,15 +233,21 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
                   return;
                 }
 
-                // Upload with Firebase IDs
+                console.log(`[CSVUpload] Calling createBulkDailyData: ${dataWithFirebaseIds!.length} records, isConnected=${isConnected}...`);
                 await dailyDataService.createBulkDailyData(
                   userProfile.plantationId,
-                  dataWithFirebaseIds,
+                  dataWithFirebaseIds!,
+                  isConnected,
                 );
+                console.log(`[CSVUpload] createBulkDailyData completed successfully`);
+
+                const successMsg = isConnected
+                  ? `Successfully uploaded ${dataWithFirebaseIds!.length} record(s)`
+                  : `Saved ${dataWithFirebaseIds!.length} record(s) locally. They will sync when online.`;
 
                 showAlert(
-                  'Success',
-                  `Successfully uploaded ${dataWithFirebaseIds.length} record(s)`,
+                  isConnected ? 'Success' : 'Saved Locally',
+                  successMsg,
                   [
                     {
                       text: 'View Data',
@@ -230,9 +258,12 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
                   'low',
                 );
               } catch (error: any) {
+                console.error('[CSVUpload] Upload failed:', error?.code, error?.message, error);
                 const appError = handleFirebaseError(error);
                 logError(appError, 'DailyDataEntryScreen - CSV Upload');
                 showAlert('Upload Error', appError.userMessage, undefined, 'high');
+              } finally {
+                setUploadingCSV(false);
               }
             },
           },
@@ -240,12 +271,11 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
         'medium',
       );
     } catch (error: any) {
-      // Check if user cancelled - the new package throws a specific error
       if (error?.message === 'User canceled document picker') {
-        // User cancelled the picker
+        console.log('[CSVUpload] User cancelled file picker.');
         return;
       }
-
+      console.error('[CSVUpload] File pick/read error:', error?.message, error);
       const appError = handleFirebaseError(error);
       logError(appError, 'DailyDataEntryScreen - CSV Upload');
       showAlert('Error', 'Failed to read CSV file. Please try again.', undefined, 'high');

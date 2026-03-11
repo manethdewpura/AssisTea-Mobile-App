@@ -92,44 +92,88 @@ class DailyDataService {
   }
 
   /**
-   * Create multiple daily data entries (for bulk upload)
+   * Create multiple daily data entries (for bulk upload).
+   *
+   * @param isConnected - Network state. Same online/offline split as createDailyData:
+   *   - Online  : Firestore batch first (awaited), then SQLite mirror.
+   *   - Offline : SQLite first (awaited), then batch fire-and-forget (SDK queues).
    */
   async createBulkDailyData(
     plantationId: string,
     dataArray: CreateDailyDataInput[],
+    isConnected: boolean = true,
   ): Promise<DailyData[]> {
-    try {
-      const batch = writeBatch(this.db);
-      const now = Date.now();
-      const createdData: DailyData[] = [];
-      const dailyDataCollection = collection(this.db, this.collectionName);
+    console.log(`[DailyDataService] createBulkDailyData → count=${dataArray.length}, isConnected=${isConnected}, plantationId=${plantationId}`);
 
-      dataArray.forEach(data => {
-        const newDocRef = doc(dailyDataCollection);
-        const dataId = newDocRef.id;
-        const dailyData: DailyData = {
-          id: dataId,
-          ...data,
-          plantationId,
-          teaPluckedKg: typeof data.teaPluckedKg === 'string'
-            ? parseFloat(data.teaPluckedKg)
-            : data.teaPluckedKg,
-          timeSpentHours: typeof data.timeSpentHours === 'string'
-            ? parseFloat(data.timeSpentHours)
-            : data.timeSpentHours,
-          createdAt: now,
-          updatedAt: now,
-        };
+    const batch = writeBatch(this.db);
+    const now = Date.now();
+    const createdData: DailyData[] = [];
+    const dailyDataCollection = collection(this.db, this.collectionName);
 
-        batch.set(newDocRef, dailyData);
-        createdData.push(dailyData);
+    dataArray.forEach(data => {
+      const newDocRef = doc(dailyDataCollection);
+      const dataId = newDocRef.id;
+      const dailyData: DailyData = {
+        id: dataId,
+        ...data,
+        plantationId,
+        teaPluckedKg: typeof data.teaPluckedKg === 'string'
+          ? parseFloat(data.teaPluckedKg)
+          : data.teaPluckedKg,
+        timeSpentHours: typeof data.timeSpentHours === 'string'
+          ? parseFloat(data.timeSpentHours)
+          : data.timeSpentHours,
+        createdAt: now,
+        updatedAt: now,
+      };
+      batch.set(newDocRef, dailyData);
+      createdData.push(dailyData);
+    });
+
+    console.log(`[DailyDataService] createBulkDailyData → prepared ${createdData.length} DailyData objects`);
+
+    if (!isConnected) {
+      // ── OFFLINE PATH ───────────────────────────────────────────────────────
+      // 1. Insert into SQLite immediately so UI reflects the new records.
+      console.log(`[DailyDataService] OFFLINE – inserting ${createdData.length} records into SQLite...`);
+      try {
+        await dailyDataSQLiteService.insertOrReplaceBatch(createdData);
+        console.log(`[DailyDataService] SQLite bulk insert succeeded for ${createdData.length} records`);
+      } catch (sqliteError) {
+        console.warn(`[DailyDataService] SQLite bulk insert FAILED:`, sqliteError);
+        throw sqliteError;
+      }
+
+      // 2. Queue the batch – SDK auto-syncs when back online.
+      console.log(`[DailyDataService] OFFLINE – queuing Firebase batch.commit for ${createdData.length} records`);
+      batch.commit().then(() => {
+        console.log(`[DailyDataService] Queued Firebase batch.commit flushed for ${createdData.length} records`);
+      }).catch((err: unknown) => {
+        console.warn(`[DailyDataService] Queued Firebase batch.commit error:`, err);
       });
+    } else {
+      // ── ONLINE PATH ────────────────────────────────────────────────────────
+      // 1. Await Firestore batch so real server errors surface to the caller.
+      console.log(`[DailyDataService] ONLINE – calling Firebase batch.commit for ${createdData.length} records...`);
+      try {
+        await batch.commit();
+        console.log(`[DailyDataService] Firebase batch.commit succeeded for ${createdData.length} records`);
+      } catch (firestoreError) {
+        console.warn(`[DailyDataService] Firebase batch.commit FAILED:`, firestoreError);
+        throw firestoreError;
+      }
 
-      await batch.commit();
-      return createdData;
-    } catch (error) {
-      throw error;
+      // 2. Mirror to SQLite so the local cache is up-to-date.
+      console.log(`[DailyDataService] ONLINE – inserting ${createdData.length} records into SQLite...`);
+      try {
+        await dailyDataSQLiteService.insertOrReplaceBatch(createdData);
+        console.log(`[DailyDataService] SQLite bulk insert succeeded for ${createdData.length} records`);
+      } catch (sqliteError) {
+        console.warn(`[DailyDataService] SQLite bulk insert FAILED (Firebase succeeded):`, sqliteError);
+      }
     }
+
+    return createdData;
   }
 
   /**
