@@ -1050,8 +1050,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
             <ScrollView style={styles.modalBody}>
               {/* Day of Week Selection */}
               <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.text }]}>{t('setup.day_of_week')}
-                </Text>
+                <Text style={[styles.label, { color: colors.text }]}>{t('setup.day_of_week')}</Text>
                 <TouchableOpacity
                   onPress={() => setShowDayPicker(true)}
                   style={[styles.pickerButton, { backgroundColor: colors.background, borderColor: colors.border }]}

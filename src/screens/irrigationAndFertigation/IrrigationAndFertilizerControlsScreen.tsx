@@ -41,7 +41,7 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
         [{ text: t('general.ok') }]
       );
     }
-  }, [backendUrl]);
+  }, [backendUrl, t]);
 
   const loadStatus = useCallback(async () => {
     if (!backendUrl) return;

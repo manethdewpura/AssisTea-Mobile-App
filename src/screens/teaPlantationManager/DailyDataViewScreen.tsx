@@ -265,7 +265,12 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           onPress: async () => {
             try {
               await dailyDataService.deleteDailyData(data.id);
-              showAlert(t('general.success'), t('daily_data.entry_deleted_success'));
+              showAlert(
+                t('general.success'),
+                t('daily_data.entry_deleted_success'),
+                undefined,
+                'low'
+              );
               loadDailyData();
             } catch (error: any) {
               const appError = handleFirebaseError(error);

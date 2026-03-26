@@ -544,7 +544,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
               ) : (
                 <>
                   <Text style={styles.saveIcon}>✓</Text>
-                  <Text style={styles.saveButtonText}>{t('general.save Entry')}</Text>
+                  <Text style={styles.saveButtonText}>{t('general.save')}</Text>
                 </>
               )}
             </TouchableOpacity>
