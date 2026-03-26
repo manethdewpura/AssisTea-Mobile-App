@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   Platform,
   KeyboardAvoidingView,
@@ -14,31 +13,23 @@ import {
 } from 'react-native';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppSelector } from '../../hooks';
+import { useAppSelector, useThemedAlert } from '../../hooks';
+import CustomAlert from '../../components/molecule/CustomAlert';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
-import { workerService, dailyDataService } from '../../services';
+import { workerService, dailyDataService, fieldService } from '../../services';
 import { handleFirebaseError, logError } from '../../utils';
+import { checkNetworkConnection } from '../../utils/network.util';
 import { useTranslation } from 'react-i18next';
 import type { Worker } from '../../models/Worker';
+import type { Field } from '../../models/Field';
 
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
   'EditDailyData'
 >;
-
-interface FieldArea {
-  id: string;
-  name: string;
-}
-
-const MOCK_FIELD_AREAS: FieldArea[] = [
-  { id: '1', name: 'Field A' },
-  { id: '2', name: 'Field B' },
-  { id: '3', name: 'Field C' },
-];
 
 const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
   const { colors } = useAppSelector(selectTheme);
@@ -48,8 +39,10 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [workers, setWorkers] = useState<Worker[]>([]);
+  const [fields, setFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { showAlert, hideAlert, alertState } = useThemedAlert();
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -64,6 +57,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
 
   useEffect(() => {
     loadWorkers();
+    loadFields();
     loadDailyData();
   }, [dataId]);
 
@@ -83,14 +77,26 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
+  const loadFields = async () => {
+    if (!userProfile?.plantationId) return;
+    try {
+      const fetchedFields = await fieldService.getFieldsByPlantation(
+        userProfile.plantationId,
+      );
+      setFields(fetchedFields);
+    } catch (error: any) {
+      const appError = handleFirebaseError(error);
+      logError(appError, 'EditDailyDataScreen - LoadFields');
+    }
+  };
+
   const loadDailyData = async () => {
     try {
       setLoading(true);
       const data = await dailyDataService.getDailyDataById(dataId);
 
       if (!data) {
-        Alert.alert('Error', 'Daily data not found');
-        navigation.goBack();
+        showAlert('Error', 'Daily data not found', [{ text: 'OK', style: 'default', onPress: () => navigation.goBack() }], 'high');
         return;
       }
 
@@ -113,8 +119,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
     } catch (error: any) {
       const appError = handleFirebaseError(error);
       logError(appError, 'EditDailyDataScreen - LoadDailyData');
-      Alert.alert('Error', appError.userMessage);
-      navigation.goBack();
+      showAlert('Error', appError.userMessage, [{ text: 'OK', style: 'default', onPress: () => navigation.goBack() }], 'high');
     } finally {
       setLoading(false);
     }
@@ -138,8 +143,8 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const getFieldName = (fieldId: string) => {
-    const field = MOCK_FIELD_AREAS.find(f => f.id === fieldId);
-    return field ? field.name : t('daily_data.select_field_placeholder');
+    const field = fields.find(f => f.id === fieldId);
+    return field ? field.name : (fieldId || t('daily_data.select_field_placeholder'));
   };
 
   const handleSaveData = async () => {
@@ -149,32 +154,38 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
       !formData.timeSpentHours ||
       !formData.fieldArea
     ) {
-      Alert.alert('Validation', 'Please fill in all fields');
+      showAlert('Validation', 'Please fill in all fields', undefined, 'low');
       return;
     }
 
     try {
       setSaving(true);
-      await dailyDataService.updateDailyData(dataId, {
+      const { isConnected } = await checkNetworkConnection();
+
+      const updates = {
         workerId: formData.workerId,
         date: formData.date,
         teaPluckedKg: parseFloat(formData.teaPluckedKg),
         timeSpentHours: parseFloat(formData.timeSpentHours),
         fieldArea: formData.fieldArea,
-      });
+      };
 
-      Alert.alert(t('general.success'), t('daily_data.update_success'), [
-        {
-          text: t('general.ok'),
-          onPress: () => {
-            navigation.goBack();
-          },
-        },
-      ]);
+      await dailyDataService.updateDailyData(dataId, updates, isConnected);
+
+      if (!isConnected) {
+        showAlert('Saved Locally', 'Data updated on this device. Changes will sync automatically when you\'re back online.', [
+          { text: 'OK', style: 'default', onPress: () => navigation.goBack() },
+        ], 'low');
+      } else {
+        showAlert(t('general.success'), t('daily_data.update_success'), [
+          { text: t('general.ok'), style: 'default', onPress: () => navigation.goBack() },
+        ], 'low');
+      }
     } catch (error: any) {
+      console.error('[EditDailyData] handleSaveData threw an error:', error?.code, error?.message, error);
       const appError = handleFirebaseError(error);
       logError(appError, 'EditDailyDataScreen - SaveData');
-      Alert.alert('Error', appError.userMessage);
+      showAlert('Error', appError.userMessage, undefined, 'high');
     } finally {
       setSaving(false);
     }
@@ -212,11 +223,11 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
           <View
             style={[
               styles.formCard,
-              { backgroundColor: colors.cardBackground || '#fff' },
+              { backgroundColor: colors.cardBackground || '#fff', borderColor: colors.border },
             ]}
           >
             {/* Date Section */}
-            <View style={styles.dateSection}>
+            <View style={[styles.dateSection, { borderBottomColor: colors.border }]}>
               <Text style={[styles.dateLabel, { color: colors.text }]}>
                 {t('daily_data.date_label')} {formData.date}
               </Text>
@@ -224,7 +235,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
                 style={styles.calendarButton}
                 onPress={() => setShowDatePicker(true)}
               >
-                <Lucide name="calendar" size={24} color="#7cb342" />
+                <Lucide name="calendar" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
 
@@ -260,7 +271,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
               <TouchableOpacity
                 style={[
                   styles.dropdownBox,
-                  { backgroundColor: colors.background },
+                  { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
                 onPress={() => setShowWorkerDropdown(!showWorkerDropdown)}
               >
@@ -271,21 +282,23 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
               </TouchableOpacity>
 
               {showWorkerDropdown && (
-                <View style={styles.dropdownList}>
-                  {workers.map(worker => (
-                    <TouchableOpacity
-                      key={worker.id}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setFormData({ ...formData, workerId: worker.id });
-                        setShowWorkerDropdown(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>
-                        {worker.name} ({worker.workerId})
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                <View style={[styles.dropdownList, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+                  <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={false}>
+                    {workers.map(worker => (
+                      <TouchableOpacity
+                        key={worker.id}
+                        style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
+                        onPress={() => {
+                          setFormData({ ...formData, workerId: worker.id });
+                          setShowWorkerDropdown(false);
+                        }}
+                      >
+                        <Text style={[styles.dropdownItemText, { color: colors.text }]}>
+                          {worker.name} ({worker.workerId})
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
                 </View>
               )}
             </View>
@@ -298,7 +311,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
               <View
                 style={[
                   styles.inputBox,
-                  { backgroundColor: colors.background },
+                  { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
               >
                 <TextInput
@@ -322,7 +335,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
               <View
                 style={[
                   styles.inputBox,
-                  { backgroundColor: colors.background },
+                  { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
               >
                 <TextInput
@@ -346,7 +359,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
               <TouchableOpacity
                 style={[
                   styles.dropdownBox,
-                  { backgroundColor: colors.background },
+                  { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
                 onPress={() => setShowFieldDropdown(!showFieldDropdown)}
               >
@@ -357,19 +370,21 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
               </TouchableOpacity>
 
               {showFieldDropdown && (
-                <View style={styles.dropdownList}>
-                  {MOCK_FIELD_AREAS.map(field => (
-                    <TouchableOpacity
-                      key={field.id}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setFormData({ ...formData, fieldArea: field.id });
-                        setShowFieldDropdown(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>{field.name}</Text>
-                    </TouchableOpacity>
-                  ))}
+                <View style={[styles.dropdownList, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+                  <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={false}>
+                    {fields.map((field: Field) => (
+                      <TouchableOpacity
+                        key={field.id}
+                        style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
+                        onPress={() => {
+                          setFormData({ ...formData, fieldArea: field.id });
+                          setShowFieldDropdown(false);
+                        }}
+                      >
+                        <Text style={[styles.dropdownItemText, { color: colors.text }]}>{field.name}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
                 </View>
               )}
             </View>
@@ -382,7 +397,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
               disabled={saving}
             >
               {saving ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color="#F4B124" />
               ) : (
                 <>
                   <Text style={styles.saveIcon}>✓</Text>
@@ -393,6 +408,7 @@ const EditDailyDataScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
         </ScrollView>
       </SafeAreaView>
+      <CustomAlert visible={alertState.visible} title={alertState.title} message={alertState.message} buttons={alertState.buttons} onDismiss={hideAlert} severity={alertState.severity} />
     </KeyboardAvoidingView>
   );
 };
@@ -455,6 +471,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginTop: 0,
     marginBottom: 20,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -468,7 +485,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingBottom: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   dateLabel: {
     fontSize: 16,
@@ -483,6 +499,7 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     marginBottom: 16,
+    position: 'relative',
   },
   label: {
     fontSize: 14,
@@ -494,9 +511,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    height: 52,
+    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#e0e0e0',
   },
   textInput: {
     fontSize: 14,
@@ -506,9 +523,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    height: 52,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -522,18 +538,22 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   dropdownList: {
-    backgroundColor: '#fff',
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
-    marginTop: 4,
-    maxHeight: 150,
+    marginTop: 2,
+    maxHeight: 180,
+    zIndex: 1000,
+    elevation: 10,
+    overflow: 'hidden',
   },
   dropdownItem: {
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
   },
   dropdownItemText: {
     fontSize: 14,
@@ -558,29 +578,28 @@ const styles = StyleSheet.create({
     color: '#7cb342',
   },
   saveButton: {
-    backgroundColor: '#fbc02d',
-    borderRadius: 8,
-    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: '#F4B124',
+    backgroundColor: 'transparent',
+    borderRadius: 8,
+    paddingVertical: 9,
+    paddingHorizontal: 32,
     marginTop: 25,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    alignSelf: 'center',
   },
   saveIcon: {
-    fontSize: 18,
-    color: '#fff',
-    marginRight: 6,
-    fontWeight: 'bold',
+    fontSize: 15,
+    color: '#F4B124',
+    fontWeight: '700',
   },
   saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: '#F4B124',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
 

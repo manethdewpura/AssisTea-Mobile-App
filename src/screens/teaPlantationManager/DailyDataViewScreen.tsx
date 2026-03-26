@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   Platform,
   Modal,
@@ -13,7 +12,8 @@ import {
 } from 'react-native';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppSelector } from '../../hooks';
+import { useAppSelector, useThemedAlert } from '../../hooks';
+import CustomAlert from '../../components/molecule/CustomAlert';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import { useFocusEffect } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -21,6 +21,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { dailyDataService, workerService, fieldService } from '../../services';
 import { handleFirebaseError, logError } from '../../utils';
+import { checkNetworkConnection } from '../../utils/network.util';
+import { dailyDataSQLiteService } from '../../services/sqlite/dailyDataSQLite.service';
 import { useTranslation } from 'react-i18next';
 import type { DailyData } from '../../models/DailyData';
 import type { Worker } from '../../models/Worker';
@@ -55,6 +57,13 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
   const [dateFilter, setDateFilter] = useState<string>('');
   const [startDateFilter, setStartDateFilter] = useState<string>('');
   const [endDateFilter, setEndDateFilter] = useState<string>('');
+  const { showAlert, hideAlert, alertState } = useThemedAlert();
+  const [syncing, setSyncing] = useState(false);
+
+  const fieldNameMap = useMemo(
+    () => Object.fromEntries(fields.map(f => [f.id, f.name])),
+    [fields]
+  );
 
   // Check if workerId is passed from route params (from WorkerDetailsScreen)
   useEffect(() => {
@@ -127,69 +136,69 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
     try {
       setLoading(true);
 
-      // Always fetch all data first for filtering
-      const allData = await dailyDataService.getDailyDataByPlantation(
+      // Always read from SQLite so UI reflects true offline data.
+      const allData = await dailyDataSQLiteService.getByPlantation(
         userProfile.plantationId,
       );
 
-      // Now apply filtering based on filterType
-      let data: DailyData[] = [];
+      // Now apply filtering based on filterType (all in-memory)
+      let data: DailyData[] = allData;
 
       if (filterType === 'date' && dateFilter) {
-        data = await dailyDataService.getDailyDataByPlantation(
-          userProfile.plantationId,
-          dateFilter,
-          dateFilter,
-        );
+        data = allData.filter(d => d.date === dateFilter);
       } else if (filterType === 'dateRange' && startDateFilter && endDateFilter) {
-        data = await dailyDataService.getDailyDataByPlantation(
-          userProfile.plantationId,
-          startDateFilter,
-          endDateFilter,
-        );
+        data = allData.filter(d => d.date >= startDateFilter && d.date <= endDateFilter);
       } else if (filterType === 'worker' && selectedWorkerId) {
-        data = await dailyDataService.getDailyDataByWorker(
-          selectedWorkerId,
-          startDateFilter || undefined,
-          endDateFilter || undefined,
-        );
+        data = allData.filter(d => {
+          if (d.workerId !== selectedWorkerId) return false;
+          if (startDateFilter && d.date < startDateFilter) return false;
+          if (endDateFilter && d.date > endDateFilter) return false;
+          return true;
+        });
       } else if (filterType === 'field' && selectedField) {
         data = allData.filter(d => d.fieldArea === selectedField);
-      } else {
-        // Show all data
-        data = allData;
       }
 
       setDailyData(data);
     } catch (error: any) {
-      // Log the actual error for debugging
-      console.error('DailyDataViewScreen - LoadDailyData Error:', {
-        code: error.code,
-        message: error.message,
-        error: error,
-      });
+      console.error('DailyDataViewScreen - LoadDailyData Error (SQLite):', error);
 
       const appError = handleFirebaseError(error);
-      logError(appError, 'DailyDataViewScreen - LoadDailyData');
-
-      // Show more specific error message
-      let errorMessage = appError.userMessage;
-      const errorCode = error.code || '';
-      const errorMsg = error.message || '';
-
-      if (errorCode === 'failed-precondition' || errorMsg.includes('index') || errorMsg.includes('Index')) {
-        errorMessage = 'Database index required. The query has been optimized to work without indexes. Please try again.';
-      } else if (errorCode === 'permission-denied' || errorCode === 'firestore/permission-denied') {
-        errorMessage = 'You do not have permission to view this data.';
-      } else if (errorCode === 'unavailable' || errorCode === 'firestore/unavailable') {
-        errorMessage = 'Service temporarily unavailable. Please check your connection and try again.';
-      } else if (errorCode === 'deadline-exceeded' || errorCode === 'firestore/deadline-exceeded') {
-        errorMessage = 'Request timed out. Please try again.';
-      }
-
-      Alert.alert('Error', errorMessage);
+      logError(appError, 'DailyDataViewScreen - LoadDailyData (SQLite)');
+      showAlert('Error', appError.userMessage, undefined, 'high');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSyncNow = async () => {
+    if (!userProfile?.plantationId || syncing) return;
+
+    try {
+      setSyncing(true);
+
+      const { isConnected } = await checkNetworkConnection();
+      if (!isConnected) {
+
+        showAlert('Offline', 'Connect to the internet to sync daily data.', undefined, 'medium');
+        return;
+      }
+
+      await dailyDataService.syncToSQLite(userProfile.plantationId);
+      await loadDailyData();
+      showAlert('Synced', 'Daily data has been synced from the server.', undefined, 'low');
+    } catch (error: any) {
+      console.error(
+        '[DailyDataViewScreen] Manual sync failed:',
+        error?.code,
+        error?.message,
+        error,
+      );
+      const appError = handleFirebaseError(error);
+      logError(appError, 'DailyDataViewScreen - ManualSync');
+      showAlert('Sync Failed', appError.userMessage, undefined, 'high');
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -242,7 +251,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const handleDelete = (data: DailyData) => {
-    Alert.alert(
+    showAlert(
       t('general.delete'),
       t('daily_data.delete_entry_confirm', {
         name: getWorkerName(data.workerId),
@@ -256,16 +265,17 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           onPress: async () => {
             try {
               await dailyDataService.deleteDailyData(data.id);
-              Alert.alert(t('general.success'), t('daily_data.entry_deleted_success'));
+              showAlert(t('general.success'), t('daily_data.entry_deleted_success'));
               loadDailyData();
             } catch (error: any) {
               const appError = handleFirebaseError(error);
               logError(appError, 'DailyDataViewScreen - DeleteData');
-              Alert.alert(t('general.error'), appError.userMessage);
+              showAlert(t('general.error'), appError.userMessage, undefined, 'high');
             }
           },
         },
       ],
+      'high'
     );
   };
 
@@ -323,6 +333,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           <TouchableOpacity
             style={[
               styles.filterButton,
+              { borderColor: colors.border, backgroundColor: colors.cardBackground },
               filterType === 'all' && styles.filterButtonActive,
             ]}
             onPress={clearFilters}
@@ -330,6 +341,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
             <Text
               style={[
                 styles.filterButtonText,
+                { color: colors.text },
                 filterType === 'all' && styles.filterButtonTextActive,
               ]}
             >
@@ -340,54 +352,51 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           <TouchableOpacity
             style={[
               styles.filterButton,
+              { borderColor: colors.border, backgroundColor: colors.cardBackground },
               filterType === 'date' && styles.filterButtonActive,
             ]}
             onPress={() => {
-              // Always allow changing date filter
               setShowDatePicker(true);
             }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Lucide name="calendar" size={16} color={filterType === 'date' ? '#fff' : '#1976D2'} />
-              <Text
-                style={[
-                  styles.filterButtonText,
-                  filterType === 'date' && styles.filterButtonTextActive,
-                ]}
-              >
-                {dateFilter || t('workers.select_date_placeholder')}
-              </Text>
-            </View>
+            <Text
+              style={[
+                styles.filterButtonText,
+                { color: colors.text },
+                filterType === 'date' && styles.filterButtonTextActive,
+              ]}
+            >
+              {dateFilter || t('workers.select_date_placeholder')}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[
               styles.filterButton,
+              { borderColor: colors.border, backgroundColor: colors.cardBackground },
               filterType === 'dateRange' && styles.filterButtonActive,
             ]}
             onPress={() => {
-              // Always allow changing date range filter
               setShowDateRangeModal(true);
             }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Lucide name="calendar" size={16} color={filterType === 'dateRange' ? '#fff' : '#1976D2'} />
-              <Text
-                style={[
-                  styles.filterButtonText,
-                  filterType === 'dateRange' && styles.filterButtonTextActive,
-                ]}
-              >
-                {startDateFilter && endDateFilter
-                  ? `${startDateFilter} to ${endDateFilter}`
-                  : 'Date Range'}
-              </Text>
-            </View>
+            <Text
+              style={[
+                styles.filterButtonText,
+                { color: colors.text },
+                filterType === 'dateRange' && styles.filterButtonTextActive,
+              ]}
+            >
+              {startDateFilter && endDateFilter
+                ? `${startDateFilter} to ${endDateFilter}`
+                : 'Date Range'}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[
               styles.filterButton,
+              { borderColor: colors.border, backgroundColor: colors.cardBackground },
               filterType === 'worker' && styles.filterButtonActive,
             ]}
             onPress={() => {
@@ -398,10 +407,10 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
             <Text
               style={[
                 styles.filterButtonText,
+                { color: colors.text },
                 filterType === 'worker' && styles.filterButtonTextActive,
               ]}
             >
-              👤{' '}
               {selectedWorkerId
                 ? getWorkerName(selectedWorkerId)
                 : t('daily_data.select_worker_placeholder')}
@@ -411,6 +420,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           <TouchableOpacity
             style={[
               styles.filterButton,
+              { borderColor: colors.border, backgroundColor: colors.cardBackground },
               filterType === 'field' && styles.filterButtonActive,
             ]}
             onPress={() => {
@@ -421,26 +431,48 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
             <Text
               style={[
                 styles.filterButtonText,
+                { color: colors.text },
                 filterType === 'field' && styles.filterButtonTextActive,
               ]}
             >
-              🏞️{' '}
               {selectedField || t('daily_data.select_field_placeholder')}
             </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.filterButton,
+              { borderColor: colors.border, backgroundColor: colors.cardBackground },
+            ]}
+            onPress={handleSyncNow}
+            disabled={syncing}
+          >
+            {syncing ? (
+              <ActivityIndicator size="small" color={colors.text} />
+            ) : (
+              <Text
+                style={[
+                  styles.filterButtonText,
+                  { color: colors.text },
+                ]}
+              >
+                Sync
+              </Text>
+            )}
           </TouchableOpacity>
 
         </ScrollView>
 
         {showWorkerDropdown && (
-          <View style={styles.workerDropdown}>
+          <View style={[styles.workerDropdown, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
             <ScrollView style={styles.workerDropdownList}>
               {workers.map(worker => (
                 <TouchableOpacity
                   key={worker.id}
-                  style={styles.workerDropdownItem}
+                  style={[styles.workerDropdownItem, { borderBottomColor: colors.border }]}
                   onPress={() => handleWorkerSelect(worker.id)}
                 >
-                  <Text style={styles.workerDropdownText}>
+                  <Text style={[styles.workerDropdownText, { color: colors.text }]}>
                     {worker.name} ({worker.workerId})
                   </Text>
                 </TouchableOpacity>
@@ -450,12 +482,12 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
         )}
 
         {showFieldDropdown && (
-          <View style={styles.workerDropdown}>
+          <View style={[styles.workerDropdown, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
             <ScrollView style={styles.workerDropdownList}>
               {fields.map((field: Field) => (
                 <TouchableOpacity
                   key={field.id}
-                  style={styles.workerDropdownItem}
+                  style={[styles.workerDropdownItem, { borderBottomColor: colors.border }]}
                   onPress={() => {
                     setSelectedField(field.name);
                     setFilterType('field');
@@ -470,7 +502,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                     setSelectedWorkerId('');
                   }}
                 >
-                  <Text style={styles.workerDropdownText}>{field.name}</Text>
+                  <Text style={[styles.workerDropdownText, { color: colors.text }]}>{field.name}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -513,43 +545,43 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           }}
         >
           <View style={styles.dateRangeModalOverlay}>
-            <View style={styles.dateRangeModalContent}>
+            <View style={[styles.dateRangeModalContent, { backgroundColor: colors.cardBackground }]}>
               {/* Header */}
-              <View style={styles.dateRangeHeader}>
-                <Text style={styles.dateRangeTitle}>{t('daily_data.filter_date_range')}</Text>
+              <View style={[styles.dateRangeHeader, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.dateRangeTitle, { color: colors.text }]}>{t('daily_data.filter_date_range')}</Text>
                 <TouchableOpacity onPress={() => {
                   setShowDateRangeModal(false);
                   setActiveDatePicker(null);
                 }}>
-                  <Text style={styles.dateRangeCloseButton}>✕</Text>
+                  <Text style={[styles.dateRangeCloseButton, { color: colors.textSecondary }]}>✕</Text>
                 </TouchableOpacity>
               </View>
 
               {/* From Date Section */}
               <View style={styles.dateSection}>
-                <Text style={styles.dateSectionLabel}>From Date</Text>
+                <Text style={[styles.dateSectionLabel, { color: colors.text }]}>From Date</Text>
                 <TouchableOpacity
-                  style={styles.dateDisplayBox}
+                  style={[styles.dateDisplayBox, { backgroundColor: colors.background, borderColor: '#73AB2E' }]}
                   onPress={() => setActiveDatePicker('start')}
                 >
-                  <Text style={styles.dateDisplayText}>
+                  <Text style={[styles.dateDisplayText, { color: colors.text }]}>
                     {startDate ? startDate.toISOString().split('T')[0] : 'Tap to select start date'}
                   </Text>
-                  <Lucide name="calendar" size={18} color="#7cb342" />
+                  <Lucide name="calendar" size={18} color={colors.text} />
                 </TouchableOpacity>
               </View>
 
               {/* To Date Section */}
               <View style={styles.dateSection}>
-                <Text style={styles.dateSectionLabel}>To Date</Text>
+                <Text style={[styles.dateSectionLabel, { color: colors.text }]}>To Date</Text>
                 <TouchableOpacity
-                  style={styles.dateDisplayBox}
+                  style={[styles.dateDisplayBox, { backgroundColor: colors.background, borderColor: '#73AB2E' }]}
                   onPress={() => setActiveDatePicker('end')}
                 >
-                  <Text style={styles.dateDisplayText}>
+                  <Text style={[styles.dateDisplayText, { color: colors.text }]}>
                     {endDate ? endDate.toISOString().split('T')[0] : 'Tap to select end date'}
                   </Text>
-                  <Lucide name="calendar" size={18} color="#7cb342" />
+                  <Lucide name="calendar" size={18} color={colors.text} />
                 </TouchableOpacity>
               </View>
 
@@ -672,10 +704,10 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               key={data.id}
               style={[
                 styles.dataCard,
-                { backgroundColor: colors.cardBackground || '#fff' },
+                { backgroundColor: colors.cardBackground || '#fff', borderColor: colors.border },
               ]}
             >
-              <View style={styles.dataCardHeader}>
+              <View style={[styles.dataCardHeader, { borderBottomColor: colors.border }]}>
                 <View style={styles.dataCardHeaderLeft}>
                   <Text style={[styles.workerName, { color: colors.text }]}>
                     {getWorkerName(data.workerId)}
@@ -724,7 +756,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                     {t('daily_data.field_short')}:
                   </Text>
                   <Text style={[styles.dataValue, { color: colors.text }]}>
-                    {data.fieldArea}
+                    {fieldNameMap[data.fieldArea] ?? data.fieldArea}
                   </Text>
                 </View>
 
@@ -733,6 +765,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
           ))
         )}
       </ScrollView>
+      <CustomAlert visible={alertState.visible} title={alertState.title} message={alertState.message} buttons={alertState.buttons} onDismiss={hideAlert} severity={alertState.severity} />
     </SafeAreaView>
   );
 };
@@ -775,29 +808,28 @@ const styles = StyleSheet.create({
     backgroundColor: '#2d5016',
   },
   filterContainer: {
-    backgroundColor: '#fff',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    paddingVertical: 10,
   },
   filterScrollContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     gap: 8,
+    alignItems: 'center',
   },
   filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
-    marginRight: 8,
+    borderWidth: 1,
+    backgroundColor: 'transparent',
   },
   filterButtonActive: {
-    backgroundColor: '#7cb342',
+    backgroundColor: '#73AB2E',
+    borderColor: '#73AB2E',
   },
   filterButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    color: '#666',
+    color: '#333',
   },
   filterButtonTextActive: {
     color: '#fff',
@@ -856,7 +888,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   dateRangeModalContent: {
-    backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingBottom: 20,
@@ -868,16 +899,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   dateRangeTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#333',
   },
   dateRangeCloseButton: {
     fontSize: 24,
-    color: '#666',
     fontWeight: '300',
   },
   dateSection: {
@@ -887,24 +915,20 @@ const styles = StyleSheet.create({
   dateSectionLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 8,
   },
   dateDisplayBox: {
-    backgroundColor: '#fff',
     borderRadius: 8,
     paddingVertical: 14,
     paddingHorizontal: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#7cb342',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   dateDisplayText: {
     fontSize: 15,
-    color: '#333',
     fontWeight: '500',
   },
   calendarIcon: {
@@ -919,33 +943,35 @@ const styles = StyleSheet.create({
   },
   clearDateButton: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
     borderRadius: 8,
-    paddingVertical: 14,
+    paddingVertical: 11,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#7cb342',
+    borderWidth: 1.5,
+    borderColor: '#73AB2E',
   },
   clearDateButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#7cb342',
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#73AB2E',
   },
   applyDateButton: {
     flex: 1,
-    backgroundColor: '#7cb342',
+    backgroundColor: 'transparent',
     borderRadius: 8,
-    paddingVertical: 14,
+    paddingVertical: 11,
     alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#73AB2E',
   },
   applyDateButtonDisabled: {
-    backgroundColor: '#ccc',
-    opacity: 0.6,
+    borderColor: '#ccc',
+    opacity: 0.5,
   },
   applyDateButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#73AB2E',
   },
   content: {
     flex: 1,
@@ -987,6 +1013,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -1000,7 +1027,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   dataCardHeaderLeft: {
     flex: 1,

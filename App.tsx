@@ -29,7 +29,7 @@ import { useAppDispatch } from './src/hooks';
 import { setLanguage } from './src/store/slices/ai.slice';
 import type { Language } from './src/store/slices/ai.slice';
 import { loadLanguagePreference } from './src/common/utils/languageStorage';
-import NotificationsScreen from './src/screens/NotificationsScreen';
+import { NotificationsScreenContent } from './src/screens/NotificationsScreen';
 
 export const navigationRef = createNavigationContainerRef();
 const { width: screenWidth } = Dimensions.get('window');
@@ -265,7 +265,7 @@ function AppContent() {
                   },
                 ]}
               >
-                <NotificationsScreen
+                <NotificationsScreenContent
                   onBackPress={handleCloseNotifications}
                 />
               </Animated.View>
@@ -320,7 +320,7 @@ function AppContent() {
                   },
                 ]}
               >
-                <NotificationsScreen
+                <NotificationsScreenContent
                   onBackPress={handleCloseNotifications}
                 />
               </Animated.View>

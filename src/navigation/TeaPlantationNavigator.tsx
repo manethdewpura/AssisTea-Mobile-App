@@ -14,13 +14,12 @@ import { databaseService } from '../services/database.service';
 
 interface TeaPlantationNavigatorProps {
   onNavigateToWeather?: () => void;
-  onNavigateToSensors?: () => void;
 }
 
 export type TeaPlantationStackParamList = {
   TeaPlantationHome: undefined;
   WorkerManagement: undefined;
-  WorkerDetails: { workerId: string };
+  WorkerDetails: { workerId: string; editMode?: boolean };
   AddWorker: undefined;
   DailyDataEntry: undefined;
   DailyDataView: { workerId?: string } | undefined;
@@ -34,7 +33,6 @@ const Stack = createNativeStackNavigator<TeaPlantationStackParamList>();
 
 export const TeaPlantationNavigator: React.FC<TeaPlantationNavigatorProps> = ({
   onNavigateToWeather,
-  onNavigateToSensors,
 }) => {
   // Initialize SQLite database when this navigator mounts
   useEffect(() => {
@@ -63,7 +61,6 @@ export const TeaPlantationNavigator: React.FC<TeaPlantationNavigatorProps> = ({
         children={() => (
           <TeaPlantationManagerScreen 
             onNavigateToWeather={onNavigateToWeather}
-            onNavigateToSensors={onNavigateToSensors}
           />
         )}
       />

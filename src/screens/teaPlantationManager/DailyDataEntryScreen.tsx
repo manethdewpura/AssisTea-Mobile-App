@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   Platform,
   KeyboardAvoidingView,
@@ -14,32 +13,25 @@ import {
 } from 'react-native';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppSelector } from '../../hooks';
+import { useAppSelector, useThemedAlert } from '../../hooks';
+import CustomAlert from '../../components/molecule/CustomAlert';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
-import { workerService, dailyDataService } from '../../services';
+import { workerService, dailyDataService, fieldService } from '../../services';
+import { workerSQLiteService } from '../../services/sqlite/workerSQLite.service';
 import { handleFirebaseError, logError, parseCSVFile, formatValidationErrors } from '../../utils';
+import { checkNetworkConnection } from '../../utils/network.util';
 import { useTranslation } from 'react-i18next';
 import type { Worker } from '../../models/Worker';
+import type { Field } from '../../models/Field';
 import { pick, types } from '@react-native-documents/picker';
 
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
   'DailyDataEntry'
 >;
-
-interface FieldArea {
-  id: string;
-  name: string;
-}
-
-const MOCK_FIELD_AREAS: FieldArea[] = [
-  { id: '1', name: 'Field A' },
-  { id: '2', name: 'Field B' },
-  { id: '3', name: 'Field C' },
-];
 
 const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppSelector(selectTheme);
@@ -48,8 +40,10 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [workers, setWorkers] = useState<Worker[]>([]);
+  const [fields, setFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploadingCSV, setUploadingCSV] = useState(false);
+  const { showAlert, hideAlert, alertState } = useThemedAlert();
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -64,6 +58,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
 
   React.useEffect(() => {
     loadWorkers();
+    loadFields();
   }, []);
 
   const loadWorkers = async () => {
@@ -85,6 +80,22 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
+  const loadFields = async () => {
+    if (!userProfile?.plantationId) {
+      return;
+    }
+
+    try {
+      const fetchedFields = await fieldService.getFieldsByPlantation(
+        userProfile.plantationId
+      );
+      setFields(fetchedFields);
+    } catch (error: any) {
+      const appError = handleFirebaseError(error);
+      logError(appError, 'DailyDataEntryScreen - LoadFields');
+    }
+  };
+
   const handleDateChange = (event: any, date: Date | undefined) => {
     if (date) {
       setSelectedDate(date);
@@ -103,18 +114,17 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const getFieldName = (fieldId: string) => {
-    const field = MOCK_FIELD_AREAS.find(f => f.id === fieldId);
+    const field = fields.find(f => f.id === fieldId);
     return field ? field.name : t('daily_data.select_field_placeholder');
   };
 
   const handleUploadCSV = async () => {
     if (!userProfile?.plantationId) {
-      Alert.alert('Error', 'Plantation ID not found');
+      showAlert('Error', 'Plantation ID not found', undefined, 'high');
       return;
     }
 
     try {
-      // Pick CSV file
       const result = await pick({
         type: [types.csv, types.plainText],
         copyTo: 'cachesDirectory',
@@ -126,33 +136,33 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
 
       const file = result[0];
 
-      // Read file content
       setUploadingCSV(true);
 
-      // Read the file using fetch - the uri property contains the file path
       const response = await fetch(file.uri);
       const fileContent = await response.text();
 
-      // Parse and validate CSV (using date from UI date picker)
       const parseResult = await parseCSVFile(fileContent, formData.date);
 
       if (!parseResult.success) {
         if (parseResult.errors && parseResult.errors.length > 0) {
           const errorMessage = formatValidationErrors(parseResult.errors);
-          Alert.alert('Validation Errors', errorMessage);
+          showAlert('Validation Errors', errorMessage, undefined, 'high');
         } else {
-          Alert.alert('Error', parseResult.message || 'Failed to parse CSV file');
+          showAlert('Error', parseResult.message || 'Failed to parse CSV file', undefined, 'high');
         }
         return;
       }
 
       if (!parseResult.data || parseResult.data.length === 0) {
-        Alert.alert('Error', 'No valid data found in CSV file');
+        showAlert('Error', 'No valid data found in CSV file', undefined, 'high');
         return;
       }
 
-      // Confirm upload
-      Alert.alert(
+      // Check connectivity once — used for both worker lookup and bulk create
+      const networkResult = await checkNetworkConnection();
+      const isConnected = !!networkResult?.isConnected;
+
+      showAlert(
         'Confirm Upload',
         `Found ${parseResult.data.length} valid record(s). Do you want to upload them?`,
         [
@@ -163,80 +173,96 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
           {
             text: 'Upload',
             onPress: async () => {
+              setUploadingCSV(true);
               try {
-                // Upload to Firebase
                 if (!userProfile?.plantationId) {
-                  Alert.alert('Error', 'Plantation ID not found');
+                  showAlert('Error', 'Plantation ID not found', undefined, 'high');
                   return;
                 }
 
-                // Convert custom worker IDs to Firebase document IDs
-                const dataWithFirebaseIds = [];
-                const missingWorkers = [];
+
+                const dataWithFirebaseIds: typeof parseResult.data = [];
+                const missingWorkers: string[] = [];
 
                 for (const record of parseResult.data!) {
-                  // Look up worker by custom workerId field
-                  const worker = await workerService.getWorkerByWorkerId(
-                    record.workerId,
-                    userProfile.plantationId,
-                  );
+                  let worker = null;
+
+                  if (isConnected) {
+                    // Online: query Firestore by custom workerId field
+                    worker = await workerService.getWorkerByWorkerId(
+                      record.workerId,
+                      userProfile.plantationId,
+                    );
+                  } else {
+                    // Offline: fall back to SQLite cache
+                    worker = await workerSQLiteService.getWorkerByCustomId(
+                      record.workerId,
+                      userProfile.plantationId,
+                    );
+                  }
 
                   if (!worker) {
                     missingWorkers.push(record.workerId);
                   } else {
-                    // Replace custom workerId with Firebase document ID
-                    dataWithFirebaseIds.push({
+                    dataWithFirebaseIds!.push({
                       ...record,
-                      workerId: worker.id, // Use Firebase document ID
+                      workerId: worker.id, // swap custom ID → Firebase doc ID
                     });
                   }
                 }
 
-                // Check if any workers were not found
+
                 if (missingWorkers.length > 0) {
-                  Alert.alert(
+                  showAlert(
                     'Workers Not Found',
                     `The following worker IDs were not found in the system:\n${missingWorkers.join(', ')}\n\nPlease add these workers first or correct the worker IDs in your CSV file.`,
+                    undefined,
+                    'high',
                   );
                   return;
                 }
 
-                // Upload with Firebase IDs
                 await dailyDataService.createBulkDailyData(
                   userProfile.plantationId,
-                  dataWithFirebaseIds,
+                  dataWithFirebaseIds!,
+                  isConnected,
                 );
 
-                Alert.alert(
-                  'Success',
-                  `Successfully uploaded ${dataWithFirebaseIds.length} record(s)`,
+                const successMsg = isConnected
+                  ? `Successfully uploaded ${dataWithFirebaseIds!.length} record(s)`
+                  : `Saved ${dataWithFirebaseIds!.length} record(s) locally. They will sync when online.`;
+
+                showAlert(
+                  isConnected ? 'Success' : 'Saved Locally',
+                  successMsg,
                   [
                     {
                       text: 'View Data',
                       onPress: () => navigation.navigate('DailyDataView'),
                     },
-                    { text: 'OK' },
+                    { text: 'OK', style: 'default' },
                   ],
+                  'low',
                 );
               } catch (error: any) {
                 const appError = handleFirebaseError(error);
                 logError(appError, 'DailyDataEntryScreen - CSV Upload');
-                Alert.alert('Upload Error', appError.userMessage);
+                showAlert('Upload Error', appError.userMessage, undefined, 'high');
+              } finally {
+                setUploadingCSV(false);
               }
             },
           },
         ],
+        'medium',
       );
     } catch (error: any) {
-      // Check if user cancelled - the new package throws a specific error
       if (error?.message === 'User canceled document picker') {
-        // User cancelled the picker
         return;
       }
-
       const appError = handleFirebaseError(error);
       logError(appError, 'DailyDataEntryScreen - CSV Upload');
-      Alert.alert('Error', 'Failed to read CSV file. Please try again.');
+      showAlert('Error', 'Failed to read CSV file. Please try again.', undefined, 'high');
     } finally {
       setUploadingCSV(false);
     }
@@ -249,51 +275,53 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
       !formData.timeSpentHours ||
       !formData.fieldArea
     ) {
-      Alert.alert('Validation', 'Please fill in all fields');
+      showAlert('Validation', 'Please fill in all fields', undefined, 'low');
       return;
     }
 
     if (!userProfile?.plantationId) {
-      Alert.alert('Error', 'Plantation ID not found');
+      showAlert('Error', 'Plantation ID not found', undefined, 'high');
       return;
     }
 
     try {
       setLoading(true);
-      await dailyDataService.createDailyData(userProfile.plantationId, {
+      const { isConnected } = await checkNetworkConnection();
+      const dailyData = {
         workerId: formData.workerId,
         date: formData.date,
         teaPluckedKg: parseFloat(formData.teaPluckedKg),
         timeSpentHours: parseFloat(formData.timeSpentHours),
         fieldArea: formData.fieldArea,
-      });
+      };
 
-      Alert.alert(t('general.success'), t('daily_data.save_success'), [
-        {
-          text: t('daily_data.view_all'),
-          onPress: () => {
-            navigation.navigate('DailyDataView');
-          },
-        },
-        {
-          text: t('general.ok'),
-          onPress: () => {
-            // Reset form
-            setFormData({
-              date: new Date().toISOString().split('T')[0],
-              workerId: '',
-              teaPluckedKg: '',
-              timeSpentHours: '',
-              fieldArea: '',
-            });
-            setSelectedDate(new Date());
-          },
-        },
-      ]);
+      const resetForm = () => {
+        setFormData({
+          date: new Date().toISOString().split('T')[0],
+          workerId: '',
+          teaPluckedKg: '',
+          timeSpentHours: '',
+          fieldArea: '',
+        });
+        setSelectedDate(new Date());
+      };
+
+      await dailyDataService.createDailyData(userProfile.plantationId, dailyData, isConnected);
+
+      if (!isConnected) {
+        showAlert('Saved Locally', 'Data saved on this device. Changes will sync automatically when you\'re back online.', [
+          { text: 'OK', style: 'default', onPress: resetForm },
+        ], 'low');
+      } else {
+        showAlert('Success', 'Daily data saved successfully', [
+          { text: 'View All Data', onPress: () => navigation.navigate('DailyDataView') },
+          { text: 'OK', style: 'default', onPress: resetForm },
+        ], 'low');
+      }
     } catch (error: any) {
       const appError = handleFirebaseError(error);
       logError(appError, 'DailyDataEntryScreen - SaveData');
-      Alert.alert('Error', appError.userMessage);
+      showAlert('Error', appError.userMessage, undefined, 'high');
     } finally {
       setLoading(false);
     }
@@ -315,11 +343,11 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
           <View
             style={[
               styles.formCard,
-              { backgroundColor: colors.cardBackground || '#fff' },
+              { backgroundColor: colors.cardBackground || '#fff', borderColor: colors.border },
             ]}
           >
             {/* Date Section */}
-            <View style={styles.dateSection}>
+            <View style={[styles.dateSection, { borderBottomColor: colors.border }]}>
               <Text style={[styles.dateLabel, { color: colors.text }]}>
                 {t('daily_data.date_label')} {formData.date}
               </Text>
@@ -327,7 +355,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
                 style={styles.calendarButton}
                 onPress={() => setShowDatePicker(true)}
               >
-                <Lucide name="calendar" size={24} color="#7cb342" />
+                <Lucide name="calendar" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
 
@@ -357,14 +385,14 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
 
             {/* Upload CSV Section */}
             <TouchableOpacity
-              style={styles.uploadButton}
+              style={[styles.uploadButton, (loading || uploadingCSV) && styles.uploadButtonDisabled]}
               onPress={handleUploadCSV}
               disabled={loading || uploadingCSV}
             >
               {uploadingCSV ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color="#73AB2E" />
               ) : (
-                <Text style={styles.uploadButtonText}>📄 {t('daily_data.upload_csv')}</Text>
+                <Text style={styles.uploadButtonText}>＋ {t('daily_data.upload_csv')}</Text>
               )}
             </TouchableOpacity>
 
@@ -378,7 +406,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
               <TouchableOpacity
                 style={[
                   styles.dropdownBox,
-                  { backgroundColor: colors.background },
+                  { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
                 onPress={() => setShowWorkerDropdown(!showWorkerDropdown)}
               >
@@ -389,7 +417,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
               </TouchableOpacity>
 
               {showWorkerDropdown && (
-                <View style={styles.dropdownList}>
+                <View style={[styles.dropdownList, { backgroundColor: colors.cardBackground || '#fff', borderColor: colors.border }]}>
                   <ScrollView
                     style={styles.dropdownScrollView}
                     nestedScrollEnabled={true}
@@ -398,13 +426,13 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
                     {workers.map(worker => (
                       <TouchableOpacity
                         key={worker.id}
-                        style={styles.dropdownItem}
+                        style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
                         onPress={() => {
                           setFormData({ ...formData, workerId: worker.id });
                           setShowWorkerDropdown(false);
                         }}
                       >
-                        <Text style={styles.dropdownItemText}>
+                        <Text style={[styles.dropdownItemText, { color: colors.text }]}>
                           {worker.name} ({worker.workerId})
                         </Text>
                       </TouchableOpacity>
@@ -422,7 +450,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
               <View
                 style={[
                   styles.inputBox,
-                  { backgroundColor: colors.background },
+                  { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
               >
                 <TextInput
@@ -446,7 +474,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
               <View
                 style={[
                   styles.inputBox,
-                  { backgroundColor: colors.background },
+                  { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
               >
                 <TextInput
@@ -470,7 +498,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
               <TouchableOpacity
                 style={[
                   styles.dropdownBox,
-                  { backgroundColor: colors.background },
+                  { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
                 onPress={() => setShowFieldDropdown(!showFieldDropdown)}
               >
@@ -481,19 +509,25 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
               </TouchableOpacity>
 
               {showFieldDropdown && (
-                <View style={styles.dropdownList}>
-                  {MOCK_FIELD_AREAS.map(field => (
-                    <TouchableOpacity
-                      key={field.id}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setFormData({ ...formData, fieldArea: field.id });
-                        setShowFieldDropdown(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>{field.name}</Text>
-                    </TouchableOpacity>
-                  ))}
+                <View style={[styles.dropdownList, { backgroundColor: colors.cardBackground || '#fff', borderColor: colors.border }]}>
+                  <ScrollView
+                    style={styles.dropdownScrollView}
+                    nestedScrollEnabled={true}
+                    showsVerticalScrollIndicator={true}
+                  >
+                    {fields.map(field => (
+                      <TouchableOpacity
+                        key={field.id}
+                        style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
+                        onPress={() => {
+                          setFormData({ ...formData, fieldArea: field.id });
+                          setShowFieldDropdown(false);
+                        }}
+                      >
+                        <Text style={[styles.dropdownItemText, { color: colors.text }]}>{field.name}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
                 </View>
               )}
             </View>
@@ -506,17 +540,18 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color="#F4B124" />
               ) : (
                 <>
                   <Text style={styles.saveIcon}>✓</Text>
-                  <Text style={styles.saveButtonText}>{t('general.save')}</Text>
+                  <Text style={styles.saveButtonText}>{t('general.save Entry')}</Text>
                 </>
               )}
             </TouchableOpacity>
           </View>
         </ScrollView>
       </SafeAreaView>
+      <CustomAlert visible={alertState.visible} title={alertState.title} message={alertState.message} buttons={alertState.buttons} onDismiss={hideAlert} severity={alertState.severity} />
     </KeyboardAvoidingView>
   );
 };
@@ -570,6 +605,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginTop: 0,
     marginBottom: 20,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -597,19 +633,26 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   uploadButton: {
-    backgroundColor: '#7cb342',
-    borderRadius: 8,
-    paddingVertical: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: '#73AB2E',
+    backgroundColor: 'transparent',
+    borderRadius: 8,
+    paddingVertical: 9,
+    paddingHorizontal: 24,
     marginBottom: 15,
+    alignSelf: 'center',
   },
   uploadButtonDisabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
   uploadButtonText: {
-    color: '#fff',
+    color: '#73AB2E',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   orText: {
     textAlign: 'center',
@@ -620,7 +663,6 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     marginBottom: 16,
-    position: 'relative',
   },
   label: {
     fontSize: 14,
@@ -632,9 +674,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    height: 52,
+    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#e0e0e0',
   },
   textInput: {
     fontSize: 14,
@@ -644,9 +686,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    height: 52,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -666,16 +707,6 @@ const styles = StyleSheet.create({
     borderColor: '#e0e0e0',
     marginTop: 4,
     maxHeight: 200,
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    zIndex: 1000,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
   },
   dropdownScrollView: {
     maxHeight: 200,
@@ -709,29 +740,28 @@ const styles = StyleSheet.create({
     color: '#7cb342',
   },
   saveButton: {
-    backgroundColor: '#fbc02d',
-    borderRadius: 8,
-    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: '#F4B124',
+    backgroundColor: 'transparent',
+    borderRadius: 8,
+    paddingVertical: 9,
+    paddingHorizontal: 32,
     marginTop: 25,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    alignSelf: 'center',
   },
   saveIcon: {
-    fontSize: 18,
-    color: '#fff',
-    marginRight: 6,
-    fontWeight: 'bold',
+    fontSize: 15,
+    color: '#F4B124',
+    fontWeight: '700',
   },
   saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: '#F4B124',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
 

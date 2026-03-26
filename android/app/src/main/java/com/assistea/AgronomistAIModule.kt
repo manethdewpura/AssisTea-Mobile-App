@@ -112,9 +112,9 @@ class AgronomistAIModule(reactContext: ReactApplicationContext) : ReactContextBa
             
             val queryEmbedding = offlineNLPEngine.generateEmbedding(query)
             val matches = if (queryEmbedding != null) {
-                knowledgeBaseManager.findTopMatches(queryEmbedding, knowledgeBase, query, topK = 5, minSimilarity = 0.5)
+                knowledgeBaseManager.findTopMatches(queryEmbedding, knowledgeBase, query, topK = 5, minSimilarity = 0.35)
             } else {
-                knowledgeBaseManager.findTopMatches(FloatArray(0), knowledgeBase, query, topK = 5, minSimilarity = 0.5)
+                knowledgeBaseManager.findTopMatches(FloatArray(0), knowledgeBase, query, topK = 5, minSimilarity = 0.35)
             }
             
             val array = Arguments.createArray()

@@ -6,18 +6,19 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppSelector } from '../../hooks';
+import { useAppSelector, useThemedAlert } from '../../hooks';
+import CustomAlert from '../../components/molecule/CustomAlert';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { workerService } from '../../services';
 import { handleFirebaseError, logError } from '../../utils';
+import { checkNetworkConnection } from '../../utils/network.util';
 import type { Worker } from '../../models/Worker';
 import { useTranslation } from 'react-i18next';
 
@@ -34,6 +35,7 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
   const [filteredWorkers, setFilteredWorkers] = useState<Worker[]>([]);
   const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(false);
+  const { showAlert, hideAlert, alertState } = useThemedAlert();
 
   useFocusEffect(
     useCallback(() => {
@@ -43,7 +45,7 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
 
   const loadWorkers = async () => {
     if (!userProfile?.plantationId) {
-      Alert.alert('Error', 'Plantation information not found');
+      showAlert('Error', 'Plantation information not found', undefined, 'high');
       return;
     }
 
@@ -57,7 +59,7 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
     } catch (error: any) {
       const appError = handleFirebaseError(error);
       logError(appError, 'WorkerManagementScreen - LoadWorkers');
-      Alert.alert('Error', appError.userMessage);
+      showAlert('Error', appError.userMessage, undefined, 'high');
     } finally {
       setLoading(false);
     }
@@ -77,32 +79,46 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
     navigation.navigate('WorkerDetails', { workerId });
   };
 
+  const handleEditWorker = (workerId: string) => {
+    navigation.navigate('WorkerDetails', { workerId, editMode: true });
+  };
+
   const handleDeleteWorker = (workerId: string, workerName: string) => {
-    Alert.alert(
+    showAlert(
       t('workers.delete_title'),
       t('workers.delete_confirm', { name: workerName }),
       [
-        {
-          text: t('general.cancel'),
-          style: 'cancel',
-        },
+        { text: t('general.cancel'), style: 'cancel' },
         {
           text: t('general.delete'),
           style: 'destructive',
           onPress: async () => {
-            try {
-              await workerService.deleteWorker(workerId);
-              setWorkers(workers.filter(w => w.id !== workerId));
-              setFilteredWorkers(filteredWorkers.filter(w => w.id !== workerId));
-              Alert.alert(t('general.success'), t('workers.delete_success'));
+            const workersSnapshot = workers;
+              const filteredSnapshot = filteredWorkers;
+              try {
+              const { isConnected } = await checkNetworkConnection();
+              // Optimistically remove from UI immediately
+              setWorkers(prev => prev.filter(w => w.id !== workerId));
+              setFilteredWorkers(prev => prev.filter(w => w.id !== workerId));
+              await workerService.deleteWorker(workerId, isConnected);
+              if (!isConnected) {
+                showAlert('Deleted Locally', 'Worker removed on this device. Changes will sync automatically when you\'re back online.', undefined, 'low');
+              } else {
+                showAlert('Success', 'Worker deleted successfully', undefined, 'low');
+              }
             } catch (error: any) {
+              console.error('[WorkerManagement] deleteWorker threw an error:', error?.code, error?.message, error);
               const appError = handleFirebaseError(error);
               logError(appError, 'WorkerManagementScreen - DeleteWorker');
-              Alert.alert(t('general.error'), appError.userMessage);
+              // Rollback optimistic removal on failure
+              setWorkers(workersSnapshot);
+              setFilteredWorkers(filteredSnapshot);
+              showAlert(t('general.error'), appError.userMessage, undefined, 'high');
             }
           },
         },
-      ]
+      ],
+      'high'
     );
   };
 
@@ -114,7 +130,7 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
     <TouchableOpacity
       style={[
         styles.workerCard,
-        { backgroundColor: colors.cardBackground || '#fff' },
+        { backgroundColor: colors.cardBackground || '#fff', borderColor: colors.border },
       ]}
       onPress={() => handleViewWorker(item.id)}
     >
@@ -130,6 +146,12 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
       <View style={styles.workerActions}>
         <TouchableOpacity
           style={styles.actionButton}
+          onPress={() => handleEditWorker(item.id)}
+        >
+          <Lucide name="pencil" size={20} color="#F4B124" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.actionButton}
           onPress={() => handleDeleteWorker(item.id, item.name)}
         >
           <Lucide name="trash-2" size={20} color="#f44336" />
@@ -143,15 +165,22 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Text style={styles.searchIcon}>🔍</Text>
-        <TextInput
-          style={[styles.searchInput, { color: colors.text }]}
-          placeholder={t('workers.search_placeholder')}
-          placeholderTextColor={colors.textSecondary}
-          value={searchText}
-          onChangeText={handleSearch}
-        />
+      <View style={[styles.searchContainer, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <View style={[styles.searchInputRow, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <Lucide name="search" size={18} color={colors.textSecondary} />
+          <TextInput
+            style={[styles.searchInput, { color: colors.text }]}
+            placeholder={t('workers.search_placeholder')}
+            placeholderTextColor={colors.textSecondary}
+            value={searchText}
+            onChangeText={handleSearch}
+          />
+          {searchText.length > 0 && (
+            <TouchableOpacity onPress={() => handleSearch('')}>
+              <Lucide name="x" size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Workers List */}
@@ -180,13 +209,17 @@ const WorkerManagementScreen: React.FC<Props> = ({ navigation }) => {
       </View>
 
       {/* Add Worker Button */}
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={handleAddWorker}
-      >
-        <Text style={styles.addButtonIcon}>+</Text>
-        <Text style={styles.addButtonText}>{t('workers.add_new_worker')}</Text>
-      </TouchableOpacity>
+      <View style={[styles.addButtonContainer, { borderTopColor: colors.border }]}>
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={handleAddWorker}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.addButtonPlus}>＋</Text>
+          <Text style={styles.addButtonText}>{t('workers.add_new_worker')}</Text>
+        </TouchableOpacity>
+      </View>
+      <CustomAlert visible={alertState.visible} title={alertState.title} message={alertState.message} buttons={alertState.buttons} onDismiss={hideAlert} severity={alertState.severity} />
     </SafeAreaView>
   );
 };
@@ -224,25 +257,22 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   searchContainer: {
-    backgroundColor: '#f5f5f5',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+  },
+  searchInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  searchIcon: {
-    fontSize: 20,
-    marginRight: 10,
-    color: '#666',
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   searchInput: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
     fontSize: 14,
-    color: '#333',
   },
   listContainer: {
     flex: 1,
@@ -250,7 +280,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   listContent: {
-    paddingBottom: 20,
+    paddingBottom: 90,
   },
   loadingContainer: {
     flex: 1,
@@ -275,6 +305,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -313,33 +344,33 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#f44336',
   },
-  addButton: {
-    position: 'absolute',
-    bottom: 16,
-    right: 16,
-    backgroundColor: '#7cb342',
-    borderRadius: 25,
+  addButtonContainer: {
     paddingHorizontal: 16,
     paddingVertical: 12,
+    borderTopWidth: 1,
+    alignItems: 'flex-end',
+  },
+  addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: '#73AB2E',
+    backgroundColor: 'transparent',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
-  addButtonIcon: {
-    fontSize: 20,
-    color: '#fff',
-    fontWeight: 'bold',
-    marginRight: 6,
+  addButtonPlus: {
+    color: '#73AB2E',
+    fontWeight: '700',
+    fontSize: 15,
+    lineHeight: 17,
   },
   addButtonText: {
-    color: '#fff',
+    color: '#73AB2E',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });
 

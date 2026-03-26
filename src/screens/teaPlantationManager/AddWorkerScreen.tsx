@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   Platform,
   KeyboardAvoidingView,
@@ -13,7 +12,8 @@ import {
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppSelector } from '../../hooks';
+import { useAppSelector, useThemedAlert } from '../../hooks';
+import CustomAlert from '../../components/molecule/CustomAlert';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -21,6 +21,7 @@ import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantation
 import { workerService } from '../../services';
 import { handleFirebaseError, logError, validateRequired } from '../../utils';
 import { useTranslation } from 'react-i18next';
+import { checkNetworkConnection } from '../../utils/network.util';
 
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
@@ -34,6 +35,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const { showAlert, hideAlert, alertState } = useThemedAlert();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -136,49 +138,50 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
     }
 
     if (!userProfile?.plantationId) {
-      Alert.alert('Error', 'Plantation information not found');
+      showAlert('Error', 'Plantation information not found', undefined, 'high');
       return;
     }
 
     try {
       setLoading(true);
-
-      // Check if worker ID already exists in this plantation
-      const exists = await workerService.checkWorkerIdExists(
-        formData.workerId,
-        userProfile.plantationId,
-      );
-
-      if (exists) {
-        setErrors(prev => ({
-          ...prev,
-          workerId: 'This Worker ID already exists in your plantation',
-        }));
-        return;
-      }
-
-      // Create worker
-      await workerService.createWorker(userProfile.plantationId, {
+      const { isConnected } = await checkNetworkConnection();
+      const workerData = {
         name: formData.name.trim(),
         workerId: formData.workerId.trim(),
         birthDate: formData.birthDate,
         age: parseInt(formData.age, 10),
         experience: formData.experience.trim(),
         gender: formData.gender,
-      });
+      };
 
-      Alert.alert(t('general.success'), t('workers.add_success'), [
-        {
-          text: t('general.ok'),
-          onPress: () => {
-            navigation.goBack();
-          },
-        },
-      ]);
+      if (!isConnected) {
+        // Skip duplicate ID check offline — Firebase queues the write
+        await workerService.createWorker(userProfile.plantationId, workerData, false);
+        showAlert('Saved Locally', 'Worker added on this device. Changes will sync automatically when you\'re back online.', [
+          { text: 'OK', style: 'default', onPress: () => navigation.goBack() },
+        ], 'low');
+      } else {
+        const exists = await workerService.checkWorkerIdExists(
+          formData.workerId,
+          userProfile.plantationId,
+        );
+        if (exists) {
+          setErrors(prev => ({
+            ...prev,
+            workerId: 'This Worker ID already exists in your plantation',
+          }));
+          return;
+        }
+        await workerService.createWorker(userProfile.plantationId, workerData, true);
+        showAlert('Success', 'Worker added successfully', [
+          { text: 'OK', style: 'default', onPress: () => navigation.goBack() },
+        ], 'low');
+      }
     } catch (error: any) {
+      console.error('[AddWorker] handleSaveWorker threw an error:', error?.code, error?.message, error);
       const appError = handleFirebaseError(error);
       logError(appError, 'AddWorkerScreen');
-      Alert.alert('Error', appError.userMessage);
+      showAlert('Error', appError.userMessage, undefined, 'high');
     } finally {
       setLoading(false);
     }
@@ -197,7 +200,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          <View style={[styles.formCard, { backgroundColor: colors.cardBackground || '#fff' }]}>
+          <View style={[styles.formCard, { backgroundColor: colors.cardBackground || '#fff', borderColor: colors.border }]}>
             {/* Name Input */}
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: colors.text }]}>{t('workers.name_label')}</Text>
@@ -313,8 +316,8 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
                 style={[
                   styles.inputBox,
                   {
-                    borderColor: '#ddd',
-                    backgroundColor: '#f0f0f0',
+                    borderColor: colors.border,
+                    backgroundColor: colors.background,
                   },
                 ]}
               >
@@ -402,7 +405,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color="#F4B124" />
               ) : (
                 <>
                   <Text style={styles.saveIcon}>✓</Text>
@@ -413,6 +416,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </ScrollView>
       </SafeAreaView>
+      <CustomAlert visible={alertState.visible} title={alertState.title} message={alertState.message} buttons={alertState.buttons} onDismiss={hideAlert} severity={alertState.severity} />
     </KeyboardAvoidingView>
   );
 };
@@ -466,6 +470,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginTop: 0,
     marginBottom: 20,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -485,8 +490,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 12,
-    minHeight: 48,
+    height: 52,
     justifyContent: 'center',
   },
   textInput: {
@@ -547,29 +551,28 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   saveButton: {
-    backgroundColor: '#fbc02d',
-    borderRadius: 8,
-    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: '#F4B124',
+    backgroundColor: 'transparent',
+    borderRadius: 8,
+    paddingVertical: 9,
+    paddingHorizontal: 32,
     marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    alignSelf: 'center',
   },
   saveIcon: {
-    fontSize: 18,
-    color: '#fff',
-    marginRight: 6,
-    fontWeight: 'bold',
+    fontSize: 15,
+    color: '#F4B124',
+    fontWeight: '700',
   },
   saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: '#F4B124',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
 

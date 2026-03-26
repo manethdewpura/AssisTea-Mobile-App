@@ -7,19 +7,24 @@ import {
     TouchableOpacity,
     Modal,
     TextInput,
-    Alert,
     ActivityIndicator,
 } from 'react-native';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { useAppSelector } from '../../hooks/redux.hooks';
-import { selectAuth } from '../../store/selectors';
+import { useThemedAlert } from '../../hooks/useThemedAlert';
+import { selectAuth, selectTheme } from '../../store/selectors';
 import { fieldService } from '../../services/field.service';
+import { fieldSQLiteService } from '../../services/sqlite/fieldSQLite.service';
 import { Field, CreateFieldInput } from '../../models/Field';
+import { checkNetworkConnection } from '../../utils/network.util';
+import { handleFirebaseError, logError } from '../../utils';
 import Slider from '@react-native-community/slider';
+import CustomAlert from '../../components/molecule/CustomAlert';
 import { useTranslation } from 'react-i18next';
 
 export default function FieldManagementScreen() {
     const { userProfile } = useAppSelector(selectAuth);
+    const { colors } = useAppSelector(selectTheme);
     const { t } = useTranslation('common');
     const [fields, setFields] = useState<Field[]>([]);
     const [loading, setLoading] = useState(true);
@@ -32,6 +37,7 @@ export default function FieldManagementScreen() {
     const [maxWorkers, setMaxWorkers] = useState(5);
 
     const [saving, setSaving] = useState(false);
+    const { showAlert, hideAlert, alertState } = useThemedAlert();
 
     // Load fields on mount
     useEffect(() => {
@@ -45,11 +51,12 @@ export default function FieldManagementScreen() {
 
         try {
             setLoading(true);
-            const fetchedFields = await fieldService.getFieldsByPlantation(userProfile.plantationId);
+            // Read from SQLite so the list is always correct online and offline.
+            const fetchedFields = await fieldSQLiteService.getAllFields(userProfile.plantationId);
             setFields(fetchedFields);
         } catch (error) {
-            console.error('Error loading fields:', error);
-            Alert.alert('Error', 'Failed to load fields');
+            console.error('[FieldManagement] loadFields error:', error);
+            showAlert('Error', 'Failed to load fields', undefined, 'high');
         } finally {
             setLoading(false);
         }
@@ -75,27 +82,28 @@ export default function FieldManagementScreen() {
 
     const handleSave = async () => {
         if (!userProfile?.plantationId) {
-            Alert.alert('Error', 'User profile not found');
+            showAlert('Error', 'User profile not found', undefined, 'high');
             return;
         }
 
         if (!fieldName.trim()) {
-            Alert.alert('Error', 'Please enter a field name');
+            showAlert('Error', 'Please enter a field name', undefined, 'low');
             return;
         }
 
         if (slope < 5 || slope > 70) {
-            Alert.alert('Error', 'Slope must be between 5° and 70°');
+            showAlert('Error', 'Slope must be between 5° and 70°', undefined, 'low');
             return;
         }
 
         if (maxWorkers < 1 || maxWorkers > 20) {
-            Alert.alert('Error', 'Max workers must be between 1 and 20');
+            showAlert('Error', 'Max workers must be between 1 and 20', undefined, 'low');
             return;
         }
 
         try {
             setSaving(true);
+            const { isConnected } = await checkNetworkConnection();
 
             const fieldData: CreateFieldInput = {
                 name: fieldName.trim(),
@@ -103,28 +111,33 @@ export default function FieldManagementScreen() {
                 maxWorkers,
             };
 
+
             if (editingField) {
-                // Update existing field
-                await fieldService.updateField(editingField.id, fieldData);
-                Alert.alert('Success', 'Field updated successfully');
+                await fieldService.updateField(editingField.id, fieldData, isConnected);
+                showAlert(isConnected ? 'Success' : 'Saved Locally',
+                    isConnected ? 'Field updated successfully' : 'Field updated on this device. Changes will sync when you\'re back online.',
+                    undefined, 'low');
             } else {
-                // Create new field
-                await fieldService.createField(userProfile.plantationId, fieldData);
-                Alert.alert('Success', 'Field created successfully');
+                await fieldService.createField(userProfile.plantationId, fieldData, isConnected);
+                showAlert(isConnected ? 'Success' : 'Saved Locally',
+                    isConnected ? 'Field created successfully' : 'Field added on this device. Changes will sync when you\'re back online.',
+                    undefined, 'low');
             }
 
             setModalVisible(false);
             loadFields();
-        } catch (error) {
-            console.error('Error saving field:', error);
-            Alert.alert('Error', 'Failed to save field');
+        } catch (error: any) {
+            console.error('[FieldManagement] handleSave threw an error:', error?.code, error?.message, error);
+            const appError = handleFirebaseError(error);
+            logError(appError, 'FieldManagementScreen - SaveField');
+            showAlert('Error', appError.userMessage, undefined, 'high');
         } finally {
             setSaving(false);
         }
     };
 
     const handleDelete = (field: Field) => {
-        Alert.alert(
+        showAlert(
             t('general.delete'),
             t('fields.delete_confirm', { name: field.name }),
             [
@@ -134,23 +147,34 @@ export default function FieldManagementScreen() {
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            await fieldService.deleteField(field.id);
-                            Alert.alert(t('general.success'), t('fields.delete_success'));
+                            const { isConnected } = await checkNetworkConnection();
+                            // Optimistically remove from UI right away
+                            setFields(prev => prev.filter(f => f.id !== field.id));
+                            await fieldService.deleteField(field.id, isConnected);
+                            showAlert(
+                                isConnected ? 'Success' : 'Deleted Locally',
+                                isConnected ? 'Field deleted successfully' : 'Field removed on this device. Changes will sync when you\'re back online.',
+                                undefined, 'low'
+                            );
+                        } catch (error: any) {
+                            console.error('[FieldManagement] handleDelete threw an error:', error?.code, error?.message, error);
+                            const appError = handleFirebaseError(error);
+                            logError(appError, 'FieldManagementScreen - DeleteField');
+                            // Rollback optimistic removal on failure
                             loadFields();
-                        } catch (error) {
-                            console.error('Error deleting field:', error);
-                            Alert.alert(t('general.error'), t('fields.delete_error'));
+                            showAlert('Error', appError.userMessage, undefined, 'high');
                         }
                     },
                 },
-            ]
+            ],
+            'high'
         );
     };
 
     const renderFieldItem = ({ item }: { item: Field }) => (
-        <View style={styles.fieldCard}>
+        <View style={[styles.fieldCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
             <View style={styles.fieldHeader}>
-                <Text style={styles.fieldName}>{item.name}</Text>
+                <Text style={[styles.fieldName, { color: colors.text }]}>{item.name}</Text>
                 <View style={styles.actions}>
                     <TouchableOpacity
                         style={styles.editButton}
@@ -169,17 +193,17 @@ export default function FieldManagementScreen() {
 
             <View style={styles.fieldDetails}>
                 <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>{t('fields.slope_label')}:</Text>
-                    <Text style={styles.detailValue}>{item.slope}°</Text>
+                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>{t('fields.slope_label')}:</Text>
+                    <Text style={[styles.detailValue, { color: colors.text }]}>{item.slope}°</Text>
                 </View>
                 <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>{t('fields.max_workers_label')}:</Text>
-                    <Text style={styles.detailValue}>{item.maxWorkers}</Text>
+                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>{t('fields.max_workers_label')}:</Text>
+                    <Text style={[styles.detailValue, { color: colors.text }]}>{item.maxWorkers}</Text>
                 </View>
                 {item.location && (
                     <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Location:</Text>
-                        <Text style={styles.detailValue}>{item.location}</Text>
+                        <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Location:</Text>
+                        <Text style={[styles.detailValue, { color: colors.text }]}>{item.location}</Text>
                     </View>
                 )}
             </View>
@@ -188,20 +212,20 @@ export default function FieldManagementScreen() {
 
     if (loading) {
         return (
-            <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color="#4CAF50" />
-                <Text style={styles.loadingText}>Loading fields...</Text>
+            <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
+                <ActivityIndicator size="large" color="#73AB2E" />
+                <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading fields...</Text>
             </View>
         );
     }
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Fields List */}
             {fields.length === 0 ? (
                 <View style={styles.emptyContainer}>
-                    <Text style={styles.emptyText}>{t('fields.no_fields')}</Text>
-                    <Text style={styles.emptySubtext}>
+                    <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('fields.no_fields')}</Text>
+                    <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
                         {t('fields.no_fields_subtext')}
                     </Text>
                 </View>
@@ -214,11 +238,13 @@ export default function FieldManagementScreen() {
                 />
             )}
 
-            {/* Add Field Button - matching worker button style */}
-            <TouchableOpacity style={styles.addButton} onPress={openAddModal}>
-                <Text style={styles.addButtonIcon}>+</Text>
-                <Text style={styles.addButtonText}>{t('fields.add_field')}</Text>
-            </TouchableOpacity>
+            {/* Add Field Button */}
+            <View style={[styles.addButtonContainer, { borderTopColor: colors.border }]}>
+                <TouchableOpacity style={styles.addButton} onPress={openAddModal}>
+                    <Text style={styles.addButtonPlus}>＋</Text>
+                    <Text style={styles.addButtonText}>{t('fields.add_field')}</Text>
+                </TouchableOpacity>
+            </View>
 
             {/* Add/Edit Modal */}
             <Modal
@@ -228,23 +254,23 @@ export default function FieldManagementScreen() {
                 onRequestClose={() => setModalVisible(false)}
             >
                 <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
+                        <Text style={[styles.modalTitle, { color: colors.text }]}>
                             {editingField ? t('fields.edit_field') : t('fields.add_field')}
                         </Text>
 
                         {/* Field Name */}
-                        <Text style={styles.inputLabel}>{t('fields.field_name')} *</Text>
+                        <Text style={[styles.inputLabel, { color: colors.text }]}>{t('fields.field_name')} *</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
                             value={fieldName}
                             onChangeText={setFieldName}
                             placeholder={t('fields.field_name_placeholder')}
-                            placeholderTextColor="#999"
+                            placeholderTextColor={colors.textSecondary}
                         />
 
                         {/* Slope Slider */}
-                        <Text style={styles.inputLabel}>{t('fields.slope_label')}: {slope}°</Text>
+                        <Text style={[styles.inputLabel, { color: colors.text }]}>{t('fields.slope_label')}: {slope}°</Text>
                         <Slider
                             style={styles.slider}
                             minimumValue={5}
@@ -252,26 +278,24 @@ export default function FieldManagementScreen() {
                             step={1}
                             value={slope}
                             onValueChange={setSlope}
-                            minimumTrackTintColor="#4CAF50"
-                            maximumTrackTintColor="#ddd"
+                            minimumTrackTintColor="#73AB2E"
+                            maximumTrackTintColor={colors.border}
                         />
                         <View style={styles.sliderLabels}>
-                            <Text style={styles.sliderLabel}>5° (Gentle)</Text>
-                            <Text style={styles.sliderLabel}>70° (Very Steep)</Text>
+                            <Text style={[styles.sliderLabel, { color: colors.textSecondary }]}>5° (Gentle)</Text>
+                            <Text style={[styles.sliderLabel, { color: colors.textSecondary }]}>70° (Very Steep)</Text>
                         </View>
 
                         {/* Max Workers */}
-                        <Text style={styles.inputLabel}>{t('fields.max_workers_label')} *</Text>
+                        <Text style={[styles.inputLabel, { color: colors.text }]}>{t('fields.max_workers_label')} *</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
                             value={maxWorkers.toString()}
                             onChangeText={text => setMaxWorkers(parseInt(text) || 1)}
                             placeholder="e.g., 5"
                             keyboardType="numeric"
-                            placeholderTextColor="#999"
+                            placeholderTextColor={colors.textSecondary}
                         />
-
-
 
                         {/* Buttons */}
                         <View style={styles.modalButtons}>
@@ -288,10 +312,10 @@ export default function FieldManagementScreen() {
                                 disabled={saving}
                             >
                                 {saving ? (
-                                    <ActivityIndicator color="#fff" />
+                                    <ActivityIndicator color="#F4B124" />
                                 ) : (
                                     <Text style={styles.saveButtonText}>
-                                        {editingField ? t('general.update') : t('general.save')}
+                                        ✓ {editingField ? t('general.update') : t('general.save')}
                                     </Text>
                                 )}
                             </TouchableOpacity>
@@ -299,6 +323,7 @@ export default function FieldManagementScreen() {
                     </View>
                 </View>
             </Modal>
+            <CustomAlert visible={alertState.visible} title={alertState.title} message={alertState.message} buttons={alertState.buttons} onDismiss={hideAlert} severity={alertState.severity} />
         </View>
     );
 }
@@ -306,60 +331,54 @@ export default function FieldManagementScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
     },
     centerContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f5f5f5',
     },
     loadingText: {
         marginTop: 10,
         fontSize: 16,
-        color: '#666',
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 16,
-        backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: '#e0e0e0',
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#333',
     },
-    addButton: {
-        position: 'absolute',
-        bottom: 16,
-        right: 16,
-        backgroundColor: '#7cb342',
-        borderRadius: 25,
+    addButtonContainer: {
         paddingHorizontal: 16,
         paddingVertical: 12,
+        borderTopWidth: 1,
+        alignItems: 'flex-end',
+    },
+    addButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 4,
+        gap: 6,
+        borderWidth: 1.5,
+        borderColor: '#73AB2E',
+        backgroundColor: 'transparent',
+        borderRadius: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
     },
-    addButtonIcon: {
-        fontSize: 20,
-        color: '#fff',
-        fontWeight: 'bold',
-        marginRight: 6,
+    addButtonPlus: {
+        color: '#73AB2E',
+        fontWeight: '700',
+        fontSize: 15,
+        lineHeight: 17,
     },
     addButtonText: {
-        color: '#fff',
+        color: '#73AB2E',
         fontSize: 14,
-        fontWeight: '600',
+        fontWeight: '700',
     },
     emptyContainer: {
         flex: 1,
@@ -370,22 +389,21 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#666',
         marginBottom: 8,
     },
     emptySubtext: {
         fontSize: 14,
-        color: '#999',
         textAlign: 'center',
     },
     listContainer: {
         padding: 16,
+        paddingBottom: 24,
     },
     fieldCard: {
-        backgroundColor: '#fff',
         borderRadius: 12,
         padding: 16,
         marginBottom: 12,
+        borderWidth: 1,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -401,7 +419,6 @@ const styles = StyleSheet.create({
     fieldName: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#333',
         flex: 1,
     },
     actions: {
@@ -413,7 +430,6 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
     },
     editButtonText: {
-        color: '#fff',
         fontSize: 14,
         fontWeight: '600',
     },
@@ -422,7 +438,6 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
     },
     deleteButtonText: {
-        color: '#fff',
         fontSize: 14,
         fontWeight: '600',
     },
@@ -435,21 +450,18 @@ const styles = StyleSheet.create({
     },
     detailLabel: {
         fontSize: 14,
-        color: '#666',
     },
     detailValue: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#333',
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
         justifyContent: 'center',
         alignItems: 'center',
     },
     modalContent: {
-        backgroundColor: '#fff',
         borderRadius: 16,
         padding: 24,
         width: '90%',
@@ -458,23 +470,19 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#333',
         marginBottom: 20,
     },
     inputLabel: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#333',
         marginBottom: 8,
         marginTop: 12,
     },
     input: {
         borderWidth: 1,
-        borderColor: '#ddd',
         borderRadius: 8,
         padding: 12,
-        fontSize: 16,
-        color: '#333',
+        fontSize: 15,
     },
     slider: {
         width: '100%',
@@ -487,37 +495,41 @@ const styles = StyleSheet.create({
     },
     sliderLabel: {
         fontSize: 12,
-        color: '#666',
     },
     modalButtons: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
         gap: 12,
         marginTop: 24,
+        alignItems: 'center',
     },
     cancelButton: {
-        paddingHorizontal: 20,
-        paddingVertical: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
         borderRadius: 8,
-        backgroundColor: '#f5f5f5',
+        borderWidth: 1.5,
+        borderColor: '#73AB2E',
+        backgroundColor: 'transparent',
     },
     cancelButtonText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#666',
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#73AB2E',
     },
     saveButton: {
-        paddingHorizontal: 20,
-        paddingVertical: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
         borderRadius: 8,
-        backgroundColor: '#fbc02d',
+        borderWidth: 1.5,
+        borderColor: '#F4B124',
+        backgroundColor: 'transparent',
     },
     saveButtonDisabled: {
-        opacity: 0.6,
+        opacity: 0.5,
     },
     saveButtonText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#fff',
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#F4B124',
     },
 });
