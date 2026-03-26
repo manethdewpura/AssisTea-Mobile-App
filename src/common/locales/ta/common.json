@@ -395,6 +395,12 @@
     "schedule_deleted": "அட்டவணை வெற்றிகரமாக நீக்கப்பட்டது",
     "delete_schedule_failed": "அட்டவணையை நீக்க முடியவில்லை"
   },
+  "theme": {
+    "choose_theme": "தீமை தேர்வு செய்",
+    "light": "ஒளி",
+    "dark": "இருள்",
+    "system": "கணினி"
+  },
   "time_ago": {
     "just_now": "இப்போது",
     "minute_ago_one": "{{count}} நிமிடத்திற்கு முன்",

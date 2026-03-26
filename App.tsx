@@ -232,6 +232,7 @@ function AppContent() {
     if (userProfile.role === 'admin') {
       return (
         <View style={styles.container}>
+          <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
           <TopNavbar 
             onNotificationPress={() => setShowNotifications(true)}
             onMenuPress={() => setShowHamburgerMenu(true)}
@@ -287,6 +288,7 @@ function AppContent() {
     } else if (userProfile.role === 'tea_plantation_manager') {
       return (
         <View style={styles.container}>
+          <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
           <TopNavbar 
             onNotificationPress={() => setShowNotifications(true)}
             onMenuPress={() => setShowHamburgerMenu(true)}

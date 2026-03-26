@@ -10,8 +10,8 @@ import {
   NavigationContainer,
   type NavigatorScreenParams,
   type NavigationContainerRefWithCurrent,
-  type ParamListBase,
 } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   createBottomTabNavigator,
   type BottomTabBarProps,
@@ -55,7 +55,7 @@ type MainTabParamList = {
 
 interface MainNavigatorProps {
   userRole: 'admin' | 'tea_plantation_manager';
-  navigationRef: NavigationContainerRefWithCurrent<ParamListBase>;
+  navigationRef: NavigationContainerRefWithCurrent<any>;
 }
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -165,6 +165,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
 }) => {
   const { colors, isDark } = useAppSelector(selectTheme);
   const { t } = useTranslation('common');
+  const insets = useSafeAreaInsets();
 
   const tabAccessibilityLabel: Record<keyof MainTabParamList, string> = {
     Watering: t('menu.watering'),
@@ -178,7 +179,10 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
     <View
       style={[
         styles.tabBarContainer,
-        { backgroundColor: colors.surface },
+        {
+          backgroundColor: colors.surface,
+          paddingBottom: Math.max(insets.bottom, 8),
+        },
         isDark ? styles.noBorder : styles.withBorder,
       ]}
     >
@@ -288,7 +292,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     paddingTop: 12,
-    paddingBottom: 24,
     paddingHorizontal: 16,
     shadowColor: '#000',
     shadowOffset: {

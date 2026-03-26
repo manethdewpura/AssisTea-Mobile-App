@@ -7,6 +7,7 @@ import {
   Modal,
   Dimensions,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useAppSelector, useAppDispatch } from '../../hooks';
 import { selectTheme } from '../../store/selectors';
 import { setThemeMode } from '../../store/slices';
@@ -21,12 +22,13 @@ interface ThemeSelectorProps {
 const ThemeSelector: React.FC<ThemeSelectorProps> = ({ style }) => {
   const dispatch = useAppDispatch();
   const { colors, mode } = useAppSelector(selectTheme);
+  const { t } = useTranslation('common');
   const [modalVisible, setModalVisible] = useState(false);
 
   const themeOptions: { mode: ThemeMode; label: string; icon: string }[] = [
-    { mode: 'light', label: 'Light', icon: '☀️' },
-    { mode: 'dark', label: 'Dark', icon: '🌙' },
-    { mode: 'system', label: 'System', icon: '⚙️' },
+    { mode: 'light', label: t('theme.light'), icon: '☀️' },
+    { mode: 'dark', label: t('theme.dark'), icon: '🌙' },
+    { mode: 'system', label: t('theme.system'), icon: '⚙️' },
   ];
 
   const handleThemeSelect = (selectedMode: ThemeMode) => {
@@ -41,7 +43,7 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({ style }) => {
 
   const getCurrentThemeLabel = () => {
     const current = themeOptions.find(option => option.mode === mode);
-    return current?.label || 'System';
+    return current?.label || t('theme.system');
   };
 
   return (
@@ -80,7 +82,7 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({ style }) => {
             ]}
           >
             <Text style={[styles.modalTitle, { color: colors.text }]}>
-              Choose Theme
+              {t('theme.choose_theme')}
             </Text>
 
             {themeOptions.map(option => (
@@ -125,7 +127,7 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({ style }) => {
               <Text
                 style={[styles.cancelText, { color: colors.textSecondary }]}
               >
-                Cancel
+                {t('general.cancel')}
               </Text>
             </TouchableOpacity>
           </View>

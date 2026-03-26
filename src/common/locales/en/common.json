@@ -395,6 +395,12 @@
     "schedule_deleted": "Schedule deleted successfully",
     "delete_schedule_failed": "Failed to delete schedule"
   },
+  "theme": {
+    "choose_theme": "Choose Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
   "time_ago": {
     "just_now": "Just now",
     "minute_ago_one": "{{count}} minute ago",

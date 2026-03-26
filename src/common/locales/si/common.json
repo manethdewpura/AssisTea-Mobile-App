@@ -395,6 +395,12 @@
     "schedule_deleted": "කාලසටහන සාර්ථකව මකා දමන ලදී",
     "delete_schedule_failed": "කාලසටහන මකා දැමීමට අපොහොසත් විය"
   },
+  "theme": {
+    "choose_theme": "තේමාව තෝරන්න",
+    "light": "ආලෝක",
+    "dark": "අඳුරු",
+    "system": "පද්ධති"
+  },
   "time_ago": {
     "just_now": "දැන්",
     "minute_ago_one": "මිනිත්තු {{count}}කට පෙර",

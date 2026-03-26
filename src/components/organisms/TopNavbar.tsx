@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Lucide } from '@react-native-vector-icons/lucide';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppSelector } from '../../hooks';
 import { selectTheme, selectNotifications } from '../../store/selectors';
 
@@ -14,13 +15,14 @@ export interface TopNavbarProps {
 const TopNavbar: React.FC<TopNavbarProps> = ({ onNotificationPress, onMenuPress, unreadCount }) => {
   const { colors, isDark } = useAppSelector(selectTheme);
   const notifications = useAppSelector(selectNotifications);
+  const insets = useSafeAreaInsets();
   const resolvedUnreadCount = unreadCount ?? notifications.unreadCount ?? 5;
 
   return (
     <View
       style={[
         styles.container,
-        { backgroundColor: colors.primary },
+        { backgroundColor: colors.primary, paddingTop: insets.top + 6 },
         isDark ? styles.noBorder : styles.withBorder,
       ]}
     >
@@ -62,8 +64,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 24,
-    paddingVertical: 6,
+    paddingBottom: 6,
     paddingHorizontal: 16,
     elevation: 2,
     shadowColor: '#000',
