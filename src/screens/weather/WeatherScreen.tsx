@@ -18,12 +18,14 @@ import {
   formatCompactDateTimeColombo,
 } from '../../utils';
 import { Lucide } from '@react-native-vector-icons/lucide';
+import { useTranslation } from 'react-i18next';
 
 interface WeatherScreenProps {
   onBackPress?: () => void;
 }
 
 const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
+  const { t } = useTranslation();
   const { current, forecast, isFetching, error, lastUpdated, isBackendConnected, predictions, isPredictionMode } =
     useAppSelector(selectWeather);
   const { colors } = useAppSelector(selectTheme);
@@ -50,7 +52,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.text }]}>
-            Loading weather data...
+            {t('weather.loading')}
           </Text>
         </View>
       </View>
@@ -80,7 +82,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
             <Lucide name="arrow-left" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text }]}>
-            Weather Forecast
+            {t('weather.title')}
           </Text>
           <View style={styles.backButton} />
         </View>
@@ -104,7 +106,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
             ]}
           >
             <Text style={styles.statusText}>
-              ML Predicted Data — No Internet Connection
+              {t('weather.ml_predicted_no_internet')}
             </Text>
           </View>
         ) : (
@@ -123,10 +125,10 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
           >
             <Text style={styles.statusText}>
               {isBackendConnected === true
-                ? '✓ Backend Connected - Data Syncing'
+                ? t('weather.backend_connected')
                 : isBackendConnected === false
-                ? '⚠ Backend Disconnected - Local Mode'
-                : 'Checking backend connection...'}
+                ? t('weather.backend_disconnected')
+                : t('weather.checking_backend')}
             </Text>
           </View>
         )}
@@ -195,7 +197,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
               <Text
                 style={[styles.feelsLikeText, { color: colors.textSecondary }]}
               >
-                Feels like {Math.round(current.main.feels_like)}°
+                {t('weather.feels_like', { value: Math.round(current.main.feels_like) })}
               </Text>
               {current.weather[0] && (
                 <Text
@@ -210,7 +212,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
             <View style={styles.weatherDetails}>
               <View style={styles.detailItem}>
                 <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>
-                  Humidity
+                  {t('weather.humidity')}
                 </Text>
                 <Text style={[styles.detailValue, { color: colors.text }]}>
                   {Number(current.main.humidity).toFixed(2)}%
@@ -218,7 +220,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
               </View>
               <View style={styles.detailItem}>
                 <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>
-                  Pressure
+                  {t('weather.pressure')}
                 </Text>
                 <Text style={[styles.detailValue, { color: colors.text }]}>
                   {Number(current.main.pressure).toFixed(2)} hPa
@@ -226,7 +228,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
               </View>
               <View style={styles.detailItem}>
                 <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>
-                  Wind Speed
+                  {t('weather.wind_speed')}
                 </Text>
                 <Text style={[styles.detailValue, { color: colors.text }]}>
                   {Number(current.wind.speed).toFixed(2)} m/s
@@ -234,7 +236,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
               </View>
               <View style={styles.detailItem}>
                 <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>
-                  Visibility
+                  {t('weather.visibility')}
                 </Text>
                 <Text style={[styles.detailValue, { color: colors.text }]}>
                   {(current.visibility / 1000).toFixed(1)} km
@@ -247,7 +249,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
               <View style={styles.sunTimes}>
                 <View style={styles.sunTimeItem}>
                   <Text style={[styles.sunTimeLabel, { color: colors.textSecondary }]}>
-                    Sunrise
+                    {t('weather.sunrise')}
                   </Text>
                   <Text style={[styles.sunTimeValue, { color: colors.text }]}>
                     {formatTimeFromUnixSeconds(current.sys.sunrise)}
@@ -255,7 +257,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
                 </View>
                 <View style={styles.sunTimeItem}>
                   <Text style={[styles.sunTimeLabel, { color: colors.textSecondary }]}>
-                    Sunset
+                    {t('weather.sunset')}
                   </Text>
                   <Text style={[styles.sunTimeValue, { color: colors.text }]}>
                     {formatTimeFromUnixSeconds(current.sys.sunset)}
@@ -268,10 +270,15 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
             {isPredictionMode && predictions.length > 0 && (
               <View style={styles.predictionTimestamp}>
                 <Text style={[styles.predictionTimestampText, { color: colors.textSecondary }]}>
-                  Predicted for: {formatDateTimeToColombo(predictions[0].measured_at)} (LK Time)
+                  {t('weather.predicted_for', {
+                    value: formatDateTimeToColombo(predictions[0].measured_at),
+                  })}{' '}
+                  (LK Time)
                 </Text>
                 <Text style={[styles.predictionTimestampText, { color: colors.textSecondary }]}>
-                  Generated at: {formatDateTimeToColombo(predictions[0].predicted_at)}
+                  {t('weather.generated_at', {
+                    value: formatDateTimeToColombo(predictions[0].predicted_at),
+                  })}
                 </Text>
               </View>
             )}
@@ -280,7 +287,9 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
               <Text
                 style={[styles.lastUpdatedText, { color: colors.textSecondary }]}
               >
-                Last updated: {new Date(lastUpdated).toLocaleString()}
+                {t('weather.last_updated', {
+                  value: new Date(lastUpdated).toLocaleString(),
+                })}
               </Text>
             )}
           </View>
@@ -299,7 +308,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
             ]}
           >
             <Text style={[styles.forecastTitle, { color: colors.text }]}>
-              Other ML Predictions
+              {t('weather.other_ml_predictions')}
             </Text>
             {predictions.slice(1).map((prediction, index) => {
               const confidenceInfo = getConfidenceInfo(prediction.confidence_score);
@@ -374,7 +383,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
             ]}
           >
             <Text style={[styles.forecastTitle, { color: colors.text }]}>
-              Daily Forecast
+              {t('weather.daily_forecast')}
             </Text>
             {forecast.list.slice(0, 5).map((item, index) => (
               <View

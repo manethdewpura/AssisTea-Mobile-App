@@ -25,6 +25,7 @@ import MessageBubble from '../components/molecule/MessageBubble';
 import LanguageSelector from '../components/molecule/LanguageSelector';
 import ChatInput from '../components/molecule/ChatInput';
 import type { Language, MessageSource } from '../store/slices/ai.slice';
+import { useTranslation } from 'react-i18next';
  
 const getEmptyTexts = (lang: Language) => {
   switch (lang) {
@@ -55,6 +56,7 @@ const getEmptyTexts = (lang: Language) => {
  
 const ChatScreen: React.FC = () => {
   const { colors } = useAppSelector(selectTheme);
+  const { t } = useTranslation();
   const { messages, loading, language, modelLoaded, error } =
     useAppSelector(selectAI);
   const { isOnline } = useAppSelector(selectNetwork);
@@ -283,7 +285,7 @@ const ChatScreen: React.FC = () => {
               { color: isOnline ? colors.primary : colors.textSecondary },
             ]}
           >
-            {isOnline ? 'Online' : 'Offline'}
+            {isOnline ? t('chat.online') : t('chat.offline')}
           </Text>
         </View>
         {!modelLoaded && (
@@ -294,7 +296,7 @@ const ChatScreen: React.FC = () => {
               <Text
                 style={[styles.modelStatusText, { color: colors.textSecondary }]}
               >
-                Model: Using fallback
+                {t('chat.model_fallback')}
               </Text>
             )}
           </View>
@@ -400,7 +402,7 @@ const ChatScreen: React.FC = () => {
               <Text
                 style={[styles.typingText, { color: colors.textSecondary }]}
               >
-                AI is thinking...
+                {t('chat.ai_thinking')}
               </Text>
             </View>
           )}
@@ -427,7 +429,7 @@ const ChatScreen: React.FC = () => {
           onSend={handleSendMessage}
           loading={loading}
           disabled={initializing}
-          placeholder="Ask about tea farming..."
+          placeholder={t('chat.ask_placeholder')}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>

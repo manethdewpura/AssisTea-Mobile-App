@@ -165,7 +165,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
 
       const appError = handleFirebaseError(error);
       logError(appError, 'DailyDataViewScreen - LoadDailyData (SQLite)');
-      showAlert('Error', appError.userMessage, undefined, 'high');
+      showAlert(t('general.error'), appError.userMessage, undefined, 'high');
     } finally {
       setLoading(false);
     }
@@ -180,13 +180,13 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
       const { isConnected } = await checkNetworkConnection();
       if (!isConnected) {
 
-        showAlert('Offline', 'Connect to the internet to sync daily data.', undefined, 'medium');
+        showAlert(t('admin.network_error'), t('daily_data.sync_offline'), undefined, 'medium');
         return;
       }
 
       await dailyDataService.syncToSQLite(userProfile.plantationId);
       await loadDailyData();
-      showAlert('Synced', 'Daily data has been synced from the server.', undefined, 'low');
+      showAlert(t('daily_data.synced_title'), t('daily_data.synced_message'), undefined, 'low');
     } catch (error: any) {
       console.error(
         '[DailyDataViewScreen] Manual sync failed:',
@@ -196,7 +196,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
       );
       const appError = handleFirebaseError(error);
       logError(appError, 'DailyDataViewScreen - ManualSync');
-      showAlert('Sync Failed', appError.userMessage, undefined, 'high');
+      showAlert(t('daily_data.sync_failed_title'), appError.userMessage, undefined, 'high');
     } finally {
       setSyncing(false);
     }
@@ -243,7 +243,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const getWorkerName = (workerId: string) => {
     const worker = workers.find(w => w.id === workerId);
-    return worker ? worker.name : 'Unknown Worker';
+    return worker ? worker.name : t('daily_data.unknown_worker');
   };
 
   const handleEdit = (dataId: string) => {
@@ -388,8 +388,8 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               ]}
             >
               {startDateFilter && endDateFilter
-                ? `${startDateFilter} to ${endDateFilter}`
-                : 'Date Range'}
+                ? `${startDateFilter} ${t('daily_data.to')} ${endDateFilter}`
+                : t('daily_data.filter_date_range')}
             </Text>
           </TouchableOpacity>
 
@@ -456,7 +456,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                   { color: colors.text },
                 ]}
               >
-                Sync
+                {t('daily_data.sync')}
               </Text>
             )}
           </TouchableOpacity>
@@ -559,13 +559,13 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
 
               {/* From Date Section */}
               <View style={styles.dateSection}>
-                <Text style={[styles.dateSectionLabel, { color: colors.text }]}>From Date</Text>
+                <Text style={[styles.dateSectionLabel, { color: colors.text }]}>{t('daily_data.from_date')}</Text>
                 <TouchableOpacity
                   style={[styles.dateDisplayBox, { backgroundColor: colors.background, borderColor: '#73AB2E' }]}
                   onPress={() => setActiveDatePicker('start')}
                 >
                   <Text style={[styles.dateDisplayText, { color: colors.text }]}>
-                    {startDate ? startDate.toISOString().split('T')[0] : 'Tap to select start date'}
+                    {startDate ? startDate.toISOString().split('T')[0] : t('daily_data.tap_select_start_date')}
                   </Text>
                   <Lucide name="calendar" size={18} color={colors.text} />
                 </TouchableOpacity>
@@ -573,13 +573,13 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
 
               {/* To Date Section */}
               <View style={styles.dateSection}>
-                <Text style={[styles.dateSectionLabel, { color: colors.text }]}>To Date</Text>
+                <Text style={[styles.dateSectionLabel, { color: colors.text }]}>{t('daily_data.to_date')}</Text>
                 <TouchableOpacity
                   style={[styles.dateDisplayBox, { backgroundColor: colors.background, borderColor: '#73AB2E' }]}
                   onPress={() => setActiveDatePicker('end')}
                 >
                   <Text style={[styles.dateDisplayText, { color: colors.text }]}>
-                    {endDate ? endDate.toISOString().split('T')[0] : 'Tap to select end date'}
+                    {endDate ? endDate.toISOString().split('T')[0] : t('daily_data.tap_select_end_date')}
                   </Text>
                   <Lucide name="calendar" size={18} color={colors.text} />
                 </TouchableOpacity>
@@ -598,7 +598,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                     setActiveDatePicker(null);
                   }}
                 >
-                  <Text style={styles.clearDateButtonText}>Clear</Text>
+                  <Text style={styles.clearDateButtonText}>{t('general.clear')}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -615,7 +615,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
                   }}
                   disabled={!startDate || !endDate}
                 >
-                  <Text style={styles.applyDateButtonText}>Apply Filter</Text>
+                  <Text style={styles.applyDateButtonText}>{t('daily_data.apply_filter')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -695,7 +695,7 @@ const DailyDataViewScreen: React.FC<Props> = ({ navigation, route }) => {
               style={styles.addDataButton}
               onPress={() => navigation.navigate('DailyDataEntry')}
             >
-              <Text style={styles.addDataButtonText}>Add Daily Data</Text>
+              <Text style={styles.addDataButtonText}>{t('daily_data.add_daily_data')}</Text>
             </TouchableOpacity>
           </View>
         ) : (

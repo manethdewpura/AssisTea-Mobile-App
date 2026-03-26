@@ -56,7 +56,7 @@ export default function FieldManagementScreen() {
             setFields(fetchedFields);
         } catch (error) {
             console.error('[FieldManagement] loadFields error:', error);
-            showAlert('Error', 'Failed to load fields', undefined, 'high');
+            showAlert(t('general.error'), t('fields.load_error'), undefined, 'high');
         } finally {
             setLoading(false);
         }
@@ -82,22 +82,22 @@ export default function FieldManagementScreen() {
 
     const handleSave = async () => {
         if (!userProfile?.plantationId) {
-            showAlert('Error', 'User profile not found', undefined, 'high');
+            showAlert(t('general.error'), t('general.user_profile_not_found'), undefined, 'high');
             return;
         }
 
         if (!fieldName.trim()) {
-            showAlert('Error', 'Please enter a field name', undefined, 'low');
+            showAlert(t('general.error'), t('fields.enter_name_required'), undefined, 'low');
             return;
         }
 
         if (slope < 5 || slope > 70) {
-            showAlert('Error', 'Slope must be between 5° and 70°', undefined, 'low');
+            showAlert(t('general.error'), t('fields.slope_range_error'), undefined, 'low');
             return;
         }
 
         if (maxWorkers < 1 || maxWorkers > 20) {
-            showAlert('Error', 'Max workers must be between 1 and 20', undefined, 'low');
+            showAlert(t('general.error'), t('fields.max_workers_range_error'), undefined, 'low');
             return;
         }
 
@@ -114,13 +114,13 @@ export default function FieldManagementScreen() {
 
             if (editingField) {
                 await fieldService.updateField(editingField.id, fieldData, isConnected);
-                showAlert(isConnected ? 'Success' : 'Saved Locally',
-                    isConnected ? 'Field updated successfully' : 'Field updated on this device. Changes will sync when you\'re back online.',
+                showAlert(isConnected ? t('general.success') : t('general.saved_locally'),
+                    isConnected ? t('fields.update_success') : t('fields.updated_local_sync'),
                     undefined, 'low');
             } else {
                 await fieldService.createField(userProfile.plantationId, fieldData, isConnected);
-                showAlert(isConnected ? 'Success' : 'Saved Locally',
-                    isConnected ? 'Field created successfully' : 'Field added on this device. Changes will sync when you\'re back online.',
+                showAlert(isConnected ? t('general.success') : t('general.saved_locally'),
+                    isConnected ? t('fields.create_success') : t('fields.created_local_sync'),
                     undefined, 'low');
             }
 
@@ -130,7 +130,7 @@ export default function FieldManagementScreen() {
             console.error('[FieldManagement] handleSave threw an error:', error?.code, error?.message, error);
             const appError = handleFirebaseError(error);
             logError(appError, 'FieldManagementScreen - SaveField');
-            showAlert('Error', appError.userMessage, undefined, 'high');
+            showAlert(t('general.error'), appError.userMessage, undefined, 'high');
         } finally {
             setSaving(false);
         }
@@ -152,8 +152,8 @@ export default function FieldManagementScreen() {
                             setFields(prev => prev.filter(f => f.id !== field.id));
                             await fieldService.deleteField(field.id, isConnected);
                             showAlert(
-                                isConnected ? 'Success' : 'Deleted Locally',
-                                isConnected ? 'Field deleted successfully' : 'Field removed on this device. Changes will sync when you\'re back online.',
+                                isConnected ? t('general.success') : t('general.deleted_locally'),
+                                isConnected ? t('fields.delete_success') : t('fields.deleted_local_sync'),
                                 undefined, 'low'
                             );
                         } catch (error: any) {
@@ -162,7 +162,7 @@ export default function FieldManagementScreen() {
                             logError(appError, 'FieldManagementScreen - DeleteField');
                             // Rollback optimistic removal on failure
                             loadFields();
-                            showAlert('Error', appError.userMessage, undefined, 'high');
+                            showAlert(t('general.error'), appError.userMessage, undefined, 'high');
                         }
                     },
                 },
@@ -202,7 +202,7 @@ export default function FieldManagementScreen() {
                 </View>
                 {item.location && (
                     <View style={styles.detailRow}>
-                        <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Location:</Text>
+                        <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>{t('admin.location_prefix')}</Text>
                         <Text style={[styles.detailValue, { color: colors.text }]}>{item.location}</Text>
                     </View>
                 )}
@@ -214,7 +214,7 @@ export default function FieldManagementScreen() {
         return (
             <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
                 <ActivityIndicator size="large" color="#73AB2E" />
-                <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading fields...</Text>
+                <Text style={[styles.loadingText, { color: colors.textSecondary }]}>{t('fields.loading')}</Text>
             </View>
         );
     }
@@ -282,8 +282,8 @@ export default function FieldManagementScreen() {
                             maximumTrackTintColor={colors.border}
                         />
                         <View style={styles.sliderLabels}>
-                            <Text style={[styles.sliderLabel, { color: colors.textSecondary }]}>5° (Gentle)</Text>
-                            <Text style={[styles.sliderLabel, { color: colors.textSecondary }]}>70° (Very Steep)</Text>
+                            <Text style={[styles.sliderLabel, { color: colors.textSecondary }]}>{t('fields.slope_gentle')}</Text>
+                            <Text style={[styles.sliderLabel, { color: colors.textSecondary }]}>{t('fields.slope_steep')}</Text>
                         </View>
 
                         {/* Max Workers */}
@@ -292,7 +292,7 @@ export default function FieldManagementScreen() {
                             style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
                             value={maxWorkers.toString()}
                             onChangeText={text => setMaxWorkers(parseInt(text) || 1)}
-                            placeholder="e.g., 5"
+                            placeholder={t('fields.max_workers_placeholder')}
                             keyboardType="numeric"
                             placeholderTextColor={colors.textSecondary}
                         />

@@ -155,8 +155,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
           appError.severity === 'low'
             ? t('general.notice')
             : appError.severity === 'high'
-              ? 'Error'
-              : 'Warning',
+              ? t('general.error')
+              : t('general.warning'),
           appError.userMessage,
           { severity: appError.severity },
         );
@@ -326,7 +326,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
     } catch (error: any) {
       const appError = handleFirebaseError(error);
       logError(appError, 'AdminDashboard - CreatePlantation');
-      showCustomAlert('Error', appError.userMessage, {
+      showCustomAlert(t('general.error'), appError.userMessage, {
         severity: appError.severity,
       });
     }
@@ -354,7 +354,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
               } catch (error: any) {
                 const appError = handleFirebaseError(error);
                 logError(appError, 'AdminDashboard - DeletePlantation');
-                showCustomAlert('Error', appError.userMessage, {
+                showCustomAlert(t('general.error'), appError.userMessage, {
                   severity: appError.severity,
                 });
               }
@@ -407,7 +407,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
       </View>
       <View style={styles.plantationDetails}>
         <View style={styles.detailChip}>
-          <Text style={[styles.detailChipText, { color: colors.text }]}>🌾 {item.area} acres</Text>
+          <Text style={[styles.detailChipText, { color: colors.text }]}>🌾 {item.area} {t('admin.area_suffix')}</Text>
         </View>
         {item.description && (
           <Text style={[styles.plantationDescription, { color: colors.textSecondary }]}>
@@ -420,7 +420,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
         onPress={() => handleDeletePlantation(item.id)}
         activeOpacity={0.7}
       >
-        <Text style={styles.deletePlantationBtnText}>Delete Plantation</Text>
+        <Text style={styles.deletePlantationBtnText}>{t('admin.delete_plantation_title')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -440,34 +440,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
           <View style={styles.heroContent}>
             <View style={styles.heroTop}>
               <View>
-                <Text style={styles.heroLabel}>ADMIN CONTROL CENTER</Text>
-                <Text style={styles.heroTitle}>Dashboard</Text>
+                <Text style={styles.heroLabel}>{t('admin.hero_label')}</Text>
+                <Text style={styles.heroTitle}>{t('admin.hero_title')}</Text>
               </View>
               <View style={styles.heroBadge}>
                 <Text style={styles.heroBadgeText}>⚙️</Text>
               </View>
             </View>
             <Text style={styles.heroSubtitle}>
-              Welcome back, {userProfile?.email?.split('@')[0] || 'Admin'}
+              {t('general.welcome_back')}, {userProfile?.email?.split('@')[0] || t('menu.admin_role')}
             </Text>
 
             {/* Summary Stats Row */}
             <View style={styles.statsRow}>
               <View style={styles.statPill}>
                 <Text style={styles.statPillValue}>{plantations.length}</Text>
-                <Text style={styles.statPillLabel}>Plantation</Text>
+                <Text style={styles.statPillLabel}>{t('admin.plantation')}</Text>
               </View>
               <View style={styles.statPillDivider} />
               <View style={styles.statPill}>
                 <Text style={styles.statPillValue}>{users.length}</Text>
-                <Text style={styles.statPillLabel}>Managers</Text>
+                <Text style={styles.statPillLabel}>{t('admin.managers')}</Text>
               </View>
               <View style={styles.statPillDivider} />
               <View style={styles.statPill}>
                 <Text style={styles.statPillValue}>
                   {plantations.reduce((acc, p) => acc + (p.area || 0), 0)}
                 </Text>
-                <Text style={styles.statPillLabel}>Acres</Text>
+                <Text style={styles.statPillLabel}>{t('admin.acres')}</Text>
               </View>
             </View>
           </View>
@@ -477,7 +477,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#73AB2E" />
             <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-              Loading data...
+              {t('admin.loading_data')}
             </Text>
           </View>
         )}
@@ -488,7 +488,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
             <View style={styles.sectionTitleGroup}>
               <View style={styles.sectionAccent} />
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Plantation Managers
+                {t('admin.plantation_managers')}
               </Text>
             </View>
             <TouchableOpacity
@@ -497,16 +497,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
               activeOpacity={0.7}
             >
               <Text style={styles.addBtnPlus}>＋</Text>
-              <Text style={styles.addBtnText}>Add Manager</Text>
+              <Text style={styles.addBtnText}>{t('admin.add_manager_plain')}</Text>
             </TouchableOpacity>
           </View>
 
           {users.length === 0 && !loading ? (
             <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={styles.emptyIcon}>👤</Text>
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>No Managers Yet</Text>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('admin.no_managers_title')}</Text>
               <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                Add a plantation manager to get started.
+                {t('admin.no_managers_text')}
               </Text>
             </View>
           ) : (
@@ -525,7 +525,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
             <View style={styles.sectionTitleGroup}>
               <View style={[styles.sectionAccent, styles.sectionAccentAmber]} />
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                My Plantation
+                {t('admin.my_plantation')}
               </Text>
             </View>
             {plantations.length === 0 && (
@@ -535,7 +535,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
                 activeOpacity={0.7}
               >
                 <Text style={[styles.addBtnPlus, styles.addBtnPlusAmber]}>＋</Text>
-                <Text style={[styles.addBtnText, styles.addBtnTextAmber]}>Create</Text>
+                <Text style={[styles.addBtnText, styles.addBtnTextAmber]}>{t('admin.create')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -543,9 +543,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
           {plantations.length === 0 && !loading ? (
             <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={styles.emptyIcon}>🌿</Text>
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>No Plantation Yet</Text>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('admin.no_plantation_yet_title')}</Text>
               <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                Create your first tea plantation to start managing.
+                {t('admin.no_plantation_yet_text')}
               </Text>
             </View>
           ) : (
@@ -564,7 +564,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
             <View style={styles.sectionTitleGroup}>
               <View style={[styles.sectionAccent, styles.sectionAccentSky]} />
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Weather Forecast
+                {t('weather.title')}
               </Text>
             </View>
             <TouchableOpacity
@@ -577,8 +577,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
                   <Text style={styles.weatherCardIcon}>🌤️</Text>
                 </View>
                 <View>
-                  <Text style={[styles.weatherCardTitle, { color: colors.text }]}>View Weather Forecast</Text>
-                  <Text style={[styles.weatherCardSub, { color: colors.textSecondary }]}>Tap to see current forecast</Text>
+                  <Text style={[styles.weatherCardTitle, { color: colors.text }]}>{t('admin.view_weather')}</Text>
+                  <Text style={[styles.weatherCardSub, { color: colors.textSecondary }]}>{t('admin.tap_to_view_weather')}</Text>
                 </View>
               </View>
               <Text style={styles.weatherCardArrow}>›</Text>
@@ -624,16 +624,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
               />
 
               <View style={styles.roleContainer}>
-                <Text style={[styles.roleLabel, { color: colors.textSecondary }]}>Role:</Text>
+                <Text style={[styles.roleLabel, { color: colors.textSecondary }]}>{t('admin.role_label')}</Text>
                 <View style={styles.roleChip}>
-                  <Text style={[styles.roleChipText, { color: colors.text }]}>Tea Plantation Manager</Text>
+                  <Text style={[styles.roleChipText, { color: colors.text }]}>{t('menu.manager_role')}</Text>
                 </View>
               </View>
 
               {newUser.role === 'tea_plantation_manager' && (
                 <View style={styles.plantationSelector}>
                   <Text style={[styles.plantationLabel, { color: colors.text }]}>
-                    Assign to Plantation:
+                    {t('admin.assign_plantation')}
                   </Text>
                   {plantations.length > 0 ? (
                     <ScrollView style={styles.plantationList}>
@@ -668,7 +668,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
                     </ScrollView>
                   ) : (
                     <Text style={[styles.noPlantationText, { color: colors.textSecondary }]}>
-                      You need to create a plantation first before adding managers.
+                      {t('admin.no_plantation_for_manager')}
                     </Text>
                   )}
                 </View>
@@ -679,7 +679,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
                   style={[styles.cancelButton, { borderColor: colors.border }]}
                   onPress={() => setShowCreateUserModal(false)}
                 >
-                  <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
+                  <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>{t('general.cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.createButton}
@@ -759,13 +759,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateToWeather }) 
                   style={[styles.cancelButton, { borderColor: colors.border }]}
                   onPress={() => setShowCreatePlantationModal(false)}
                 >
-                  <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
+                  <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>{t('general.cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.createButton, styles.createButtonAmber]}
                   onPress={handleCreatePlantation}
                 >
-                  <Text style={styles.createButtonText}>Create Plantation</Text>
+                  <Text style={styles.createButtonText}>{t('admin.create_plantation_button_plain')}</Text>
                 </TouchableOpacity>
               </View>
             </View>

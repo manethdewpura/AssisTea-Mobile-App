@@ -55,7 +55,7 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
           const appError = handleFirebaseError(error);
           logError(appError, 'TeaPlantationManagerScreen - LoadPlantation');
           if (!isNetworkError(error)) {
-            Alert.alert('Error', appError.userMessage);
+            Alert.alert(t('general.error'), appError.userMessage);
           }
           // For network errors, fall through to SQLite cache.
         }
@@ -68,15 +68,12 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
       if (localPlantation) {
         setPlantation(localPlantation as any);
       } else if (!isConnected) {
-        Alert.alert(
-          'Offline',
-          'No cached plantation data available. Please connect to the internet at least once.',
-        );
+        Alert.alert(t('admin.network_error'), t('plantation.no_cache_offline'));
       }
     } finally {
       setLoading(false);
     }
-  }, [userProfile?.plantationId]);
+  }, [userProfile?.plantationId, t]);
 
   useEffect(() => {
     loadPlantationData();
@@ -104,43 +101,43 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
   const actionCards = [
     {
       icon: '📝',
-      label: 'Enter Daily Data',
-      sub: 'Add today\'s records',
+      label: t('plantation.enter_daily_data'),
+      sub: t('plantation.enter_daily_data_sub'),
       color: '#73AB2E',
       onPress: () => navigation.navigate('DailyDataEntry'),
     },
     {
       icon: '📊',
-      label: 'View Daily Data',
-      sub: 'Browse past records',
+      label: t('plantation.view_daily_data'),
+      sub: t('plantation.view_daily_data_sub'),
       color: '#73AB2E',
       onPress: () => navigation.navigate('DailyDataView'),
     },
     {
       icon: '👥',
-      label: 'Manage Workers',
-      sub: 'Add, edit workers',
+      label: t('plantation.manage_workers'),
+      sub: t('plantation.manage_workers_sub'),
       color: '#F4B124',
       onPress: () => navigation.navigate('WorkerManagement'),
     },
     {
       icon: '🌱',
-      label: 'Manage Fields',
-      sub: 'View & edit fields',
+      label: t('plantation.manage_fields'),
+      sub: t('plantation.manage_fields_sub'),
       color: '#F4B124',
       onPress: () => navigation.navigate('FieldManagement'),
     },
     {
       icon: '📅',
-      label: 'Generate Schedule',
-      sub: 'Auto-assign labour',
+      label: t('plantation.generate_schedule'),
+      sub: t('plantation.generate_schedule_sub'),
       color: '#0E401D',
       onPress: () => navigation.navigate('AssignmentGeneration'),
     },
     {
       icon: '📋',
-      label: 'View Schedule',
-      sub: 'See latest schedule',
+      label: t('plantation.view_schedule'),
+      sub: t('plantation.view_schedule_sub'),
       color: '#0E401D',
       onPress: () => navigation.navigate('ViewLatestSchedule'),
     },
@@ -157,9 +154,9 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
           <View style={styles.heroOverlay} />
           <View style={styles.heroTop}>
             <View>
-              <Text style={styles.heroLabel}>TEA PLANTATION</Text>
+              <Text style={styles.heroLabel}>{t('plantation.hero_label')}</Text>
               <Text style={styles.heroTitle}>
-                {plantation ? plantation.name : 'My Dashboard'}
+                {plantation ? plantation.name : t('plantation.my_dashboard')}
               </Text>
             </View>
             <View style={styles.heroBadge}>
@@ -167,14 +164,14 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
             </View>
           </View>
           <Text style={styles.heroSubtitle}>
-            Welcome back, {userProfile?.email?.split('@')[0] || 'Manager'}
+            {t('general.welcome_back')}, {userProfile?.email?.split('@')[0] || t('menu.manager_role')}
           </Text>
 
           {plantation && (
             <View style={styles.statsRow}>
               <View style={styles.statPill}>
                 <Text style={styles.statPillValue}>{plantation.area}</Text>
-                <Text style={styles.statPillLabel}>ACRES</Text>
+                <Text style={styles.statPillLabel}>{t('admin.area_suffix')}</Text>
               </View>
               <View style={styles.statPillDivider} />
               <View style={styles.statPill}>
@@ -190,9 +187,9 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
           <View style={styles.sectionContainer}>
             <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={styles.emptyIcon}>🌿</Text>
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>No Plantation Assigned</Text>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('plantation.no_plantation_title')}</Text>
               <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                You haven't been assigned to any tea plantation yet. Please contact your administrator.
+                {t('plantation.no_plantation_text')}
               </Text>
             </View>
           </View>
@@ -204,7 +201,7 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
             <View style={styles.sectionTitleGroup}>
               <View style={styles.sectionAccent} />
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Quick Actions
+                {t('plantation.quick_actions')}
               </Text>
             </View>
 
@@ -237,7 +234,7 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
             <View style={styles.sectionTitleGroup}>
               <View style={[styles.sectionAccent, styles.sectionAccentAmber]} />
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Weather Forecast
+                {t('weather.title')}
               </Text>
             </View>
             <TouchableOpacity
@@ -251,10 +248,10 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
                 </View>
                 <View>
                   <Text style={[styles.weatherCardTitle, { color: colors.text }]}>
-                    View Weather Forecast
+                    {t('admin.view_weather')}
                   </Text>
                   <Text style={[styles.weatherCardSub, { color: colors.textSecondary }]}>
-                    Tap to see current forecast
+                    {t('admin.tap_to_view_weather')}
                   </Text>
                 </View>
               </View>

@@ -36,9 +36,9 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
   useEffect(() => {
     if (!backendUrl) {
       Alert.alert(
-        'Backend URL Not Configured',
-        'Please configure the backend URL in the Setup screen before using controls.',
-        [{ text: 'OK' }]
+        t('irrigation.no_backend_url'),
+        t('irrigation.no_backend_url_desc'),
+        [{ text: t('general.ok') }]
       );
     }
   }, [backendUrl]);
@@ -69,7 +69,7 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
 
   const handleStartIrrigation = async () => {
     if (!backendUrl) {
-      Alert.alert('Error', 'Backend URL not configured');
+      Alert.alert(t('general.error'), t('irrigation.no_backend_url'));
       return;
     }
 
@@ -78,13 +78,13 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
       await irrigationService.startIrrigation(undefined, skipWeatherCheck);
       dispatch(
         showToast({
-          message: 'Irrigation started',
+          message: t('irrigation_controls.irrigation_started'),
           type: 'success',
         })
       );
       await loadStatus();
     } catch (error: any) {
-      Alert.alert('Error', error.userMessage || error.message || 'Failed to start irrigation');
+      Alert.alert(t('general.error'), error.userMessage || error.message || t('irrigation_controls.start_irrigation_failed'));
     } finally {
       setLoadingIrrigation(false);
     }
@@ -92,7 +92,7 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
 
   const handleStopIrrigation = async () => {
     if (!backendUrl) {
-      Alert.alert('Error', 'Backend URL not configured');
+      Alert.alert(t('general.error'), t('irrigation.no_backend_url'));
       return;
     }
 
@@ -101,13 +101,13 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
       await irrigationService.stopIrrigation();
       dispatch(
         showToast({
-          message: 'Irrigation has been stopped',
+          message: t('irrigation_controls.irrigation_stopped'),
           type: 'success',
         })
       );
       await loadStatus();
     } catch (error: any) {
-      Alert.alert('Error', error.userMessage || error.message || 'Failed to stop irrigation');
+      Alert.alert(t('general.error'), error.userMessage || error.message || t('irrigation_controls.stop_irrigation_failed'));
     } finally {
       setLoadingIrrigation(false);
     }
@@ -115,7 +115,7 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
 
   const handleStartFertigation = async () => {
     if (!backendUrl) {
-      Alert.alert('Error', 'Backend URL not configured');
+      Alert.alert(t('general.error'), t('irrigation.no_backend_url'));
       return;
     }
 
@@ -124,13 +124,13 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
       await fertigationService.startFertigation();
       dispatch(
         showToast({
-          message: 'Fertigation started',
+          message: t('irrigation_controls.fertigation_started'),
           type: 'success',
         })
       );
       await loadStatus();
     } catch (error: any) {
-      Alert.alert('Error', error.userMessage || error.message || 'Failed to start fertigation');
+      Alert.alert(t('general.error'), error.userMessage || error.message || t('irrigation_controls.start_fertigation_failed'));
     } finally {
       setLoadingFertigation(false);
     }
@@ -138,7 +138,7 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
 
   const handleStopFertigation = async () => {
     if (!backendUrl) {
-      Alert.alert('Error', 'Backend URL not configured');
+      Alert.alert(t('general.error'), t('irrigation.no_backend_url'));
       return;
     }
 
@@ -147,20 +147,20 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
       await fertigationService.stopFertigation();
       dispatch(
         showToast({
-          message: 'Fertigation has been stopped',
+          message: t('irrigation_controls.fertigation_stopped'),
           type: 'success',
         })
       );
       await loadStatus();
     } catch (error: any) {
-      Alert.alert('Error', error.userMessage || error.message || 'Failed to stop fertigation');
+      Alert.alert(t('general.error'), error.userMessage || error.message || t('irrigation_controls.stop_fertigation_failed'));
     } finally {
       setLoadingFertigation(false);
     }
   };
 
   const formatDuration = (seconds?: number): string => {
-    if (!seconds) return 'N/A';
+    if (!seconds) return t('general.not_available');
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
@@ -234,7 +234,7 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
           )}
 
           <View style={[styles.checkboxRow, { borderColor: colors.border }]}>
-            <Text style={[styles.checkboxLabel, { color: colors.text }]}>Skip weather check</Text>
+            <Text style={[styles.checkboxLabel, { color: colors.text }]}>{t('irrigation_controls.skip_weather_check')}</Text>
             <Switch
               value={skipWeatherCheck}
               onValueChange={setSkipWeatherCheck}
@@ -243,7 +243,7 @@ const IrrigationAndFertilizerControlsScreen: React.FC = () => {
             />
           </View>
           <Text style={[styles.checkboxHint, { color: colors.textSecondary }]}>
-            When enabled, irrigation will start without checking weather conditions (e.g. rain).
+            {t('irrigation_controls.skip_weather_check_hint')}
           </Text>
 
           <View style={styles.buttonRow}>

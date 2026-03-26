@@ -22,7 +22,10 @@ export interface NotificationsScreenProps {
 }
 
 /** Format timestamp to relative time (e.g. "2 hours ago") */
-function formatTimeAgo(isoTimestamp: string): string {
+function formatTimeAgo(
+  isoTimestamp: string,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+): string {
   const date = new Date(isoTimestamp);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -31,11 +34,11 @@ function formatTimeAgo(isoTimestamp: string): string {
   const diffDays = Math.floor(diffMs / 86400000);
   const diffWeeks = Math.floor(diffDays / 7);
 
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return diffMins === 1 ? '1 minute ago' : `${diffMins} minutes ago`;
-  if (diffHours < 24) return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
-  if (diffDays < 7) return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
-  return diffWeeks === 1 ? '1 week ago' : `${diffWeeks} weeks ago`;
+  if (diffMins < 1) return t('time_ago.just_now');
+  if (diffMins < 60) return t('time_ago.minute_ago', { count: diffMins });
+  if (diffHours < 24) return t('time_ago.hour_ago', { count: diffHours });
+  if (diffDays < 7) return t('time_ago.day_ago', { count: diffDays });
+  return t('time_ago.week_ago', { count: diffWeeks });
 }
 
 /** Map operation status to card type for icon/color */
@@ -64,6 +67,7 @@ export const NotificationsScreenContent: React.FC<{
   onBackPress: () => void;
 }> = ({ onBackPress }) => {
   const { colors } = useAppSelector(selectTheme);
+  const { t } = useTranslation();
 
   const [logs, setLogs] = useState<OperationalLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,20 +83,23 @@ export const NotificationsScreenContent: React.FC<{
       });
       setLogs(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load logs');
+      setError(e instanceof Error ? e.message : t('notifications.load_error'));
       setLogs([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadLogs();
   }, [loadLogs]);
 
   const getOperationTitle = (log: OperationalLog): string => {
-    const opLabel = log.operation_type === 'fertigation' ? 'Fertigation' : 'Irrigation';
-    const zone = log.zone_id != null ? ` - Zone ${log.zone_id}` : '';
+    const opLabel =
+      log.operation_type === 'fertigation'
+        ? t('notifications.fertigation')
+        : t('notifications.irrigation');
+    const zone = log.zone_id != null ? ` - ${t('notifications.zone')} ${log.zone_id}` : '';
     return `${opLabel}${zone}`;
   };
 
@@ -100,8 +107,10 @@ export const NotificationsScreenContent: React.FC<{
     const status = log.status || '';
     const parts: string[] = [status.replace(/_/g, ' ')];
     if (log.duration != null) parts.push(`${log.duration}s`);
-    if (log.water_volume != null) parts.push(`${log.water_volume} L water`);
-    if (log.fertilizer_volume != null) parts.push(`${log.fertilizer_volume} L fertilizer`);
+    if (log.water_volume != null) parts.push(`${log.water_volume} L ${t('notifications.water')}`);
+    if (log.fertilizer_volume != null) {
+      parts.push(`${log.fertilizer_volume} L ${t('notifications.fertilizer')}`);
+    }
     if (log.notes) parts.push(log.notes);
     return parts.join(' · ');
   };
@@ -140,14 +149,14 @@ export const NotificationsScreenContent: React.FC<{
       edges={['top']}
     >
       <ScreenHeader
-        title="Notifications"
+        title={t('notifications.title')}
         onBackPress={onBackPress}
       />
       {loading ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            Loading logs...
+            {t('notifications.loading_logs')}
           </Text>
         </View>
       ) : error ? (
@@ -158,7 +167,7 @@ export const NotificationsScreenContent: React.FC<{
             style={[styles.retryButton, { backgroundColor: colors.primary }]}
             onPress={loadLogs}
           >
-            <Text style={styles.retryButtonText}>Retry</Text>
+            <Text style={styles.retryButtonText}>{t('general.retry')}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -170,7 +179,7 @@ export const NotificationsScreenContent: React.FC<{
             <View style={styles.emptyContainer}>
               <Lucide name="droplets" size={64} color={colors.textSecondary} />
               <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                No notifications
+                {t('notifications.no_notifications')}
               </Text>
             </View>
           ) : (
@@ -183,7 +192,7 @@ export const NotificationsScreenContent: React.FC<{
                   iconColor={getNotificationColor(cardType)}
                   title={getOperationTitle(log)}
                   message={getOperationMessage(log)}
-                  timestamp={formatTimeAgo(log.timestamp)}
+                  timestamp={formatTimeAgo(log.timestamp, t)}
                   borderColor={getNotificationColor(cardType)}
                 />
               );

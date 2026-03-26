@@ -56,7 +56,7 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
       setSchedule(latestSchedule);
     } catch (error) {
       console.error('Error loading schedule:', error);
-      showAlert('Error', 'Failed to load schedule', undefined, 'high');
+      showAlert(t('general.error'), t('schedule.load_error'), undefined, 'high');
     } finally {
       setLoading(false);
     }
@@ -73,7 +73,7 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
       setPreviousSchedules(schedules);
     } catch (error) {
       console.error('Error loading previous schedules:', error);
-      showAlert('Error', 'Failed to load previous schedules', undefined, 'high');
+      showAlert(t('general.error'), t('schedule.load_previous_error'), undefined, 'high');
     } finally {
       setLoadingPrevious(false);
     }
@@ -153,12 +153,12 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
         {viewingSchedule && (
           <View style={styles.pastBanner}>
             <Lucide name="clock" size={16} color="#fff" style={{ marginRight: 8 }} />
-            <Text style={styles.pastBannerText}>Viewing past schedule</Text>
+            <Text style={styles.pastBannerText}>{t('schedule.viewing_past')}</Text>
             <TouchableOpacity
               onPress={() => setViewingSchedule(null)}
               style={styles.backToLatestBtn}
             >
-              <Text style={styles.backToLatestText}>Back to Latest</Text>
+              <Text style={styles.backToLatestText}>{t('schedule.back_to_latest')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -170,7 +170,7 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
             onPress={handleOpenPreviousSchedules}
           >
             <Lucide name="history" size={18} color="#7cb342" style={{ marginRight: 8 }} />
-            <Text style={[styles.previousBtnText, { color: colors.text }]}>View Previous Schedules</Text>
+            <Text style={[styles.previousBtnText, { color: colors.text }]}>{t('schedule.view_previous')}</Text>
             <Lucide name="chevron-right" size={18} color="#7cb342" />
           </TouchableOpacity>
         )}
@@ -235,7 +235,7 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
                         { color: colors.textSecondary },
                       ]}
                     >
-                      {assignment.predictedEfficiency.toFixed(2)} kg/hour
+                      {assignment.predictedEfficiency.toFixed(2)} {t('schedule.kg_per_hour')}
                     </Text>
                   </View>
                   <View style={styles.badge}>
@@ -260,7 +260,7 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
           <View style={[styles.modalContainer, { backgroundColor: colors.cardBackground || '#fff' }]}>
             {/* Modal Header */}
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>Previous Schedules</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>{t('schedule.previous_schedules')}</Text>
               <TouchableOpacity onPress={() => setShowPreviousModal(false)}>
                 <Lucide name="x" size={22} color={colors.text} />
               </TouchableOpacity>
@@ -270,14 +270,14 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
               <View style={styles.modalLoading}>
                 <ActivityIndicator size="large" color="#7cb342" />
                 <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-                  Loading schedules...
+                  {t('schedule.loading')}
                 </Text>
               </View>
             ) : previousSchedules.length === 0 ? (
               <View style={styles.modalLoading}>
                 <Lucide name="calendar-x" size={48} color="#ccc" />
                 <Text style={[styles.emptyText, { color: colors.textSecondary, marginTop: 12 }]}>
-                  No previous schedules found
+                  {t('schedule.no_previous')}
                 </Text>
               </View>
             ) : (
@@ -316,7 +316,7 @@ const ViewLatestScheduleScreen: React.FC<Props> = ({ navigation }) => {
                             })}
                           </Text>
                           <Text style={[styles.scheduleItemSub, isActive && { color: '#d4edda' }, !isActive && { color: colors.textSecondary }]}>
-                            {item.totalWorkers} workers • {item.totalFields} fields
+                            {item.totalWorkers} {t('schedule.workers_suffix')} • {item.totalFields} {t('schedule.fields_suffix')}
                           </Text>
                         </View>
                       </View>

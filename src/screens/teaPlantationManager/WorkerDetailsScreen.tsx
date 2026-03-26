@@ -67,12 +67,12 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
         setExperience(fetchedWorker.experience);
         setGender(fetchedWorker.gender === 'Other' ? 'Male' : fetchedWorker.gender);
       } else {
-        showAlert('Error', 'Worker not found', [{ text: 'OK', style: 'default', onPress: () => navigation.goBack() }], 'high');
+        showAlert(t('general.error'), t('workers.not_found'), [{ text: t('general.ok'), style: 'default', onPress: () => navigation.goBack() }], 'high');
       }
     } catch (error: any) {
       const appError = handleFirebaseError(error);
       logError(appError, 'WorkerDetailsScreen - LoadWorkerDetails');
-      showAlert('Error', appError.userMessage, [{ text: 'OK', style: 'default', onPress: () => navigation.goBack() }], 'high');
+      showAlert(t('general.error'), appError.userMessage, [{ text: t('general.ok'), style: 'default', onPress: () => navigation.goBack() }], 'high');
     } finally {
       setLoading(false);
     }
@@ -103,23 +103,23 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const handleUpdate = async () => {
     if (!name.trim()) {
-      showAlert('Validation', 'Please enter a name', undefined, 'low');
+      showAlert(t('admin.validation_error'), t('workers.validation_name_required'), undefined, 'low');
       return;
     }
     const parsedAge = parseInt(age, 10);
     if (isNaN(parsedAge) || parsedAge <= 0) {
-      showAlert('Validation', 'Please enter a valid age', undefined, 'low');
+      showAlert(t('admin.validation_error'), t('workers.validation_age_required'), undefined, 'low');
       return;
     }
     const trimmedBirthDate = birthDate.trim();
     const birthDateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!trimmedBirthDate || !birthDateRegex.test(trimmedBirthDate)) {
-      showAlert('Validation', 'Please enter a valid birth date in the format YYYY-MM-DD', undefined, 'low');
+      showAlert(t('admin.validation_error'), t('workers.validation_birth_date_format'), undefined, 'low');
       return;
     }
     const trimmedExperience = experience.trim();
     if (!trimmedExperience) {
-      showAlert('Validation', 'Please enter experience', undefined, 'low');
+      showAlert(t('admin.validation_error'), t('workers.validation_experience_required'), undefined, 'low');
       return;
     }
     try {
@@ -136,15 +136,15 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
       await workerService.updateWorker(workerId, updates, isConnected);
 
       if (!isConnected) {
-        showAlert('Saved Locally', 'Worker updated on this device. Changes will sync automatically when you\'re back online.', [{ text: 'OK', style: 'default', onPress: () => navigation.goBack() }], 'low');
+        showAlert(t('general.saved_locally'), t('workers.updated_local_sync'), [{ text: t('general.ok'), style: 'default', onPress: () => navigation.goBack() }], 'low');
       } else {
-        showAlert('Success', 'Worker updated successfully', [{ text: 'OK', style: 'default', onPress: () => navigation.goBack() }], 'low');
+        showAlert(t('general.success'), t('workers.update_success'), [{ text: t('general.ok'), style: 'default', onPress: () => navigation.goBack() }], 'low');
       }
     } catch (error: any) {
       console.error('[WorkerDetails] handleUpdate threw an error:', error?.code, error?.message, error);
       const appError = handleFirebaseError(error);
       logError(appError, 'WorkerDetailsScreen - UpdateWorker');
-      showAlert('Error', appError.userMessage, undefined, 'high');
+      showAlert(t('general.error'), appError.userMessage, undefined, 'high');
     } finally {
       setSaving(false);
     }
@@ -161,7 +161,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
       ) : !worker ? (
         <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
           <Text style={[styles.errorText, { color: colors.text }]}>
-            Worker not found
+            {t('workers.not_found')}
           </Text>
         </View>
       ) : (
@@ -227,7 +227,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
 
             {/* Birth Date */}
             <View style={styles.detailGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Birth Date</Text>
+              <Text style={[styles.label, { color: colors.text }]}>{t('workers.birth_date_label')}</Text>
               {editMode ? (
                 <>
                   <TouchableOpacity
@@ -238,7 +238,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
                     onPress={() => setShowDatePicker(true)}
                   >
                     <Text style={[styles.detailValue, { color: birthDate ? colors.text : '#999' }]}>
-                      {birthDate || 'Select Date'}
+                      {birthDate || t('workers.select_date_placeholder')}
                     </Text>
                   </TouchableOpacity>
                   <Modal
@@ -250,7 +250,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
                     <View style={styles.datePickerModal}>
                       <View style={styles.datePickerHeader}>
                         <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                          <Text style={styles.datePickerHeaderText}>Done</Text>
+                          <Text style={styles.datePickerHeaderText}>{t('general.done')}</Text>
                         </TouchableOpacity>
                       </View>
                       <DateTimePicker
@@ -323,7 +323,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
 
             {/* Gender */}
             <View style={styles.detailGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Gender</Text>
+              <Text style={[styles.label, { color: colors.text }]}>{t('workers.gender_label')}</Text>
               {editMode ? (
                 <View style={styles.genderRow}>
                   {(['Male', 'Female'] as const).map(option => (
@@ -342,7 +342,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
                           { color: gender === option ? '#fff' : colors.text },
                         ]}
                       >
-                        {option}
+                        {option === 'Male' ? t('workers.male') : t('workers.female')}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -369,7 +369,7 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
                 {saving ? (
                   <ActivityIndicator size="small" color="#F4B124" />
                 ) : (
-                  <Text style={styles.updateButtonText}>Update Worker</Text>
+                  <Text style={styles.updateButtonText}>{t('workers.update_worker')}</Text>
                 )}
               </TouchableOpacity>
             )}

@@ -13,6 +13,7 @@ import { validateUrl, normalizeUrl, ZoneInfo, SystemConfig } from '../../service
 import { saveBackendUrl, loadBackendUrl } from '../../store/slices/config.slice';
 import { showToast } from '../../store/slices/notification.slice';
 import type { IrrigationStackParamList } from '../../navigation/IrrigationNavigator';
+import { useTranslation } from 'react-i18next';
 
 type IrrigationSetupNavigationProp = NativeStackNavigationProp<
   IrrigationStackParamList,
@@ -28,6 +29,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
   const { colors } = useAppSelector(selectTheme);
   const { backendUrl } = useAppSelector(selectConfig);
   const dispatch = useAppDispatch();
+  const { t } = useTranslation('common');
 
   const [backendUrlInput, setBackendUrlInput] = useState('');
   const [savingUrl, setSavingUrl] = useState(false);
@@ -593,10 +595,10 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
         {/* Backend URL Configuration */}
         <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Backend Server Configuration
+            {t('setup.backend_server_configuration')}
           </Text>
           <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
-            Configure the backend server URL (e.g., http://192.168.1.50:5000)
+            {t('setup.backend_server_description')}
           </Text>
 
           <TextInput
@@ -613,7 +615,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
           {backendUrl && (
             <View style={styles.currentUrlContainer}>
               <Text style={[styles.currentUrlLabel, { color: colors.textSecondary }]}>
-                Current URL:
+                {t('setup.current_url')}
               </Text>
               <Text style={[styles.currentUrlText, { color: colors.text }]}>
                 {configService.maskUrl(backendUrl)}
@@ -623,14 +625,14 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
 
           <View style={styles.buttonRow}>
             <Button
-              title="Test Connection"
+              title={t('setup.test_connection')}
               onPress={handleTestConnection}
               disabled={!backendUrlInput.trim() || savingUrl}
               variant="secondary"
               style={styles.button}
             />
             <Button
-              title="Save URL"
+              title={t('setup.save_url')}
               onPress={handleSaveBackendUrl}
               disabled={!backendUrlInput.trim() || savingUrl}
               loading={savingUrl}
@@ -664,27 +666,27 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
             ) : zoneInfo ? (
               <View style={[styles.zoneInfoContainer, { backgroundColor: colors.background }]}>
                 <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Zone ID</Text>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('setup.zone_id')}</Text>
                   <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.zone_id}</Text>
                 </View>
                 <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Valve GPIO Pin</Text>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('setup.valve_gpio_pin')}</Text>
                   <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.valve_gpio_pin}</Text>
                 </View>
                 <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Soil Moisture Sensor Channel</Text>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('setup.soil_moisture_sensor_channel')}</Text>
                   <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.soil_moisture_sensor_channel}</Text>
                 </View>
                 <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Configured Slope</Text>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('setup.configured_slope')}</Text>
                   <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.slope}°</Text>
                 </View>
                 <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Configured Area</Text>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('setup.configured_area')}</Text>
                   <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.area} m²</Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Configured Base Pressure</Text>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('setup.configured_base_pressure')}</Text>
                   <Text style={[styles.infoValue, { color: colors.text }]}>{zoneInfo.base_pressure} kPa</Text>
                 </View>
               </View>
@@ -708,7 +710,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
             ) : (
               <>
                 <View style={styles.formGroup}>
-                  <Text style={[styles.label, { color: colors.text }]}>Slope (degrees)</Text>
+                  <Text style={[styles.label, { color: colors.text }]}>{t('setup.slope_degrees')}</Text>
                   <TextInput
                     style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
                     value={systemConfigInputs.zone_slope_degrees}
@@ -718,7 +720,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
                 </View>
 
                 <View style={styles.formGroup}>
-                  <Text style={[styles.label, { color: colors.text }]}>Area (m²)</Text>
+                  <Text style={[styles.label, { color: colors.text }]}>{t('setup.area_m2')}</Text>
                   <TextInput
                     style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
                     value={systemConfigInputs.zone_area_m2}
@@ -728,7 +730,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
                 </View>
 
                 <View style={styles.formGroup}>
-                  <Text style={[styles.label, { color: colors.text }]}>Base Pressure (kPa)</Text>
+                  <Text style={[styles.label, { color: colors.text }]}>{t('setup.base_pressure_kpa')}</Text>
                   <TextInput
                     style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
                     value={systemConfigInputs.zone_base_pressure_kpa}
@@ -738,7 +740,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
                 </View>
 
                 <View style={styles.formGroup}>
-                  <Text style={[styles.label, { color: colors.text }]}>Pipe Length (m)</Text>
+                  <Text style={[styles.label, { color: colors.text }]}>{t('setup.pipe_length_m')}</Text>
                   <TextInput
                     style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
                     value={systemConfigInputs.pipe_length_m}
@@ -748,7 +750,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
                 </View>
 
                 <View style={styles.formGroup}>
-                  <Text style={[styles.label, { color: colors.text }]}>Pipe Diameter (m)</Text>
+                  <Text style={[styles.label, { color: colors.text }]}>{t('setup.pipe_diameter_m')}</Text>
                   <TextInput
                     style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
                     value={systemConfigInputs.pipe_diameter_m}
@@ -758,7 +760,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
                 </View>
 
                 <View style={styles.formGroup}>
-                  <Text style={[styles.label, { color: colors.text }]}>Estimated Flow Rate (m³/s)</Text>
+                  <Text style={[styles.label, { color: colors.text }]}>{t('setup.estimated_flow_rate')}</Text>
                   <TextInput
                     style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
                     value={systemConfigInputs.estimated_flow_rate_m3_per_s}
@@ -768,7 +770,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
                 </View>
 
                 <Button
-                  title="Save Configuration"
+                  title={t('setup.save_configuration')}
                   onPress={handleSaveSystemConfig}
                   loading={savingSystemConfig}
                   disabled={savingSystemConfig}
@@ -935,7 +937,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
         >
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>Add Irrigation Schedule</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>{t('setup.add_irrigation_schedule')}</Text>
               <TouchableOpacity onPress={() => setShowIrrigationModal(false)}>
                 <Lucide name="x" size={24} color={colors.text} />
               </TouchableOpacity>
@@ -944,7 +946,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
             <ScrollView style={styles.modalBody}>
               {/* Day of Week Selection */}
               <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.text }]}>Day of Week</Text>
+                <Text style={[styles.label, { color: colors.text }]}>{t('setup.day_of_week')}</Text>
                 <TouchableOpacity
                   onPress={() => setShowDayPicker(true)}
                   style={[styles.pickerButton, { backgroundColor: colors.background, borderColor: colors.border }]}
@@ -958,7 +960,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
 
               {/* Time Selection */}
               <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.text }]}>Time</Text>
+                <Text style={[styles.label, { color: colors.text }]}>{t('setup.time')}</Text>
                 <TouchableOpacity
                   onPress={() => {
                     setIsIrrigationTimePicker(true);
@@ -986,7 +988,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
                   onPress={() => setIrrigationForm({ ...irrigationForm, enabled: !irrigationForm.enabled })}
                   style={styles.toggleRow}
                 >
-                  <Text style={[styles.label, { color: colors.text }]}>Enabled</Text>
+                  <Text style={[styles.label, { color: colors.text }]}>{t('setup.enabled')}</Text>
                   <View
                     style={[
                       styles.switch,
@@ -1010,13 +1012,13 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
 
             <View style={styles.modalFooter}>
               <Button
-                title="Cancel"
+                title={t('general.cancel')}
                 onPress={() => setShowIrrigationModal(false)}
                 variant="secondary"
                 style={styles.modalButton}
               />
               <Button
-                title="Create Schedule"
+                title={t('setup.create_schedule')}
                 onPress={handleCreateIrrigationSchedule}
                 loading={creatingSchedule}
                 style={styles.modalButton}
@@ -1039,7 +1041,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
         >
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>Add Fertigation Schedule</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>{t('setup.add_fertigation_schedule')}</Text>
               <TouchableOpacity onPress={() => setShowFertigationModal(false)}>
                 <Lucide name="x" size={24} color={colors.text} />
               </TouchableOpacity>
@@ -1048,7 +1050,8 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
             <ScrollView style={styles.modalBody}>
               {/* Day of Week Selection */}
               <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.text }]}>Day of Week</Text>
+                <Text style={[styles.label, { color: colors.text }]}>{t('setup.day_of_week')}
+                </Text>
                 <TouchableOpacity
                   onPress={() => setShowDayPicker(true)}
                   style={[styles.pickerButton, { backgroundColor: colors.background, borderColor: colors.border }]}
@@ -1062,7 +1065,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
 
               {/* Time Selection */}
               <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.text }]}>Time</Text>
+                <Text style={[styles.label, { color: colors.text }]}>{t('setup.time')}</Text>
                 <TouchableOpacity
                   onPress={() => {
                     setIsIrrigationTimePicker(false);
@@ -1090,7 +1093,7 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
                   onPress={() => setFertigationForm({ ...fertigationForm, enabled: !fertigationForm.enabled })}
                   style={styles.toggleRow}
                 >
-                  <Text style={[styles.label, { color: colors.text }]}>Enabled</Text>
+                  <Text style={[styles.label, { color: colors.text }]}>{t('setup.enabled')}</Text>
                   <View
                     style={[
                       styles.switch,
@@ -1114,13 +1117,13 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
 
             <View style={styles.modalFooter}>
               <Button
-                title="Cancel"
+                title={t('general.cancel')}
                 onPress={() => setShowFertigationModal(false)}
                 variant="secondary"
                 style={styles.modalButton}
               />
               <Button
-                title="Create Schedule"
+                title={t('setup.create_schedule')}
                 onPress={handleCreateFertigationSchedule}
                 loading={creatingSchedule}
                 style={styles.modalButton}
@@ -1140,9 +1143,9 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
         <View style={styles.pickerModalOverlay}>
           <View style={[styles.pickerModalContent, { backgroundColor: colors.surface }]}>
             <View style={styles.pickerModalHeader}>
-              <Text style={[styles.pickerModalTitle, { color: colors.text }]}>Select Day</Text>
+              <Text style={[styles.pickerModalTitle, { color: colors.text }]}>{t('setup.select_day')}</Text>
               <TouchableOpacity onPress={() => setShowDayPicker(false)}>
-                <Text style={[styles.pickerModalDone, { color: colors.primary }]}>Done</Text>
+                <Text style={[styles.pickerModalDone, { color: colors.primary }]}>{t('general.done')}</Text>
               </TouchableOpacity>
             </View>
             <ScrollView>
