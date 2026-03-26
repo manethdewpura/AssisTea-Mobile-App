@@ -7,6 +7,6 @@ import App from './App';
 import { name as appName } from './app.json';
 
 // Mute RN yellow box warnings in emulator
-LogBox.ignoreAllLogs(true);
+// LogBox.ignoreAllLogs(true);
 
 AppRegistry.registerComponent(appName, () => App);
