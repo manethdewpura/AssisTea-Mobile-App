@@ -13,6 +13,9 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAppSelector } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import { teaPlantationService } from '../../services';
+import { plantationSQLiteService } from '../../services/sqlite/plantationSQLite.service';
+import { checkNetworkConnection } from '../../utils/network.util';
+import { isNetworkError, handleFirebaseError, logError } from '../../utils';
 import type { TeaPlantation } from '../../common/interfaces';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 
@@ -37,12 +40,37 @@ const TeaPlantationManagerScreen: React.FC<TeaPlantationManagerScreenProps> = ({
     }
 
     try {
-      const plantationData = await teaPlantationService.getTeaPlantation(
+      const { isConnected } = await checkNetworkConnection();
+
+      if (isConnected) {
+        try {
+          const plantationData = await teaPlantationService.getTeaPlantation(
+            userProfile.plantationId,
+          );
+          setPlantation(plantationData);
+          return;
+        } catch (error: any) {
+          const appError = handleFirebaseError(error);
+          logError(appError, 'TeaPlantationManagerScreen - LoadPlantation');
+          if (!isNetworkError(error)) {
+            Alert.alert('Error', appError.userMessage);
+          }
+          // For network errors, fall through to SQLite cache.
+        }
+      }
+
+      // Offline or network failed: try to use cached plantation data
+      const localPlantation = await plantationSQLiteService.getPlantation(
         userProfile.plantationId,
       );
-      setPlantation(plantationData);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to load plantation data');
+      if (localPlantation) {
+        setPlantation(localPlantation as any);
+      } else if (!isConnected) {
+        Alert.alert(
+          'Offline',
+          'No cached plantation data available. Please connect to the internet at least once.',
+        );
+      }
     } finally {
       setLoading(false);
     }

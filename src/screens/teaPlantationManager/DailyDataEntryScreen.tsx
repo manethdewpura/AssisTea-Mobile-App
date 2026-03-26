@@ -20,6 +20,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { workerService, dailyDataService, fieldService } from '../../services';
+import { workerSQLiteService } from '../../services/sqlite/workerSQLite.service';
 import { handleFirebaseError, logError, parseCSVFile, formatValidationErrors } from '../../utils';
 import { checkNetworkConnection } from '../../utils/network.util';
 import type { Worker } from '../../models/Worker';
@@ -122,7 +123,6 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
     }
 
     try {
-      // Pick CSV file
       const result = await pick({
         type: [types.csv, types.plainText],
         copyTo: 'cachesDirectory',
@@ -134,14 +134,11 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
 
       const file = result[0];
 
-      // Read file content
       setUploadingCSV(true);
 
-      // Read the file using fetch - the uri property contains the file path
       const response = await fetch(file.uri);
       const fileContent = await response.text();
 
-      // Parse and validate CSV (using date from UI date picker)
       const parseResult = await parseCSVFile(fileContent, formData.date);
 
       if (!parseResult.success) {
@@ -159,7 +156,10 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
         return;
       }
 
-      // Confirm upload
+      // Check connectivity once — used for both worker lookup and bulk create
+      const networkResult = await checkNetworkConnection();
+      const isConnected = !!networkResult?.isConnected;
+
       showAlert(
         'Confirm Upload',
         `Found ${parseResult.data.length} valid record(s). Do you want to upload them?`,
@@ -171,36 +171,45 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
           {
             text: 'Upload',
             onPress: async () => {
+              setUploadingCSV(true);
               try {
-                // Upload to Firebase
                 if (!userProfile?.plantationId) {
                   showAlert('Error', 'Plantation ID not found', undefined, 'high');
                   return;
                 }
 
-                // Convert custom worker IDs to Firebase document IDs
-                const dataWithFirebaseIds = [];
-                const missingWorkers = [];
+
+                const dataWithFirebaseIds: typeof parseResult.data = [];
+                const missingWorkers: string[] = [];
 
                 for (const record of parseResult.data!) {
-                  // Look up worker by custom workerId field
-                  const worker = await workerService.getWorkerByWorkerId(
-                    record.workerId,
-                    userProfile.plantationId,
-                  );
+                  let worker = null;
+
+                  if (isConnected) {
+                    // Online: query Firestore by custom workerId field
+                    worker = await workerService.getWorkerByWorkerId(
+                      record.workerId,
+                      userProfile.plantationId,
+                    );
+                  } else {
+                    // Offline: fall back to SQLite cache
+                    worker = await workerSQLiteService.getWorkerByCustomId(
+                      record.workerId,
+                      userProfile.plantationId,
+                    );
+                  }
 
                   if (!worker) {
                     missingWorkers.push(record.workerId);
                   } else {
-                    // Replace custom workerId with Firebase document ID
-                    dataWithFirebaseIds.push({
+                    dataWithFirebaseIds!.push({
                       ...record,
-                      workerId: worker.id, // Use Firebase document ID
+                      workerId: worker.id, // swap custom ID → Firebase doc ID
                     });
                   }
                 }
 
-                // Check if any workers were not found
+
                 if (missingWorkers.length > 0) {
                   showAlert(
                     'Workers Not Found',
@@ -211,15 +220,19 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
                   return;
                 }
 
-                // Upload with Firebase IDs
                 await dailyDataService.createBulkDailyData(
                   userProfile.plantationId,
-                  dataWithFirebaseIds,
+                  dataWithFirebaseIds!,
+                  isConnected,
                 );
 
+                const successMsg = isConnected
+                  ? `Successfully uploaded ${dataWithFirebaseIds!.length} record(s)`
+                  : `Saved ${dataWithFirebaseIds!.length} record(s) locally. They will sync when online.`;
+
                 showAlert(
-                  'Success',
-                  `Successfully uploaded ${dataWithFirebaseIds.length} record(s)`,
+                  isConnected ? 'Success' : 'Saved Locally',
+                  successMsg,
                   [
                     {
                       text: 'View Data',
@@ -233,6 +246,8 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
                 const appError = handleFirebaseError(error);
                 logError(appError, 'DailyDataEntryScreen - CSV Upload');
                 showAlert('Upload Error', appError.userMessage, undefined, 'high');
+              } finally {
+                setUploadingCSV(false);
               }
             },
           },
@@ -240,12 +255,9 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
         'medium',
       );
     } catch (error: any) {
-      // Check if user cancelled - the new package throws a specific error
       if (error?.message === 'User canceled document picker') {
-        // User cancelled the picker
         return;
       }
-
       const appError = handleFirebaseError(error);
       logError(appError, 'DailyDataEntryScreen - CSV Upload');
       showAlert('Error', 'Failed to read CSV file. Please try again.', undefined, 'high');
@@ -280,6 +292,7 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
         timeSpentHours: parseFloat(formData.timeSpentHours),
         fieldArea: formData.fieldArea,
       };
+
       const resetForm = () => {
         setFormData({
           date: new Date().toISOString().split('T')[0],
@@ -291,15 +304,13 @@ const DailyDataEntryScreen: React.FC<Props> = ({ navigation }) => {
         setSelectedDate(new Date());
       };
 
+      await dailyDataService.createDailyData(userProfile.plantationId, dailyData, isConnected);
+
       if (!isConnected) {
-        dailyDataService.createDailyData(userProfile.plantationId, dailyData).catch((error: any) => {
-          logError(handleFirebaseError(error), 'DailyDataEntryScreen - SaveData (offline sync)');
-        });
         showAlert('Saved Locally', 'Data saved on this device. Changes will sync automatically when you\'re back online.', [
           { text: 'OK', style: 'default', onPress: resetForm },
         ], 'low');
       } else {
-        await dailyDataService.createDailyData(userProfile.plantationId, dailyData);
         showAlert('Success', 'Daily data saved successfully', [
           { text: 'View All Data', onPress: () => navigation.navigate('DailyDataView') },
           { text: 'OK', style: 'default', onPress: resetForm },

@@ -293,7 +293,6 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
       }
 
       const normalizedUrl = normalizeUrl(testUrl);
-      console.log('[Test Connection] Testing URL:', normalizedUrl);
       
       // Create abort controller for timeout
       const controller = new AbortController();
@@ -301,7 +300,6 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
 
       // Try /health endpoint first (simpler, more reliable)
       let endpoint = `${normalizedUrl}/health`;
-      console.log('[Test Connection] Trying endpoint:', endpoint);
       
       try {
         const response = await fetch(endpoint, {
@@ -313,12 +311,10 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
         });
         clearTimeout(timeoutId);
 
-        console.log('[Test Connection] Response status:', response.status);
-        console.log('[Test Connection] Response ok:', response.ok);
+      
 
         if (response.ok || response.status === 200) {
           const data = await response.json().catch(() => ({}));
-          console.log('[Test Connection] Response data:', data);
           // Even if health check has issues, connection is successful
           if (data.overall_status === 'error') {
             dispatch(showToast({
@@ -335,7 +331,6 @@ const IrrigationAndFertilizerSetupScreen: React.FC = () => {
         } else if (response.status === 500) {
           // 500 means server is reachable but has an error
           // This is still a successful connection test
-          console.log('[Test Connection] Server returned 500, but connection is working');
           dispatch(showToast({
             message: 'Connection successful! Server is reachable, but encountered an error.',
             type: 'success',

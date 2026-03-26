@@ -131,17 +131,15 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
         gender,
       };
 
+      await workerService.updateWorker(workerId, updates, isConnected);
+
       if (!isConnected) {
-        // Firebase offline persistence queues this — resolves silently when back online
-        workerService.updateWorker(workerId, updates).catch((error: any) => {
-          logError(handleFirebaseError(error), 'WorkerDetailsScreen - UpdateWorker (offline sync)');
-        });
         showAlert('Saved Locally', 'Worker updated on this device. Changes will sync automatically when you\'re back online.', [{ text: 'OK', style: 'default', onPress: () => navigation.goBack() }], 'low');
       } else {
-        await workerService.updateWorker(workerId, updates);
         showAlert('Success', 'Worker updated successfully', [{ text: 'OK', style: 'default', onPress: () => navigation.goBack() }], 'low');
       }
     } catch (error: any) {
+      console.error('[WorkerDetails] handleUpdate threw an error:', error?.code, error?.message, error);
       const appError = handleFirebaseError(error);
       logError(appError, 'WorkerDetailsScreen - UpdateWorker');
       showAlert('Error', appError.userMessage, undefined, 'high');

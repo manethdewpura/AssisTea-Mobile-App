@@ -154,9 +154,7 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
 
       if (!isConnected) {
         // Skip duplicate ID check offline — Firebase queues the write
-        workerService.createWorker(userProfile.plantationId, workerData).catch((error: any) => {
-          logError(handleFirebaseError(error), 'AddWorkerScreen (offline sync)');
-        });
+        await workerService.createWorker(userProfile.plantationId, workerData, false);
         showAlert('Saved Locally', 'Worker added on this device. Changes will sync automatically when you\'re back online.', [
           { text: 'OK', style: 'default', onPress: () => navigation.goBack() },
         ], 'low');
@@ -172,12 +170,13 @@ const AddWorkerScreen: React.FC<Props> = ({ navigation }) => {
           }));
           return;
         }
-        await workerService.createWorker(userProfile.plantationId, workerData);
+        await workerService.createWorker(userProfile.plantationId, workerData, true);
         showAlert('Success', 'Worker added successfully', [
           { text: 'OK', style: 'default', onPress: () => navigation.goBack() },
         ], 'low');
       }
     } catch (error: any) {
+      console.error('[AddWorker] handleSaveWorker threw an error:', error?.code, error?.message, error);
       const appError = handleFirebaseError(error);
       logError(appError, 'AddWorkerScreen');
       showAlert('Error', appError.userMessage, undefined, 'high');
