@@ -173,7 +173,8 @@ class AssignmentService {
     async generateAssignments(
         plantationId: string,
         date: string,
-        fields: Field[]
+        fields: Field[],
+        excludedWorkerIds?: string[]   // IDs of workers marked absent for today
     ): Promise<AssignmentSchedule> {
         try {
             if (!mlPredictionService.isReady()) {
@@ -184,6 +185,18 @@ class AssignmentService {
 
             // Single entry point — handles both online and offline transparently
             const { workers, dailyRecords } = await this.fetchDataForSchedule(plantationId);
+
+            // Filter out absent workers — pure in-memory, no DB or network calls.
+            // The ML model and all downstream logic are completely unchanged.
+            const availableWorkers = (excludedWorkerIds && excludedWorkerIds.length > 0)
+                ? workers.filter(w => !excludedWorkerIds.includes(w.id))
+                : workers;
+
+            if (availableWorkers.length === 0) {
+                throw new Error('No available workers for today. Please mark at least one worker as available.');
+            }
+
+            console.log(`👷 ${availableWorkers.length}/${workers.length} workers available today (${(excludedWorkerIds?.length ?? 0)} absent).`);
 
             // Build field name/ID → slope lookup from the fields already provided.
             // This is pure in-memory work — no extra network calls.
@@ -210,7 +223,7 @@ class AssignmentService {
             // Build all worker × field ML inputs from in-memory data
             const combinations: Array<{ worker: Worker; field: Field; input: MLInput }> = [];
 
-            for (const worker of workers) {
+            for (const worker of availableWorkers) {
                 for (const field of fields) {
                     const stats = this.calculateHistoricalStats(worker.id, field.slope, annotatedRecords);
 
