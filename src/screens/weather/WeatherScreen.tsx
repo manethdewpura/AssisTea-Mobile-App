@@ -19,7 +19,7 @@ interface WeatherScreenProps {
 }
 
 const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
-  const { current, forecast, isFetching, error, lastUpdated, isBackendConnected, predictions, isPredictionMode } =
+  const { current, forecast, isFetching, error, lastUpdated, isBackendConnected, predictions, isPredictionMode, isForecastFallbackMode } =
     useAppSelector(selectWeather);
   const { colors } = useAppSelector(selectTheme);
 
@@ -124,6 +124,17 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
               ML Predicted Data — No Internet Connection
             </Text>
           </View>
+        ) : isForecastFallbackMode ? (
+          <View
+            style={[
+              styles.statusBar,
+              { backgroundColor: '#607D8B' },
+            ]}
+          >
+            <Text style={styles.statusText}>
+              Forecast Fallback — Insufficient Recent Observations for ML
+            </Text>
+          </View>
         ) : (
           <View
             style={[
@@ -161,7 +172,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
             ]}
           >
             {/* ML Prediction Badge */}
-            {isPredictionMode && predictions.length > 0 && (
+            {isPredictionMode && (
               <View style={styles.predictionBadge}>
                 <Lucide
                   name="droplets"
@@ -169,15 +180,23 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
                   color="#E65100"
                   style={styles.predictionBadgeIcon}
                 />
-                <Text style={styles.predictionBadgeText}>
-                  ML Prediction · {getConfidenceInfo(predictions[0].confidence_score).label}
-                </Text>
-                <View
-                  style={[
-                    styles.confidenceDot,
-                    { backgroundColor: getConfidenceInfo(predictions[0].confidence_score).color },
-                  ]}
-                />
+                {predictions.length > 0 ? (
+                  <>
+                    <Text style={styles.predictionBadgeText}>
+                      ML Prediction · {getConfidenceInfo(predictions[0].confidence_score).label}
+                    </Text>
+                    <View
+                      style={[
+                        styles.confidenceDot,
+                        { backgroundColor: getConfidenceInfo(predictions[0].confidence_score).color },
+                      ]}
+                    />
+                  </>
+                ) : (
+                  <Text style={styles.predictionBadgeText}>
+                    ML Prediction
+                  </Text>
+                )}
               </View>
             )}
 
@@ -391,7 +410,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
             ]}
           >
             <Text style={[styles.forecastTitle, { color: colors.text }]}>
-              Daily Forecast
+              {isForecastFallbackMode ? 'Forecast Fallback' : 'Daily Forecast'}
             </Text>
             {forecast.list.slice(0, 5).map((item, index) => (
               <View

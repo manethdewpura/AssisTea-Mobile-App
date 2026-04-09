@@ -12,6 +12,7 @@ interface WeatherState {
   isBackendConnected: boolean | null;
   predictions: MLPrediction[];
   isPredictionMode: boolean;
+  isForecastFallbackMode: boolean;
 }
 
 const initialState: WeatherState = {
@@ -28,6 +29,7 @@ const initialState: WeatherState = {
   isBackendConnected: null,
   predictions: [],
   isPredictionMode: false,
+  isForecastFallbackMode: false,
 };
 
 const weatherSlice = createSlice({
@@ -76,6 +78,15 @@ const weatherSlice = createSlice({
     },
     setPredictionMode(state, action: PayloadAction<boolean>) {
       state.isPredictionMode = action.payload;
+      if (action.payload) {
+        state.isForecastFallbackMode = false;
+      }
+    },
+    setForecastFallbackMode(state, action: PayloadAction<boolean>) {
+      state.isForecastFallbackMode = action.payload;
+      if (action.payload) {
+        state.isPredictionMode = false;
+      }
     },
     clearPredictions(state) {
       state.predictions = [];
@@ -89,6 +100,7 @@ const weatherSlice = createSlice({
       state.isFetching = false;
       state.predictions = [];
       state.isPredictionMode = false;
+      state.isForecastFallbackMode = false;
     },
   },
 });
@@ -104,6 +116,7 @@ export const {
   setBackendConnected,
   setPredictions,
   setPredictionMode,
+  setForecastFallbackMode,
   clearPredictions,
   resetWeather,
 } = weatherSlice.actions;

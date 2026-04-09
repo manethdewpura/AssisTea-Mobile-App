@@ -8,11 +8,14 @@ import {
   setBackendConnected,
   setPredictions,
   setPredictionMode,
+  setForecastFallbackMode,
   clearPredictions,
   setCurrentWeather,
+  setWeatherForecast,
 } from '../slices/weather.slice';
 import { weatherService, backendService } from '../../services';
 import { WEATHER_API_CONFIG } from '../../common/constants';
+import { CurrentWeather, WeatherForecast } from '../../common/interfaces';
 import NetInfo from '@react-native-community/netinfo';
 
 interface WeatherListenerProps {
@@ -27,6 +30,45 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
   const backendCheckIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const predictionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const getNearestForecastAsCurrent = (forecast: WeatherForecast): CurrentWeather | null => {
+    if (!forecast?.list?.length) {
+      return null;
+    }
+
+    const nowSec = Math.floor(Date.now() / 1000);
+    const futureOrNow = forecast.list.filter(item => item.dt >= nowSec);
+
+    // Prefer next upcoming slot; if none, use latest available past slot.
+    const selected = futureOrNow.length > 0
+      ? futureOrNow.reduce((closest, item) => (item.dt < closest.dt ? item : closest), futureOrNow[0])
+      : forecast.list.reduce((latest, item) => (item.dt > latest.dt ? item : latest), forecast.list[0]);
+
+    return {
+      coord: {
+        lat: forecast.city?.coord?.lat ?? 0,
+        lon: forecast.city?.coord?.lon ?? 0,
+      },
+      weather: selected.weather ?? [],
+      base: 'forecast_fallback',
+      main: selected.main,
+      visibility: selected.visibility ?? 10000,
+      wind: selected.wind,
+      clouds: selected.clouds,
+      rain: selected.rain,
+      snow: selected.snow,
+      dt: selected.dt,
+      sys: {
+        country: forecast.city?.country ?? '',
+        sunrise: forecast.city?.sunrise ?? 0,
+        sunset: forecast.city?.sunset ?? 0,
+      },
+      timezone: forecast.city?.timezone ?? 0,
+      id: forecast.city?.id ?? 0,
+      name: forecast.city?.name ?? 'Unknown',
+      cod: 200,
+    };
+  };
+
   // Fetch ML predictions from backend (reachable on LAN even without internet)
   const fetchPredictions = useCallback(async () => {
     if (!isConfigInitialized) {
@@ -37,6 +79,7 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
     if (!backendUrl) {
       console.log('[WeatherListener] Backend URL not configured - cannot fetch predictions');
       dispatch(clearPredictions());
+      dispatch(setForecastFallbackMode(false));
       dispatch(setError('Backend URL not configured. Please set it in Setup to enable local predictions.'));
       return;
     }
@@ -45,9 +88,10 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
       console.log('[WeatherListener] API unavailable - fetching ML predictions from backend LAN...');
       const result = await backendService.fetchMLPredictions();
 
-      if (result.success && result.predictions.length > 0) {
+      if (result.success && result.current) {
         dispatch(setPredictions(result.predictions));
         dispatch(setPredictionMode(true));
+        dispatch(setForecastFallbackMode(false));
 
         // Also set the best prediction as current weather for the main display
         if (result.current) {
@@ -60,14 +104,56 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
           `(best confidence: ${(result.best_confidence * 100).toFixed(0)}%)`
         );
       } else {
-        console.log('[WeatherListener] No ML predictions available from backend');
+        console.log('[WeatherListener] No ML predictions available, falling back to backend forecast');
         dispatch(clearPredictions());
-        dispatch(setError('Weather API unavailable and no ML predictions available'));
+
+        try {
+          const forecastResult = await backendService.fetchLatestForecast();
+          if (forecastResult.success && forecastResult.data) {
+            dispatch(setWeatherForecast(forecastResult.data));
+            const fallbackCurrent = getNearestForecastAsCurrent(forecastResult.data);
+            if (fallbackCurrent) {
+              dispatch(setCurrentWeather(fallbackCurrent));
+            }
+            dispatch(setForecastFallbackMode(true));
+            dispatch(
+              setError(
+                'Weather API unavailable. Showing backend forecast fallback (next available slots).',
+              ),
+            );
+          } else {
+            dispatch(setForecastFallbackMode(false));
+            dispatch(setError('Weather API unavailable and no ML predictions available'));
+          }
+        } catch {
+          dispatch(setForecastFallbackMode(false));
+          dispatch(setError('Weather API unavailable and no ML predictions available'));
+        }
       }
     } catch (error: any) {
       console.warn('[WeatherListener] Failed to fetch ML predictions:', error?.message || error);
       dispatch(clearPredictions());
-      dispatch(setError('Weather API and backend both unreachable'));
+      try {
+        const forecastResult = await backendService.fetchLatestForecast();
+        if (forecastResult.success && forecastResult.data) {
+          dispatch(setWeatherForecast(forecastResult.data));
+          const fallbackCurrent = getNearestForecastAsCurrent(forecastResult.data);
+          if (fallbackCurrent) {
+            dispatch(setCurrentWeather(fallbackCurrent));
+          }
+          dispatch(setForecastFallbackMode(true));
+          dispatch(
+            setError(
+              'ML predictions unavailable. Showing backend forecast fallback.',
+            ),
+          );
+          return;
+        }
+      } catch {
+        // Fall through to default error
+      }
+      dispatch(setForecastFallbackMode(false));
+      dispatch(setError('Weather API and backend predictions are unreachable'));
     }
   }, [dispatch, backendUrl, isConfigInitialized]);
 
@@ -77,6 +163,7 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
       dispatch(setFetching(true));
       const data = await weatherService.fetchAllWeatherData(location);
       dispatch(setWeatherData(data));
+      dispatch(setForecastFallbackMode(false));
 
       // API succeeded - clear prediction mode since we have live data
       dispatch(clearPredictions());
@@ -124,6 +211,7 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
         }
       } else {
         dispatch(clearPredictions());
+        dispatch(setForecastFallbackMode(false));
         dispatch(
           setError(
             'Weather API unavailable. Configure the backend URL in Setup to enable local predictions.',
