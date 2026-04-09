@@ -19,7 +19,7 @@ class MLPredictionService {
 
         try {
             const result = await TFLiteModule.initialize();
-            console.log('✅', result);
+            console.log(result);
             this.isInitialized = true;
         } catch (error) {
             console.error('Error initializing ML model:', error);
