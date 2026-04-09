@@ -1,6 +1,6 @@
 import SQLite from 'react-native-sqlite-storage';
 
-SQLite.DEBUG(true);
+SQLite.DEBUG(false);
 SQLite.enablePromise(true);
 
 class DatabaseService {
@@ -13,13 +13,11 @@ class DatabaseService {
      */
     async initialize(): Promise<void> {
         try {
-            console.log('📱 Opening SQLite database...');
             this.db = await SQLite.openDatabase({
                 name: this.DATABASE_NAME,
                 location: 'default',
             });
 
-            console.log('✅ Database opened successfully');
             await this.createTables();
         } catch (error) {
             console.error('❌ Error initializing database:', error);
@@ -36,7 +34,6 @@ class DatabaseService {
         }
 
         try {
-            console.log('📋 Creating tables...');
 
             // Users table — cache for logged-in user and related profiles
             await this.db.executeSql(`
@@ -222,7 +219,7 @@ class DatabaseService {
         ON chat_messages(language, timestamp DESC);
       `);
 
-            console.log('✅ All tables created successfully');
+            // all done
         } catch (error) {
             console.error('❌ Error creating tables:', error);
             throw error;
@@ -270,12 +267,6 @@ class DatabaseService {
         // the existing executeSql wrapper, which already logs errors.
         for (let i = 0; i < queries.length; i++) {
             const { query, params = [] } = queries[i];
-            console.log('[DatabaseService] Executing batched query', {
-                index: i,
-                total: queries.length,
-                query,
-                params,
-            });
             await this.executeSql(query, params);
         }
     }
@@ -293,7 +284,6 @@ class DatabaseService {
             await this.db.executeSql('DROP TABLE IF EXISTS schedule_assignments');
             await this.db.executeSql('DROP TABLE IF EXISTS saved_schedules');
             await this.db.executeSql('DROP TABLE IF EXISTS fields');
-            console.log('✅ All tables dropped');
         } catch (error) {
             console.error('❌ Error dropping tables:', error);
             throw error;
@@ -313,7 +303,6 @@ class DatabaseService {
             await this.db.executeSql('DELETE FROM schedule_assignments');
             await this.db.executeSql('DELETE FROM saved_schedules');
             await this.db.executeSql('DELETE FROM fields');
-            console.log('✅ All data cleared');
         } catch (error) {
             console.error('❌ Error clearing data:', error);
             throw error;
@@ -327,7 +316,6 @@ class DatabaseService {
         if (this.db) {
             await this.db.close();
             this.db = null;
-            console.log('✅ Database closed');
         }
     }
 
