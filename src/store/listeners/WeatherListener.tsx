@@ -22,6 +22,15 @@ interface WeatherListenerProps {
   children: React.ReactNode;
 }
 
+let refreshWeatherHandler: (() => Promise<void>) | null = null;
+
+export const refreshWeather = async (): Promise<void> => {
+  if (!refreshWeatherHandler) {
+    return;
+  }
+  await refreshWeatherHandler();
+};
+
 const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
   const dispatch = useAppDispatch();
   const { location, isBackendConnected } = useAppSelector(selectWeather);
@@ -222,6 +231,15 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
       dispatch(setFetching(false));
     }
   }, [dispatch, location, isBackendConnected, fetchPredictions, backendUrl, isConfigInitialized]);
+
+  useEffect(() => {
+    refreshWeatherHandler = fetchWeatherData;
+    return () => {
+      if (refreshWeatherHandler === fetchWeatherData) {
+        refreshWeatherHandler = null;
+      }
+    };
+  }, [fetchWeatherData]);
 
   // Check backend connection (always runs - backend is on LAN, not internet)
   const checkBackendConnection = useCallback(async () => {

@@ -36,6 +36,7 @@ import WeatherScreen from '../../screens/weather/WeatherScreen';
 import SensorDataScreen from '../../screens/irrigationAndFertigation/SensorDataScreen';
 import { useAppSelector } from '../../hooks';
 import { selectTheme } from '../../store/selectors';
+import { refreshWeather } from '../../store/listeners/WeatherListener';
 
 type HomeStackParamList = {
   AdminDashboard: undefined;
@@ -100,7 +101,10 @@ const AdminHomeStack: React.FC<MainTabProps<'Home'>> = ({ navigation }) => (
     <HomeStack.Screen
       name="Weather"
       children={({ navigation: homeNav }) => (
-        <WeatherScreen onBackPress={() => homeNav.goBack()} />
+        <WeatherScreen
+          onBackPress={() => homeNav.goBack()}
+          onRefresh={refreshWeather}
+        />
       )}
     />
     <HomeStack.Screen
@@ -130,7 +134,10 @@ const ManagerHomeStack: React.FC<MainTabProps<'Home'>> = ({ navigation }) => (
     <HomeStack.Screen
       name="Weather"
       children={({ navigation: homeNav }) => (
-        <WeatherScreen onBackPress={() => homeNav.goBack()} />
+        <WeatherScreen
+          onBackPress={() => homeNav.goBack()}
+          onRefresh={refreshWeather}
+        />
       )}
     />
     <HomeStack.Screen

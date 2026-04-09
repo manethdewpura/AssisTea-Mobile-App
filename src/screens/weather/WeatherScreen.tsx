@@ -16,9 +16,10 @@ import { Lucide } from '@react-native-vector-icons/lucide';
 
 interface WeatherScreenProps {
   onBackPress?: () => void;
+  onRefresh?: () => void | Promise<void>;
 }
 
-const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
+const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress, onRefresh }) => {
   const { current, forecast, isFetching, error, lastUpdated, isBackendConnected, predictions, isPredictionMode, isForecastFallbackMode } =
     useAppSelector(selectWeather);
   const { colors } = useAppSelector(selectTheme);
@@ -107,6 +108,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress }) => {
         refreshControl={
           <RefreshControl
             refreshing={isFetching}
+            onRefresh={onRefresh}
             tintColor={colors.primary}
             colors={[colors.primary]}
           />
