@@ -196,7 +196,6 @@ class AssignmentService {
                 throw new Error('No available workers for today. Please mark at least one worker as available.');
             }
 
-            console.log(`👷 ${availableWorkers.length}/${workers.length} workers available today (${(excludedWorkerIds?.length ?? 0)} absent).`);
 
             // Build field name/ID → slope lookup from the fields already provided.
             // This is pure in-memory work — no extra network calls.

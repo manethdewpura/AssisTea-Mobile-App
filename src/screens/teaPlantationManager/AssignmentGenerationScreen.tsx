@@ -22,6 +22,10 @@ import { Worker } from '../../models/Worker';
 import { useAppSelector, useThemedAlert } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import CustomAlert from '../../components/molecule/CustomAlert';
+import { generatePDF } from 'react-native-html-to-pdf';
+import { saveDocuments } from '@react-native-documents/picker';
+
+import { buildScheduleHTML } from '../../utils/schedulePdfTemplate.util';
 
 type Props = NativeStackScreenProps<TeaPlantationStackParamList, 'AssignmentGeneration'>;
 
@@ -37,6 +41,9 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
     const [workersLoading, setWorkersLoading] = useState(false);
     const [absentWorkerIds, setAbsentWorkerIds] = useState<Set<string>>(new Set());
 
+    // PDF download state
+    const [downloadingPDF, setDownloadingPDF] = useState(false);
+
     useEffect(() => { loadWorkers(); }, []);
 
     const loadWorkers = async () => {
@@ -50,8 +57,7 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
             try {
                 const local = await workerSQLiteService.getAllWorkers(userProfile.plantationId);
                 setAllWorkers(local.sort((a, b) => a.name.localeCompare(b.name)));
-            } catch (err) {
-                console.warn('[AssignmentGeneration] Could not load workers for availability:', err);
+            } catch {
             }
         } finally {
             setWorkersLoading(false);
@@ -170,6 +176,46 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
     };
 
     const fieldGroups = groupByField();
+
+    const handleDownloadSchedule = async () => {
+        if (!schedule) return;
+        try {
+            setDownloadingPDF(true);
+            const html = buildScheduleHTML(schedule, fieldGroups);
+            const result = await generatePDF({
+                html,
+                fileName: `AssisTea_Schedule_${schedule.date.replace(/-/g, '')}`,
+                directory: 'Downloads',
+                width: 595,
+                height: 842,
+            });
+            if (result.filePath) {
+                // Use Android's native "Save As" dialog (SAF ACTION_CREATE_DOCUMENT)
+                // This lets the user pick exactly where to save — including public Downloads
+                // No extra permissions or rebuild needed — saveDocuments is already compiled in
+                const sourceUri = `file://${result.filePath}`;
+                const [saved] = await saveDocuments({
+                    sourceUris: [sourceUri],
+                    mimeType: 'application/pdf',
+                    fileName: `AssisTea_Schedule_${schedule.date.replace(/-/g, '')}.pdf`,
+                });
+                if (saved.error) {
+                    throw new Error(saved.error);
+                }
+                const savedName = saved.name ?? 'AssisTea_Schedule.pdf';
+                showAlert(
+                    '📄 Schedule Saved!',
+                    `Your schedule has been saved as:\n\n${savedName}`,
+                    [{ text: 'OK', style: 'default' }],
+                    'low'
+                );
+            }
+        } catch {
+            showAlert('PDF Error', 'Could not generate the PDF. Please try again.', undefined, 'high');
+        } finally {
+            setDownloadingPDF(false);
+        }
+    };
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -337,6 +383,25 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
                                 ))}
                             </View>
                         ))}
+
+                        {/* Download Schedule Button */}
+                        <TouchableOpacity
+                            style={[styles.downloadButton, downloadingPDF && styles.buttonDisabled]}
+                            onPress={handleDownloadSchedule}
+                            disabled={downloadingPDF}
+                        >
+                            {downloadingPDF ? (
+                                <>
+                                    <ActivityIndicator color="#2d5016" size="small" style={{ marginRight: 8 }} />
+                                    <Text style={styles.downloadButtonText}>Generating PDF...</Text>
+                                </>
+                            ) : (
+                                <>
+                                    <Text style={styles.downloadButtonIcon}>📅</Text>
+                                    <Text style={styles.downloadButtonText}>Download Schedule as PDF</Text>
+                                </>
+                            )}
+                        </TouchableOpacity>
                     </View>
                 )}
 
@@ -489,6 +554,21 @@ const styles = StyleSheet.create({
     wfWorkerInfo: { flex: 1 },
     wfWorkerName: { fontSize: 14, fontWeight: '600' },
     wfWorkerStatus: { fontSize: 12, marginTop: 2 },
+
+    downloadButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: '#2d5016',
+        borderRadius: 10,
+        paddingVertical: 14,
+        marginTop: 8,
+        marginBottom: 8,
+        backgroundColor: 'transparent',
+    },
+    downloadButtonIcon: { fontSize: 18, marginRight: 8 },
+    downloadButtonText: { color: '#2d5016', fontSize: 15, fontWeight: '700' },
 });
 
 export default AssignmentGenerationScreen;
