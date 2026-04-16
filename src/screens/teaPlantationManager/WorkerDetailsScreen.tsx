@@ -44,7 +44,11 @@ function computePerformanceProfile(
 ): PerformanceProfile | null {
   const valid = workerSessions
     .filter(r => r.timeSpentHours > 0)
-    .sort((a, b) => (a.date ?? '') < (b.date ?? '') ? -1 : 1);
+    .sort((a, b) => {
+        const dateA = a.date ?? '';
+        const dateB = b.date ?? '';
+        return dateA.localeCompare(dateB);
+    });
 
   if (valid.length === 0) return null;
 

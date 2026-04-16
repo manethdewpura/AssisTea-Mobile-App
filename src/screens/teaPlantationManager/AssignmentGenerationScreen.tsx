@@ -44,20 +44,21 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
     // PDF download state
     const [downloadingPDF, setDownloadingPDF] = useState(false);
 
-    useEffect(() => { loadWorkers(); }, []);
+    useEffect(() => { loadWorkers(); }, [userProfile?.plantationId]);
 
     const loadWorkers = async () => {
         if (!userProfile?.plantationId) return;
         setWorkersLoading(true);
         try {
             const firebaseWorkers = await workerService.getWorkersByPlantation(userProfile.plantationId);
-            for (const w of firebaseWorkers) await workerSQLiteService.insertWorker(w);
+            await workerSQLiteService.insertOrReplaceBatch(firebaseWorkers);
             setAllWorkers(firebaseWorkers.sort((a, b) => a.name.localeCompare(b.name)));
-        } catch {
+        } catch (firebaseError) {
             try {
                 const local = await workerSQLiteService.getAllWorkers(userProfile.plantationId);
                 setAllWorkers(local.sort((a, b) => a.name.localeCompare(b.name)));
-            } catch {
+            } catch (localError) {
+                console.error('[loadWorkers] SQLite fallback also failed:', localError);
             }
         } finally {
             setWorkersLoading(false);
@@ -209,6 +210,8 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
                     [{ text: 'OK', style: 'default' }],
                     'low'
                 );
+            } else {
+                throw new Error('PDF file path was not returned.');
             }
         } catch {
             showAlert('PDF Error', 'Could not generate the PDF. Please try again.', undefined, 'high');

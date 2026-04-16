@@ -1,5 +1,15 @@
 import type { AssignmentSchedule, WorkerAssignment } from '../models/MLPrediction';
 
+/** Escapes special HTML characters in user-provided strings to prevent broken PDF formatting. */
+function escapeHtml(str: string): string {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 /**
  * Builds a branded AssisTea HTML document from the generated assignment schedule.
  * Used by the PDF download feature in AssignmentGenerationScreen.
@@ -18,7 +28,7 @@ export function buildScheduleHTML(
         const rowsHTML = assignments.map((a, i) =>
             `<tr class="${i % 2 !== 0 ? 'alt' : ''}">
                 <td class="rank">${i + 1}</td>
-                <td class="wname">${a.workerName}</td>
+                <td class="wname">${escapeHtml(a.workerName)}</td>
                 <td class="eff">${a.predictedEfficiency.toFixed(2)} kg/hr</td>
                 <td class="star">${a.predictedEfficiency >= 5 ? '⭐' : '✓'}</td>
             </tr>`
@@ -26,7 +36,7 @@ export function buildScheduleHTML(
         return `
         <div class="fb">
             <div class="fh">
-                <span class="fn">${assignments[0].fieldName}</span>
+                <span class="fn">${escapeHtml(assignments[0].fieldName)}</span>
                 <span class="fm">${assignments.length} workers &nbsp;&middot;&nbsp; avg ${fieldAvg.toFixed(2)} kg/hr</span>
             </div>
             <table class="wt">
@@ -80,7 +90,7 @@ export function buildScheduleHTML(
         <div class="hdr-bar"></div>
     </div>
     <div class="title-row">
-        <div><div class="sch-title">Daily Labour Assignment Schedule</div><div class="sch-date">📅 ${sched.date}</div></div>
+        <div><div class="sch-title">Daily Labour Assignment Schedule</div><div class="sch-date">📅 ${escapeHtml(sched.date)}</div></div>
         <div><div class="gen-at">Generated at</div><div class="gen-at">${generated}</div></div>
     </div>
     <div class="stats">
