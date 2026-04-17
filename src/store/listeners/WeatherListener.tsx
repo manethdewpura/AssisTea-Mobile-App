@@ -119,17 +119,20 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
         try {
           const forecastResult = await backendService.fetchLatestForecast();
           if (forecastResult.success && forecastResult.data) {
-            dispatch(setWeatherForecast(forecastResult.data));
             const fallbackCurrent = getNearestForecastAsCurrent(forecastResult.data);
             if (fallbackCurrent) {
+              dispatch(setWeatherForecast(forecastResult.data));
               dispatch(setCurrentWeather(fallbackCurrent));
+              dispatch(setForecastFallbackMode(true));
+              dispatch(
+                setError(
+                  'Weather API unavailable. Showing backend forecast fallback (next available slots).',
+                ),
+              );
+            } else {
+              dispatch(setForecastFallbackMode(false));
+              dispatch(setError('Weather API unavailable and no ML predictions available'));
             }
-            dispatch(setForecastFallbackMode(true));
-            dispatch(
-              setError(
-                'Weather API unavailable. Showing backend forecast fallback (next available slots).',
-              ),
-            );
           } else {
             dispatch(setForecastFallbackMode(false));
             dispatch(setError('Weather API unavailable and no ML predictions available'));
@@ -145,18 +148,18 @@ const WeatherListener: React.FC<WeatherListenerProps> = ({ children }) => {
       try {
         const forecastResult = await backendService.fetchLatestForecast();
         if (forecastResult.success && forecastResult.data) {
-          dispatch(setWeatherForecast(forecastResult.data));
           const fallbackCurrent = getNearestForecastAsCurrent(forecastResult.data);
           if (fallbackCurrent) {
+            dispatch(setWeatherForecast(forecastResult.data));
             dispatch(setCurrentWeather(fallbackCurrent));
+            dispatch(setForecastFallbackMode(true));
+            dispatch(
+              setError(
+                'ML predictions unavailable. Showing backend forecast fallback.',
+              ),
+            );
+            return;
           }
-          dispatch(setForecastFallbackMode(true));
-          dispatch(
-            setError(
-              'ML predictions unavailable. Showing backend forecast fallback.',
-            ),
-          );
-          return;
         }
       } catch {
         // Fall through to default error

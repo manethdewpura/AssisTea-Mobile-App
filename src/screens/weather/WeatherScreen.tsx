@@ -134,7 +134,7 @@ const WeatherScreen: React.FC<WeatherScreenProps> = ({ onBackPress, onRefresh })
             ]}
           >
             <Text style={styles.statusText}>
-              Forecast Fallback — Insufficient Recent Observations for ML
+              Forecast Fallback — ML predictions unavailable
             </Text>
           </View>
         ) : (
