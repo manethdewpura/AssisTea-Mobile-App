@@ -47,6 +47,12 @@ export interface MLPredictionsResponse {
   prediction_count: number;
 }
 
+export interface LatestForecastResponse {
+  success: boolean;
+  message?: string;
+  data: WeatherForecast;
+}
+
 export const backendService = {
   /**
    * Check if backend is available and connected on LAN
@@ -139,6 +145,48 @@ export const backendService = {
       return result;
     } catch (error: any) {
       console.error('[Backend] Error fetching ML predictions:', error?.message || error);
+      throw error;
+    }
+  },
+
+  /**
+   * Fetch latest forecast stored in backend for fallback display.
+   */
+  async fetchLatestForecast(): Promise<LatestForecastResponse> {
+    try {
+      const timeoutMs = 10000;
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Connection timeout')), timeoutMs);
+      });
+
+      const baseUrl = await getBaseUrl();
+
+      const response = await Promise.race([
+        fetch(`${baseUrl}/api/weather/forecast/latest`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }),
+        timeoutPromise,
+      ]);
+
+      if (!response.ok) {
+        let errorMessage = `Status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          const rawMessage = errorData.message || errorData.error || JSON.stringify(errorData);
+          errorMessage = rawMessage.substring(0, 200);
+        } catch {
+          errorMessage = response.statusText;
+        }
+        throw new Error(`Failed to fetch latest forecast: ${errorMessage}`);
+      }
+
+      const result: LatestForecastResponse = await response.json();
+      return result;
+    } catch (error: any) {
+      console.error('[Backend] Error fetching latest forecast:', error?.message || error);
       throw error;
     }
   },
