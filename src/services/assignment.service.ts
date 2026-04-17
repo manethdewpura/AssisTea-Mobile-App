@@ -98,7 +98,7 @@ class AssignmentService {
             const result = await checkNetworkConnection();
             isConnected = !!result?.isConnected;
         } catch (netErr) {
-            console.warn('⚠️ Could not determine network status, assuming online:', netErr);
+            console.warn('Could not determine network status, assuming online:', netErr);
         }
 
         if (isConnected) {
@@ -117,13 +117,13 @@ class AssignmentService {
                 Promise.all([
                     dailyDataSQLiteService.insertOrReplaceBatch(dailyRecords as any),
                     workerSQLiteService.insertOrReplaceBatch(firebaseWorkers),
-                ]).catch(err => console.warn('⚠️ Background SQLite cache failed:', err));
+                ]).catch(err => console.warn('Background SQLite cache failed:', err));
 
-                console.log(`🌐 Online: ${workers.length} workers, ${dailyRecords.length} daily records`);
+                console.log(`Online: ${workers.length} workers, ${dailyRecords.length} daily records`);
             } catch (error) {
                 // API failed even though we think we're online — fall back to SQLite cache.
                 console.warn('Failed to fetch from Firebase, falling back to SQLite:', error);
-                console.log('📴 Using SQLite cache due to Firebase error...');
+                console.log('Using SQLite cache due to Firebase error...');
 
                 const [sqliteWorkers, sqliteDailyData] = await Promise.all([
                     workerSQLiteService.getAllWorkers(plantationId),
@@ -134,11 +134,11 @@ class AssignmentService {
                 dailyRecords = sqliteDailyData;
                 usedSQLiteCache = true;
 
-                console.log(`📦 SQLite (fallback): ${workers.length} workers, ${dailyRecords.length} daily records`);
+                console.log(`SQLite (fallback): ${workers.length} workers, ${dailyRecords.length} daily records`);
             }
         } else {
             // ── Explicit offline path — go straight to SQLite ────────────────
-            console.log('📴 Device offline — reading from SQLite cache...');
+            console.log('Device offline — reading from SQLite cache...');
             const [sqliteWorkers, sqliteDailyData] = await Promise.all([
                 workerSQLiteService.getAllWorkers(plantationId),
                 dailyDataSQLiteService.getByPlantation(plantationId),
@@ -148,7 +148,7 @@ class AssignmentService {
             dailyRecords = sqliteDailyData;
             usedSQLiteCache = true;
 
-            console.log(`📦 SQLite (offline): ${workers.length} workers, ${dailyRecords.length} daily records`);
+            console.log(`SQLite (offline): ${workers.length} workers, ${dailyRecords.length} daily records`);
         }
 
         if (workers.length === 0) {
@@ -173,7 +173,8 @@ class AssignmentService {
     async generateAssignments(
         plantationId: string,
         date: string,
-        fields: Field[]
+        fields: Field[],
+        excludedWorkerIds?: string[]   // IDs of workers marked absent for today
     ): Promise<AssignmentSchedule> {
         try {
             if (!mlPredictionService.isReady()) {
@@ -184,6 +185,17 @@ class AssignmentService {
 
             // Single entry point — handles both online and offline transparently
             const { workers, dailyRecords } = await this.fetchDataForSchedule(plantationId);
+
+            // Filter out absent workers — pure in-memory, no DB or network calls.
+            // The ML model and all downstream logic are completely unchanged.
+            const availableWorkers = (excludedWorkerIds && excludedWorkerIds.length > 0)
+                ? workers.filter(w => !excludedWorkerIds.includes(w.id))
+                : workers;
+
+            if (availableWorkers.length === 0) {
+                throw new Error('No available workers for today. Please mark at least one worker as available.');
+            }
+
 
             // Build field name/ID → slope lookup from the fields already provided.
             // This is pure in-memory work — no extra network calls.
@@ -205,12 +217,12 @@ class AssignmentService {
                     : r; // no match → fieldSlope stays undefined → falls back to target slope
             });
 
-            console.log(`🗺️ Slope map built for ${fields.length} fields. Annotated ${annotatedRecords.filter(r => r.fieldSlope !== undefined).length}/${annotatedRecords.length} records with real slopes.`);
+            console.log(`Slope map built for ${fields.length} fields. Annotated ${annotatedRecords.filter(r => r.fieldSlope !== undefined).length}/${annotatedRecords.length} records with real slopes.`);
 
             // Build all worker × field ML inputs from in-memory data
             const combinations: Array<{ worker: Worker; field: Field; input: MLInput }> = [];
 
-            for (const worker of workers) {
+            for (const worker of availableWorkers) {
                 for (const field of fields) {
                     const stats = this.calculateHistoricalStats(worker.id, field.slope, annotatedRecords);
 
@@ -235,7 +247,7 @@ class AssignmentService {
                 }
             }
 
-            console.log(`📊 Running ${combinations.length} parallel predictions...`);
+            console.log(`Running ${combinations.length} parallel predictions...`);
 
             // All predictions in parallel — fully on-device, no network
             const predictions = await Promise.all(
@@ -271,11 +283,11 @@ class AssignmentService {
                 status: 'generated',
             };
 
-            console.log(`✅ ${assignments.length} assignments | avg ${avgEfficiency.toFixed(2)} kg/hr`);
+            console.log(`${assignments.length} assignments | avg ${avgEfficiency.toFixed(2)} kg/hr`);
 
             return schedule;
         } catch (error) {
-            console.error('❌ Error generating assignments:', error);
+            console.error('Error generating assignments:', error);
             throw error;
         }
     }

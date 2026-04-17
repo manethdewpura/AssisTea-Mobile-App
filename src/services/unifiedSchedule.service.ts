@@ -14,7 +14,7 @@ class UnifiedScheduleService {
             isConnected = !!netResult?.isConnected;
         } catch { /* ignore — treated as offline */ }
 
-        console.log(`🔧 [UnifiedSchedule.saveSchedule] date=${scheduleData.date}, isConnected=${isConnected}`);
+        console.log(`[UnifiedSchedule.saveSchedule] date=${scheduleData.date}, isConnected=${isConnected}`);
 
         const schedule: SavedSchedule = {
             id: `schedule_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
@@ -24,17 +24,17 @@ class UnifiedScheduleService {
             status: 'active',
         };
 
-        console.log(`💾 [UnifiedSchedule] Step 1 — Writing to SQLite: id=${schedule.id}, assignments=${schedule.assignments.length}`);
+        console.log(`[UnifiedSchedule] Step 1 — Writing to SQLite: id=${schedule.id}, assignments=${schedule.assignments.length}`);
         await scheduleSQLiteService.saveSchedule(schedule);
-        console.log(`✅ [UnifiedSchedule] SQLite save complete for schedule ${schedule.id}`);
+        console.log(`[UnifiedSchedule] SQLite save complete for schedule ${schedule.id}`);
 
         if (isConnected) {
-            console.log(`🌐 [UnifiedSchedule] Online — firing Firebase sync in background...`);
+            console.log(`[UnifiedSchedule] Online — firing Firebase sync in background...`);
         } else {
-            console.log(`📴 [UnifiedSchedule] Offline — Firebase sync queued (will auto-flush when online)`);
+            console.log(`[UnifiedSchedule] Offline — Firebase sync queued (will auto-flush when online)`);
         }
         this.syncToFirebase(schedule).catch(err => {
-            console.warn('⚠️ [UnifiedSchedule] Firebase sync failed (will retry later):', err);
+            console.warn('[UnifiedSchedule] Firebase sync failed (will retry later):', err);
         });
 
         return schedule;
@@ -56,23 +56,23 @@ class UnifiedScheduleService {
             isConnected = !!netResult?.isConnected;
         } catch { /* ignore */ }
 
-        console.log(`🗑️ [UnifiedSchedule.deleteSchedule] id=${scheduleId}, isConnected=${isConnected}`);
-        console.log(`💾 [UnifiedSchedule] Step 1 — Deleting from SQLite...`);
+        console.log(`[UnifiedSchedule.deleteSchedule] id=${scheduleId}, isConnected=${isConnected}`);
+        console.log(`[UnifiedSchedule] Step 1 — Deleting from SQLite...`);
         await scheduleSQLiteService.deleteSchedule(scheduleId);
-        console.log(`✅ [UnifiedSchedule] SQLite delete complete`);
+        console.log(`[UnifiedSchedule] SQLite delete complete`);
 
         if (isConnected) {
-            console.log(`🌐 [UnifiedSchedule] Online — firing Firebase delete in background...`);
+            console.log(`[UnifiedSchedule] Online — firing Firebase delete in background...`);
         } else {
-            console.log(`📴 [UnifiedSchedule] Offline — Firebase delete queued`);
+            console.log(`[UnifiedSchedule] Offline — Firebase delete queued`);
         }
         assignmentStorageService.deleteSchedule(scheduleId).catch((error) => {
-            console.error('⚠️ [UnifiedSchedule] Failed to delete schedule from Firebase:', error);
+            console.error('[UnifiedSchedule] Failed to delete schedule from Firebase:', error);
         });
     }
 
     private async syncToFirebase(schedule: SavedSchedule): Promise<void> {
-        console.log(`🔄 [UnifiedSchedule.syncToFirebase] Attempting Firebase sync for schedule id=${schedule.id}, date=${schedule.date}...`);
+        console.log(`[UnifiedSchedule.syncToFirebase] Attempting Firebase sync for schedule id=${schedule.id}, date=${schedule.date}...`);
         await assignmentStorageService.saveSchedule({
             plantationId: schedule.plantationId,
             date: schedule.date,
@@ -82,7 +82,7 @@ class UnifiedScheduleService {
             assignments: schedule.assignments,
         });
         await scheduleSQLiteService.markAsSynced(schedule.id);
-        console.log(`✅ [UnifiedSchedule.syncToFirebase] Firebase sync complete for ${schedule.id}, syncStatus=synced`);
+        console.log(`[UnifiedSchedule.syncToFirebase] Firebase sync complete for ${schedule.id}, syncStatus=synced`);
     }
 
     async pullFromFirebase(plantationId: string): Promise<void> {

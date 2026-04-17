@@ -18,9 +18,86 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { TeaPlantationStackParamList } from '../../navigation/TeaPlantationNavigator';
 import { workerService } from '../../services';
+import { dailyDataService } from '../../services/dailyData.service';
+import { unifiedFieldService } from '../../services/unifiedField.service';
 import { handleFirebaseError, logError } from '../../utils';
 import { checkNetworkConnection } from '../../utils/network.util';
 import type { Worker } from '../../models/Worker';
+import type { DailyData } from '../../models/DailyData';
+import type { Field } from '../../models/Field';
+
+const SLOPE_WINDOW = 5.0;
+const RECENT_N = 5;
+
+interface PerformanceProfile {
+  totalSessions: number;
+  allTimeAvg: number;
+  recentAvg: number;
+  trend: 'improving' | 'declining' | 'stable';
+  bestFieldName: string | null;
+  bestFieldEfficiency: number | null;
+}
+
+function computePerformanceProfile(
+  workerSessions: DailyData[],
+  fields: Field[],
+): PerformanceProfile | null {
+  const valid = workerSessions
+    .filter(r => r.timeSpentHours > 0)
+    .sort((a, b) => {
+        const dateA = a.date ?? '';
+        const dateB = b.date ?? '';
+        return dateA.localeCompare(dateB);
+    });
+
+  if (valid.length === 0) return null;
+
+  const efficiencies = valid.map(r => r.teaPluckedKg / r.timeSpentHours);
+  const allTimeAvg = efficiencies.reduce((s, v) => s + v, 0) / efficiencies.length;
+
+  const recentSlice = efficiencies.slice(-RECENT_N);
+  const recentAvg = recentSlice.reduce((s, v) => s + v, 0) / recentSlice.length;
+
+  const diff = recentAvg - allTimeAvg;
+  const trend: PerformanceProfile['trend'] =
+    diff > 0.1 ? 'improving' : diff < -0.1 ? 'declining' : 'stable';
+
+  // Build slope map from sessions (fieldArea → slope via fields lookup)
+  const fieldSlopeMap = new Map<string, number>();
+  fields.forEach(f => {
+    fieldSlopeMap.set(f.name, f.slope);
+    fieldSlopeMap.set(f.id, f.slope);
+  });
+
+  const annotated = valid.map(r => ({
+    efficiency: r.teaPluckedKg / r.timeSpentHours,
+    slope: r.fieldArea ? (fieldSlopeMap.get(r.fieldArea) ?? null) : null,
+  }));
+
+  let bestFieldName: string | null = null;
+  let bestFieldEfficiency: number | null = null;
+
+  for (const field of fields) {
+    const matched = annotated.filter(
+      s => s.slope !== null && Math.abs(s.slope! - field.slope) <= SLOPE_WINDOW,
+    );
+    if (matched.length < 2) continue; // need at least 2 sessions for meaningful stat
+    const avg = matched.reduce((s, m) => s + m.efficiency, 0) / matched.length;
+    if (bestFieldEfficiency === null || avg > bestFieldEfficiency) {
+      bestFieldEfficiency = avg;
+      bestFieldName = field.name;
+    }
+  }
+
+  return {
+    totalSessions: valid.length,
+    allTimeAvg,
+    recentAvg,
+    trend,
+    bestFieldName,
+    bestFieldEfficiency,
+  };
+}
 type Props = NativeStackScreenProps<
   TeaPlantationStackParamList,
   'WorkerDetails'
@@ -43,9 +120,36 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
   const [gender, setGender] = useState<'Male' | 'Female'>('Male');
   const { showAlert, hideAlert, alertState } = useThemedAlert();
 
+  // ML Performance Profile state
+  const [perfLoading, setPerfLoading] = useState(false);
+  const [perfProfile, setPerfProfile] = useState<PerformanceProfile | null>(null);
+
   useEffect(() => {
     loadWorkerDetails();
   }, [workerId]);
+
+  // Load ML performance data after worker profile is available
+  useEffect(() => {
+    if (worker) {
+      loadPerformanceData(worker);
+    }
+  }, [worker?.id]);
+
+  const loadPerformanceData = async (loadedWorker: Worker) => {
+    try {
+      setPerfLoading(true);
+      const [sessions, fields] = await Promise.all([
+        dailyDataService.getDailyDataByWorker(loadedWorker.id),
+        unifiedFieldService.getFields(loadedWorker.plantationId),
+      ]);
+      const profile = computePerformanceProfile(sessions, fields);
+      setPerfProfile(profile);
+    } catch (err) {
+      console.warn('[WorkerDetails] Could not load performance data:', err);
+    } finally {
+      setPerfLoading(false);
+    }
+  };
 
   const loadWorkerDetails = async () => {
     try {
@@ -373,6 +477,79 @@ const WorkerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
             )}
           </View>
         </View>
+
+        {/*ML Performance Profile Card */}
+        <View style={[styles.perfCard, { backgroundColor: colors.cardBackground || '#fff', borderColor: colors.border }]}>
+          <View style={styles.perfHeader}>
+            <Text style={styles.perfHeaderEmoji}>🧠</Text>
+            <Text style={[styles.perfHeaderTitle, { color: colors.text }]}>Performance Profile</Text>
+          </View>
+
+          {perfLoading ? (
+            <ActivityIndicator color="#7cb342" style={{ marginVertical: 16 }} />
+          ) : perfProfile === null ? (
+            <View style={styles.perfColdStart}>
+              <Text style={styles.perfColdStartEmoji}>🆕</Text>
+              <Text style={[styles.perfColdStartText, { color: colors.textSecondary }]}>
+                No session history yet
+              </Text>
+            </View>
+          ) : (
+            <>
+              {/* Sessions recorded */}
+              <View style={[styles.perfRow, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.perfLabel, { color: colors.textSecondary }]}>Sessions Recorded</Text>
+                <Text style={[styles.perfValue, { color: colors.text }]}>{perfProfile.totalSessions}</Text>
+              </View>
+
+              {/* All-time average */}
+              <View style={[styles.perfRow, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.perfLabel, { color: colors.textSecondary }]}>All-time Average</Text>
+                <Text style={[styles.perfValue, { color: '#7cb342' }]}>
+                  {perfProfile.allTimeAvg.toFixed(2)} kg/hr
+                </Text>
+              </View>
+
+              {/* Recent trend */}
+              <View style={[styles.perfRow, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.perfLabel, { color: colors.textSecondary }]}>Recent Trend (last {Math.min(perfProfile.totalSessions, RECENT_N)} sessions)</Text>
+                <View style={styles.perfTrendRow}>
+                  <Text style={[
+                    styles.perfTrendArrow,
+                    { color: perfProfile.trend === 'improving' ? '#4caf50' : perfProfile.trend === 'declining' ? '#f44336' : '#ff9800' },
+                  ]}>
+                    {perfProfile.trend === 'improving' ? '↑' : perfProfile.trend === 'declining' ? '↓' : '→'}
+                  </Text>
+                  <Text style={[
+                    styles.perfTrendLabel,
+                    { color: perfProfile.trend === 'improving' ? '#4caf50' : perfProfile.trend === 'declining' ? '#f44336' : '#ff9800' },
+                  ]}>
+                    {perfProfile.trend === 'improving' ? 'Improving' : perfProfile.trend === 'declining' ? 'Declining' : 'Stable'}
+                  </Text>
+                  <Text style={[styles.perfTrendSub, { color: colors.textSecondary }]}>
+                    {'  '}({perfProfile.recentAvg.toFixed(2)} kg/hr)
+                  </Text>
+                </View>
+              </View>
+
+              {/* Best field match */}
+              <View style={[styles.perfRow, { borderBottomWidth: 0 }]}>
+                <Text style={[styles.perfLabel, { color: colors.textSecondary }]}>Best Field Match</Text>
+                {perfProfile.bestFieldName ? (
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={[styles.perfValue, { color: colors.text }]}>{perfProfile.bestFieldName}</Text>
+                    <Text style={[styles.perfTrendSub, { color: '#7cb342' }]}>
+                      {perfProfile.bestFieldEfficiency!.toFixed(2)} kg/hr on similar terrain
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={[styles.perfTrendSub, { color: colors.textSecondary }]}>Not enough slope data</Text>
+                )}
+              </View>
+            </>
+          )}
+        </View>
+
       </ScrollView>
       )}
       <CustomAlert visible={alertState.visible} title={alertState.title} message={alertState.message} buttons={alertState.buttons} onDismiss={hideAlert} severity={alertState.severity} />
@@ -553,6 +730,82 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  perfCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderLeftWidth: 4,
+    borderLeftColor: '#7cb342',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  perfHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  perfHeaderEmoji: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  perfHeaderTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  perfSubtitle: {
+    fontSize: 12,
+    marginBottom: 16,
+    fontStyle: 'italic',
+  },
+  perfColdStart: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 8,
+    gap: 10,
+  },
+  perfColdStartEmoji: {
+    fontSize: 24,
+  },
+  perfColdStartText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  perfRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  perfLabel: {
+    fontSize: 13,
+    flex: 1,
+  },
+  perfValue: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  perfTrendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  perfTrendArrow: {
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  perfTrendLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginLeft: 4,
+  },
+  perfTrendSub: {
+    fontSize: 12,
   },
 });
 

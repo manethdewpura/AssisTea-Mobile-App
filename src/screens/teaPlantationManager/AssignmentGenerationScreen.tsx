@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -6,6 +6,7 @@ import {
     TouchableOpacity,
     ScrollView,
     ActivityIndicator,
+    Switch,
 } from 'react-native';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,9 +18,14 @@ import { unifiedScheduleService } from '../../services/unifiedSchedule.service';
 import { workerService } from '../../services/worker.Service';
 import { workerSQLiteService } from '../../services/sqlite/workerSQLite.service';
 import { AssignmentSchedule, WorkerAssignment } from '../../models/MLPrediction';
+import { Worker } from '../../models/Worker';
 import { useAppSelector, useThemedAlert } from '../../hooks';
 import { selectAuth, selectTheme } from '../../store/selectors';
 import CustomAlert from '../../components/molecule/CustomAlert';
+import { generatePDF } from 'react-native-html-to-pdf';
+import { saveDocuments } from '@react-native-documents/picker';
+
+import { buildScheduleHTML } from '../../utils/schedulePdfTemplate.util';
 
 type Props = NativeStackScreenProps<TeaPlantationStackParamList, 'AssignmentGeneration'>;
 
@@ -30,9 +36,53 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
     const [schedule, setSchedule] = useState<AssignmentSchedule | null>(null);
     const { showAlert, hideAlert, alertState } = useThemedAlert();
 
+    // ── Availability state (local only — resets each session, never persisted) ──
+    const [allWorkers, setAllWorkers] = useState<Worker[]>([]);
+    const [workersLoading, setWorkersLoading] = useState(false);
+    const [absentWorkerIds, setAbsentWorkerIds] = useState<Set<string>>(new Set());
+
+    // PDF download state
+    const [downloadingPDF, setDownloadingPDF] = useState(false);
+
+    useEffect(() => { loadWorkers(); }, [userProfile?.plantationId]);
+
+    const loadWorkers = async () => {
+        if (!userProfile?.plantationId) return;
+        setWorkersLoading(true);
+        try {
+            const firebaseWorkers = await workerService.getWorkersByPlantation(userProfile.plantationId);
+            await workerSQLiteService.insertOrReplaceBatch(firebaseWorkers);
+            setAllWorkers(firebaseWorkers.sort((a, b) => a.name.localeCompare(b.name)));
+        } catch (firebaseError) {
+            try {
+                const local = await workerSQLiteService.getAllWorkers(userProfile.plantationId);
+                setAllWorkers(local.sort((a, b) => a.name.localeCompare(b.name)));
+            } catch (localError) {
+                console.error('[loadWorkers] SQLite fallback also failed:', localError);
+            }
+        } finally {
+            setWorkersLoading(false);
+        }
+    };
+
+    const toggleWorkerAvailability = (workerId: string, isAvailable: boolean) => {
+        setAbsentWorkerIds(prev => {
+            const next = new Set(prev);
+            if (isAvailable) next.delete(workerId);
+            else next.add(workerId);
+            return next;
+        });
+    };
+
     const handleGenerateSchedule = async () => {
         if (!userProfile?.plantationId) {
             showAlert('Error', 'No plantation ID found', undefined, 'high');
+            return;
+        }
+
+        const availableCount = allWorkers.length - absentWorkerIds.size;
+        if (allWorkers.length > 0 && availableCount === 0) {
+            showAlert('No Available Workers', 'All workers are marked absent. Please mark at least one worker as available.', undefined, 'high');
             return;
         }
 
@@ -83,10 +133,12 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
             const today = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
 
             // 3. Generate assignments (ML runs offline!)
+            // Pass absent worker IDs — service filters them before ML processing.
             const generatedSchedule = await assignmentService.generateAssignments(
                 userProfile.plantationId,
                 today,
-                fieldData
+                fieldData,
+                Array.from(absentWorkerIds)
             );
 
             setSchedule(generatedSchedule);
@@ -126,6 +178,48 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
 
     const fieldGroups = groupByField();
 
+    const handleDownloadSchedule = async () => {
+        if (!schedule) return;
+        try {
+            setDownloadingPDF(true);
+            const html = buildScheduleHTML(schedule, fieldGroups);
+            const result = await generatePDF({
+                html,
+                fileName: `AssisTea_Schedule_${schedule.date.replace(/-/g, '')}`,
+                directory: 'Downloads',
+                width: 595,
+                height: 842,
+            });
+            if (result.filePath) {
+                // Use Android's native "Save As" dialog (SAF ACTION_CREATE_DOCUMENT)
+                // This lets the user pick exactly where to save — including public Downloads
+                // No extra permissions or rebuild needed — saveDocuments is already compiled in
+                const sourceUri = `file://${result.filePath}`;
+                const [saved] = await saveDocuments({
+                    sourceUris: [sourceUri],
+                    mimeType: 'application/pdf',
+                    fileName: `AssisTea_Schedule_${schedule.date.replace(/-/g, '')}.pdf`,
+                });
+                if (saved.error) {
+                    throw new Error(saved.error);
+                }
+                const savedName = saved.name ?? 'AssisTea_Schedule.pdf';
+                showAlert(
+                    '📄 Schedule Saved!',
+                    `Your schedule has been saved as:\n\n${savedName}`,
+                    [{ text: 'OK', style: 'default' }],
+                    'low'
+                );
+            } else {
+                throw new Error('PDF file path was not returned.');
+            }
+        } catch {
+            showAlert('PDF Error', 'Could not generate the PDF. Please try again.', undefined, 'high');
+        } finally {
+            setDownloadingPDF(false);
+        }
+    };
+
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <ScrollView style={styles.content}>
@@ -141,6 +235,60 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
                         Our ML model analyzes worker experience, age, field conditions, and historical data to
                         generate optimized work assignments.
                     </Text>
+                </View>
+
+                {/* Today's Workforce — Availability Toggles */}
+                <View style={[styles.workforceCard, { backgroundColor: colors.cardBackground || '#fff', borderColor: colors.border }]}>
+                    <View style={styles.workforceHeader}>
+                        <Text style={[styles.workforceTitle, { color: colors.text }]}>👷 Today's Workforce</Text>
+                        <View style={styles.wfBadgeRow}>
+                            <View style={styles.wfBadgeAvail}>
+                                <Text style={styles.wfBadgeAvailText}>✅ {allWorkers.length - absentWorkerIds.size} available</Text>
+                            </View>
+                            {absentWorkerIds.size > 0 && (
+                                <View style={styles.wfBadgeAbsent}>
+                                    <Text style={styles.wfBadgeAbsentText}>❌ {absentWorkerIds.size} absent</Text>
+                                </View>
+                            )}
+                        </View>
+                    </View>
+
+                    {workersLoading ? (
+                        <ActivityIndicator color="#7cb342" style={{ marginVertical: 12 }} />
+                    ) : allWorkers.length === 0 ? (
+                        <Text style={[styles.wfEmpty, { color: colors.textSecondary }]}>
+                            No workers found. Add workers first.
+                        </Text>
+                    ) : (
+                        allWorkers.map((worker, index) => {
+                            const isAvailable = !absentWorkerIds.has(worker.id);
+                            return (
+                                <View
+                                    key={worker.id}
+                                    style={[
+                                        styles.wfRow,
+                                        { borderBottomColor: colors.border },
+                                        index === allWorkers.length - 1 && { borderBottomWidth: 0 },
+                                    ]}
+                                >
+                                    <View style={styles.wfWorkerInfo}>
+                                        <Text style={[styles.wfWorkerName, { color: isAvailable ? colors.text : colors.textSecondary }]}>
+                                            {worker.name}
+                                        </Text>
+                                        <Text style={[styles.wfWorkerStatus, { color: isAvailable ? '#7cb342' : '#f44336' }]}>
+                                            {isAvailable ? 'Available' : 'Absent today'}
+                                        </Text>
+                                    </View>
+                                    <Switch
+                                        value={isAvailable}
+                                        onValueChange={(val) => toggleWorkerAvailability(worker.id, val)}
+                                        trackColor={{ false: '#f44336', true: '#7cb342' }}
+                                        thumbColor="#fff"
+                                    />
+                                </View>
+                            );
+                        })
+                    )}
                 </View>
 
                 {/* Generate Button */}
@@ -238,6 +386,25 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
                                 ))}
                             </View>
                         ))}
+
+                        {/* Download Schedule Button */}
+                        <TouchableOpacity
+                            style={[styles.downloadButton, downloadingPDF && styles.buttonDisabled]}
+                            onPress={handleDownloadSchedule}
+                            disabled={downloadingPDF}
+                        >
+                            {downloadingPDF ? (
+                                <>
+                                    <ActivityIndicator color="#2d5016" size="small" style={{ marginRight: 8 }} />
+                                    <Text style={styles.downloadButtonText}>Generating PDF...</Text>
+                                </>
+                            ) : (
+                                <>
+                                    <Text style={styles.downloadButtonIcon}>📅</Text>
+                                    <Text style={styles.downloadButtonText}>Download Schedule as PDF</Text>
+                                </>
+                            )}
+                        </TouchableOpacity>
                     </View>
                 )}
 
@@ -360,6 +527,51 @@ const styles = StyleSheet.create({
     emptyState: { alignItems: 'center', paddingVertical: 60 },
     emptyIcon: { fontSize: 64, marginBottom: 16 },
     emptyText: { textAlign: 'center', fontSize: 14, lineHeight: 22 },
+
+    workforceCard: {
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 20,
+        borderWidth: 1,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    workforceHeader: { marginBottom: 12 },
+    workforceTitle: { fontSize: 16, fontWeight: '700', marginBottom: 8 },
+    wfBadgeRow: { flexDirection: 'row', gap: 8 },
+    wfBadgeAvail: { backgroundColor: '#e8f5e9', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+    wfBadgeAvailText: { fontSize: 12, color: '#2e7d32', fontWeight: '600' },
+    wfBadgeAbsent: { backgroundColor: '#ffebee', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+    wfBadgeAbsentText: { fontSize: 12, color: '#c62828', fontWeight: '600' },
+    wfEmpty: { fontSize: 13, textAlign: 'center', paddingVertical: 12 },
+    wfRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+    },
+    wfWorkerInfo: { flex: 1 },
+    wfWorkerName: { fontSize: 14, fontWeight: '600' },
+    wfWorkerStatus: { fontSize: 12, marginTop: 2 },
+
+    downloadButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: '#2d5016',
+        borderRadius: 10,
+        paddingVertical: 14,
+        marginTop: 8,
+        marginBottom: 8,
+        backgroundColor: 'transparent',
+    },
+    downloadButtonIcon: { fontSize: 18, marginRight: 8 },
+    downloadButtonText: { color: '#2d5016', fontSize: 15, fontWeight: '700' },
 });
 
 export default AssignmentGenerationScreen;

@@ -39,9 +39,9 @@ export const TeaPlantationNavigator: React.FC<TeaPlantationNavigatorProps> = ({
     const initDatabase = async () => {
       try {
         await databaseService.initialize();
-        console.log('📱 SQLite database ready for tea plantation manager!');
+        console.log('SQLite database ready for tea plantation manager!');
       } catch (error) {
-        console.error('❌ Failed to initialize database:', error);
+        console.error('Failed to initialize database:', error);
       }
     };
 

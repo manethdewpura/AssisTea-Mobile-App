@@ -41,7 +41,7 @@ class UnifiedFieldService {
         });
 
         await fieldSQLiteService.markAsSynced(field.id);
-        console.log('🔄 Synced to Firebase:', field.name);
+        console.log('Synced to Firebase:', field.name);
     }
 
     /**
@@ -56,10 +56,10 @@ class UnifiedFieldService {
         };
 
         await fieldSQLiteService.insertField(field);
-        console.log('✅ Saved to SQLite (offline-safe):', field.name);
+        console.log('Saved to SQLite (offline-safe):', field.name);
 
         this.syncToFirebase(field).catch(err => {
-            console.warn('⚠️ Sync failed, will retry:', err);
+            console.warn('Sync failed, will retry:', err);
         });
 
         return field;
@@ -78,7 +78,7 @@ class UnifiedFieldService {
         const db = getFirestore();
         deleteDoc(doc(db, 'fields', fieldId))
             .catch(error => {
-                console.warn('⚠️ Failed to delete field from Firebase:', fieldId, error);
+                console.warn('Failed to delete field from Firebase:', fieldId, error);
             });
     }
 

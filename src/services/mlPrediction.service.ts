@@ -19,10 +19,10 @@ class MLPredictionService {
 
         try {
             const result = await TFLiteModule.initialize();
-            console.log('✅', result);
+            console.log(result);
             this.isInitialized = true;
         } catch (error) {
-            console.error('❌ Error initializing ML model:', error);
+            console.error('Error initializing ML model:', error);
             throw error;
         }
     }
@@ -49,7 +49,7 @@ class MLPredictionService {
 
             return efficiency;
         } catch (error) {
-            console.error('❌ Error predicting efficiency:', error);
+            console.error('Error predicting efficiency:', error);
             throw error;
         }
     }

@@ -373,7 +373,7 @@ class DailyDataService {
         await dailyDataSQLiteService.insertOrReplaceBatch(records);
         const countAfter = await dailyDataSQLiteService.getCount(plantationId);
         console.log(
-          `✅ Synced ${records.length} daily records to SQLite (daily_data count for plantation=${plantationId}: ${countAfter})`,
+          `Synced ${records.length} daily records to SQLite (daily_data count for plantation=${plantationId}: ${countAfter})`,
         );
       } else {
         console.log(
@@ -382,7 +382,7 @@ class DailyDataService {
         );
       }
     } catch (error) {
-      console.warn('⚠️ Could not sync daily data to SQLite:', error);
+      console.warn('Could not sync daily data to SQLite:', error);
       // Non-fatal — offline mode will use whatever is already cached
     }
   }
