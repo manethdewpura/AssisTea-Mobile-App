@@ -110,6 +110,14 @@ class RagChunkService {
     return denom === 0 ? 0 : dot / denom;
   }
 
+  private tokenizeQuery(input: string): string[] {
+    return input
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(t => t.length >= 3);
+  }
+
   /**
    * Find the top-k most relevant chunks for a given query embedding.
    *
@@ -142,18 +150,89 @@ class RagChunkService {
       return [];
     }
 
-    // Score every chunk and filter by threshold
-    const scored: ChunkMatch[] = chunks
-      .map(chunk => ({
+    // If vector dimensions do not match, similarity is invalid.
+    const chunkDim = chunks[0]?.embedding?.length ?? 0;
+    if (chunkDim === 0 || queryEmbedding.length !== chunkDim) {
+      console.warn(
+        `[RagChunkService] Embedding dimension mismatch (query=${queryEmbedding.length}, chunk=${chunkDim}).`,
+      );
+      return [];
+    }
+
+    // Memory-safe top-k retrieval: avoid building a huge intermediate array.
+    const best: ChunkMatch[] = [];
+
+    for (const chunk of chunks) {
+      const similarity = this.cosineSimilarity(queryEmbedding, chunk.embedding);
+      if (similarity < minSimilarity) continue;
+
+      const candidate: ChunkMatch = {
         id: chunk.id,
         text: chunk.text,
         source: chunk.source,
         title: chunk.title,
-        similarity: this.cosineSimilarity(queryEmbedding, chunk.embedding),
-      }))
-      .filter(c => c.similarity >= minSimilarity);
+        similarity,
+      };
 
-    // Sort descending and take top-k
+      if (best.length < topK) {
+        best.push(candidate);
+        best.sort((a, b) => b.similarity - a.similarity);
+        continue;
+      }
+
+      const worst = best[best.length - 1];
+      if (candidate.similarity > worst.similarity) {
+        best[best.length - 1] = candidate;
+        best.sort((a, b) => b.similarity - a.similarity);
+      }
+    }
+
+    return best;
+  }
+
+  /**
+   * Fallback retrieval when query embeddings are unavailable.
+   * Uses lexical token overlap between query and chunk text/title/source.
+   */
+  findTopChunksByKeyword(
+    query: string,
+    language: Language,
+    topK = 3,
+    minScore = 0.15,
+  ): ChunkMatch[] {
+    const cleanQuery = query.trim();
+    if (!cleanQuery) return [];
+    const queryTokens = this.tokenizeQuery(cleanQuery);
+    if (queryTokens.length === 0) return [];
+
+    const chunks = this.loadChunks(language);
+    if (chunks.length === 0) {
+      return [];
+    }
+
+    const scored: ChunkMatch[] = chunks
+      .map(chunk => {
+        // Keep fallback retrieval lightweight to avoid memory/CPU spikes on-device.
+        // We only scan title, source, and a short text prefix.
+        const searchable =
+          `${chunk.title} ${chunk.source} ${chunk.text.slice(0, 600)}`.toLowerCase();
+        let matches = 0;
+        for (const token of queryTokens) {
+          if (searchable.includes(token)) {
+            matches += 1;
+          }
+        }
+        const score = matches / queryTokens.length;
+        return {
+          id: chunk.id,
+          text: chunk.text,
+          source: chunk.source,
+          title: chunk.title,
+          similarity: score,
+        };
+      })
+      .filter(c => c.similarity >= minScore);
+
     scored.sort((a, b) => b.similarity - a.similarity);
     return scored.slice(0, topK);
   }
