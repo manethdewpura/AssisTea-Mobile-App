@@ -20,6 +20,7 @@ import {
   setMessages,
 } from '../store/slices/ai.slice';
 import { aiService } from '../services';
+import type { RagChatTurn } from '../services/ai.service';
 import { chatHistorySQLiteService } from '../services/sqlite/chatHistorySQLite.service';
 import MessageBubble from '../components/molecule/MessageBubble';
 import LanguageSelector from '../components/molecule/LanguageSelector';
@@ -64,6 +65,19 @@ const ChatScreen: React.FC = () => {
   const [initializing, setInitializing] = useState(false);
   const pendingQuestionRef = useRef<string | null>(null);
   const historyRequestIdRef = useRef(0);
+
+  /**
+   * Build the last N conversation turns as RagChatTurn[] for Gemini's startChat().
+   * Includes both question (user) and answer (model) for each completed exchange.
+   */
+  const buildConversationHistory = (): RagChatTurn[] => {
+    return messages.slice(-12).flatMap(msg => {
+      const turns: RagChatTurn[] = [];
+      if (msg.question) turns.push({ role: 'user', text: msg.question });
+      if (msg.answer)   turns.push({ role: 'model', text: msg.answer });
+      return turns;
+    });
+  };
  
   // Initialize model on mount
   useEffect(() => {
@@ -164,7 +178,7 @@ const ChatScreen: React.FC = () => {
       dispatch(setAIError(null));
  
       const response = isOnline
-        ? await aiService.queryOnline(question, language)
+        ? await aiService.queryOnlineRAG(question, language, buildConversationHistory())
         : await aiService.queryOffline(question, language);
       console.log('[ChatScreen] Received response from aiService:', {
         hasAnswer: !!response.answer,
@@ -193,6 +207,11 @@ const ChatScreen: React.FC = () => {
         answer: response.answer,
         source: response.source,
         confidence: response.confidence,
+        // Map retrieved RAG chunks to source attribution entries
+        sources: response.retrievedChunks?.map(c => ({
+          title: c.title,
+          docSource: c.source,
+        })),
       };
       console.log('[ChatScreen] Dispatching receiveMessage with:', {
         questionId: actualQuestionId,

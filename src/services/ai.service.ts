@@ -2,6 +2,8 @@ import { NativeModules, Platform } from 'react-native';
 import { getApp } from '@react-native-firebase/app';
 import { getAI, getGenerativeModel } from '@react-native-firebase/ai';
 import type { MessageSource, Language } from '../store/slices/ai.slice';
+import { ragChunkService } from './ragChunk.service';
+import type { ChunkMatch } from './ragChunk.service';
 
 const { AgronomistAI } = NativeModules;
 
@@ -23,6 +25,17 @@ export interface AIResponse {
   confidence: number;
   question?: string;
   language: Language;
+  /** Populated for online RAG answers — the raw chunks Gemini read to derive this answer */
+  retrievedChunks?: ChunkMatch[];
+}
+
+/** Re-export for consumers that need the chunk type */
+export type { ChunkMatch };
+
+/** A single turn in the conversation history passed to Gemini startChat() */
+export interface RagChatTurn {
+  role: 'user' | 'model';
+  text: string;
 }
 
 export interface AIModelStatus {
@@ -232,6 +245,207 @@ class AIService {
       }
 
       throw new Error(`Online query failed: ${errorMessage}`);
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Genuine RAG pipeline (online mode)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Embed a query string using Vertex AI text-embedding-004 via Firebase AI SDK.
+   * Returns a 768-dimensional vector. Returns [] on failure (graceful degradation).
+   *
+   * IMPORTANT: This model must match the one used in scripts/prepareRagChunks.mjs
+   * so that query embeddings and chunk embeddings occupy the same vector space.
+   */
+  private async embedQuery(text: string): Promise<number[]> {
+    try {
+      const app = getApp();
+      const ai = getAI(app);
+      const embeddingModel = getGenerativeModel(ai, { model: 'text-embedding-004' });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await (embeddingModel as any).embedContent({
+        content: { parts: [{ text }], role: 'user' },
+        taskType: 'RETRIEVAL_QUERY',
+      });
+
+      const values: number[] = result?.embedding?.values ?? [];
+      if (values.length === 0) {
+        console.warn('[AIService] embedQuery returned empty embedding vector');
+      }
+      return values;
+    } catch (error: any) {
+      console.error('[AIService] embedQuery failed:', error?.message ?? error);
+      return [];
+    }
+  }
+
+  /**
+   * Build a structured RAG prompt.
+   *
+   * Separates:
+   *   [SYSTEM]  — persona + language + RAG instructions
+   *   [CONTEXT] — retrieved raw text chunks (numbered passages)
+   *   [USER]    — the current question
+   *
+   * The system instruction is returned separately so it can be passed to
+   * getGenerativeModel({ systemInstruction }) rather than mixed into the
+   * user turn — this follows Firebase AI SDK best practice for system prompts.
+   */
+  private buildRAGPrompt(
+    query: string,
+    language: Language,
+    chunks: ChunkMatch[],
+  ): { systemInstruction: string; userTurn: string } {
+    const langName = LANGUAGE_NAMES[language];
+    const hasChunks = chunks.length > 0;
+
+    // ── System instruction ────────────────────────────────────────────────────
+    let systemInstruction =
+      'You are AssisTea, a Sri Lankan tea agronomy expert assistant. ' +
+      'Your role is to give accurate, practical advice to tea farmers and estate workers. ' +
+      'Always respond in plain text only — no markdown, no ** bold, no bullet points, ' +
+      'no numbered lists, no special symbols. ' +
+      'Use clear, simple sentences a farmer can understand. ' +
+      `Respond fully in ${langName}.`;
+
+    if (hasChunks) {
+      systemInstruction +=
+        '\n\nThe following passages are extracted verbatim from verified agronomic source ' +
+        'documents. Read every passage carefully before answering. ' +
+        'Base your answer ONLY on information found in these passages. ' +
+        'Do NOT draw on your parametric memory or training data to fill gaps. ' +
+        'If the passages do not contain enough information to answer the question fully, ' +
+        "say so clearly and add: 'Please consult a qualified agronomist for further guidance.'" +
+        '\n\n[RETRIEVED PASSAGES]\n' +
+        chunks
+          .map(
+            (c, i) =>
+              `[Passage ${i + 1}] Source: ${c.source}\nTitle: ${c.title}\n\n"${c.text}"`,
+          )
+          .join('\n\n');
+    } else {
+      systemInstruction +=
+        '\n\nNo relevant passages were retrieved from the knowledge base for this query. ' +
+        'You MUST answer using your general knowledge of Sri Lankan tea cultivation and agronomy. ' +
+        'Include specific figures and recommendations where possible. ' +
+        "Always end your response with: 'Note: This answer is based on general AI knowledge. " +
+        "Please verify with a qualified agronomist or the Tea Research Institute of Sri Lanka.'";
+    }
+
+    // ── User turn ─────────────────────────────────────────────────────────────
+    const userTurn =
+      `Question (in ${langName}): ${query}\n\n` +
+      `Please provide a direct, farmer-friendly answer in ${langName}. ` +
+      'If the question asks about quantities, dosages, application rates, or measurements, ' +
+      'always state the specific number or range. ' +
+      'Do not use bold, italics, or any text formatting — plain sentences only.';
+
+    return { systemInstruction, userTurn };
+  }
+
+  /**
+   * Full online RAG pipeline:
+   *   1. Embed the query with text-embedding-004 (same model used for chunk pre-embedding)
+   *   2. Retrieve top-3 raw text chunks via cosine similarity
+   *   3. Build a structured RAG prompt (passages go into the system instruction)
+   *   4. Send to Gemini via startChat() for multi-turn conversation support
+   *
+   * This is the method ChatScreen should call for online mode.
+   * The existing queryOnline() is kept for backward compatibility.
+   */
+  async queryOnlineRAG(
+    query: string,
+    language: Language = 'en',
+    conversationHistory: RagChatTurn[] = [],
+  ): Promise<AIResponse> {
+    // ── Step 1: Language mismatch check (same guard as offline path) ──────────
+    // Re-use native module for language detection so UX is consistent.
+    if (this.isModuleAvailable()) {
+      try {
+        // retrieveRelevantEntries already performs language detection and throws
+        // LANGUAGE_MISMATCH — we call it with a tiny minSimilarity so it exits
+        // after language detection even if no entries match.
+        await this.retrieveRelevantEntries(query, language);
+      } catch (error: any) {
+        const msg: string =
+          error?.message ||
+          error?.userInfo?.message ||
+          (error instanceof Error ? error.message : '');
+        if (
+          error?.code === 'LANGUAGE_MISMATCH' ||
+          msg.includes('appears to be in') ||
+          msg.includes('ඔබගේ ප්‍‍රශ්නය') ||
+          msg.includes('உங்கள் வினா')
+        ) {
+          throw new Error(msg);
+        }
+        // Any other error from the native module is non-fatal — continue.
+      }
+    }
+
+    // ── Step 2: Embed the query with text-embedding-004 ──────────────────────
+    const queryEmbedding = await this.embedQuery(query);
+
+    // ── Step 3: Retrieve top-3 raw text chunks ────────────────────────────────
+    const chunks = ragChunkService.findTopChunks(queryEmbedding, language, 3, 0.40);
+    console.log(
+      `[AIService] RAG: retrieved ${chunks.length} chunks for query "${query.substring(0, 60)}"`,
+      chunks.map(c => ({ title: c.title, similarity: c.similarity.toFixed(3) })),
+    );
+
+    // ── Step 4: Build structured RAG prompt ──────────────────────────────────
+    const { systemInstruction, userTurn } = this.buildRAGPrompt(query, language, chunks);
+
+    // ── Step 5: Gemini multi-turn chat ────────────────────────────────────────
+    try {
+      const app = getApp();
+      const ai = getAI(app);
+      const model = getGenerativeModel(ai, {
+        model: 'gemini-2.5-flash-lite',
+        // System instruction is set at model level (Firebase AI SDK best practice)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        systemInstruction: systemInstruction as any,
+      });
+
+      // Build Firebase-format history from the last conversation turns
+      const history = conversationHistory
+        .slice(0, -1) // exclude the current question (last user turn)
+        .map(turn => ({
+          role: turn.role,
+          parts: [{ text: turn.text }],
+        }));
+
+      const chat = model.startChat({ history });
+      const result = await chat.sendMessage(userTurn);
+      const answer = result.response.text();
+
+      return {
+        answer: answer?.trim() || 'No response from model.',
+        source: 'online',
+        confidence: chunks.length > 0 ? 0.9 : 0.5,
+        language,
+        retrievedChunks: chunks,
+      };
+    } catch (error: any) {
+      const errorMessage =
+        error?.message ||
+        error?.userInfo?.message ||
+        (error instanceof Error ? error.message : 'Unknown error');
+
+      // Preserve language-mismatch errors so ChatScreen shows the right warning
+      if (
+        error?.code === 'LANGUAGE_MISMATCH' ||
+        errorMessage.includes('appears to be in') ||
+        errorMessage.includes('ඔබගේ ප්‍‍රශ්නය') ||
+        errorMessage.includes('உங்கள் வினா')
+      ) {
+        throw new Error(errorMessage);
+      }
+
+      throw new Error(`Online RAG query failed: ${errorMessage}`);
     }
   }
 }

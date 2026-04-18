@@ -11,6 +11,8 @@ export interface ChatMessage {
   confidence?: number;
   timestamp: number;
   language: Language;
+  /** Source documents used for RAG answers (online mode only) */
+  sources?: Array<{ title: string; docSource: string }>;
 }
 
 interface AIState {
@@ -58,9 +60,10 @@ const aiSlice = createSlice({
         answer: string;
         source: MessageSource;
         confidence?: number;
+        sources?: Array<{ title: string; docSource: string }>;
       }>,
     ) => {
-      const { questionId, answer, source, confidence } = action.payload;
+      const { questionId, answer, source, confidence, sources } = action.payload;
       // First try to find by questionId
       let questionMessage = state.messages.find(msg => msg.id === questionId);
       
@@ -81,6 +84,7 @@ const aiSlice = createSlice({
           confidence,
           timestamp: Date.now(),
           language: questionMessage.language,
+          sources,
         };
         state.messages.push(aiMessage);
       } else {

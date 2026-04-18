@@ -7,6 +7,7 @@ export * from './syncQueue.service';
 export * from './weatherDatabase.service';
 export * from './backgroundSync.service';
 export * from './ai.service';
+export * from './ragChunk.service';
 export * from './worker.Service';
 export * from './dailyData.service';
 export * from './field.service';
