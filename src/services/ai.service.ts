@@ -117,6 +117,21 @@ class AIService {
   }
 
   /**
+   * Detect whether an error corresponds to a language mismatch warning emitted
+   * by native language detection. Keeps all code paths aligned to avoid fragile
+   * hard-coded checks drifting between offline and online flows.
+   */
+  private isLanguageMismatchError(error: any, errorMessage: string): boolean {
+    return (
+      error?.code === 'LANGUAGE_MISMATCH' ||
+      errorMessage.includes('appears to be in') ||
+      errorMessage.includes('ඔබගේ ප්‍රශ්නය') ||
+      errorMessage.includes('ඔබගේ ප්‍‍රශ්නය') ||
+      errorMessage.includes('உங்கள் வினா')
+    );
+  }
+
+  /**
    * Check if the ML model is loaded
    */
   async checkModelLoaded(): Promise<boolean> {
@@ -176,10 +191,7 @@ class AIService {
                           (error instanceof Error ? error.message : 'Unknown error');
       
       // Check if it's a language mismatch error by checking the error code or message content
-      if (error?.code === 'LANGUAGE_MISMATCH' || 
-          errorMessage.includes('appears to be in') ||
-          errorMessage.includes('ඔබගේ ප්‍රශ්නය') ||
-          errorMessage.includes('உங்கள் வினா')) {
+      if (this.isLanguageMismatchError(error, errorMessage)) {
         // Return the error message directly (it already contains the localized message)
         throw new Error(errorMessage);
       }
@@ -218,12 +230,7 @@ class AIService {
         (error instanceof Error ? error.message : 'Unknown error');
 
       // Surface language mismatch errors so the UI can show the same warning as offline mode
-      if (
-        error?.code === 'LANGUAGE_MISMATCH' ||
-        errorMessage.includes('appears to be in') ||
-        errorMessage.includes('ඔබගේ ප්‍රශ්නය') ||
-        errorMessage.includes('உங்கள் வினா')
-      ) {
+      if (this.isLanguageMismatchError(error, errorMessage)) {
         throw new Error(errorMessage);
       }
 
@@ -301,12 +308,7 @@ class AIService {
         (error instanceof Error ? error.message : 'Unknown error');
 
       // Preserve localized language-mismatch warning (same behavior as offline)
-      if (
-        error?.code === 'LANGUAGE_MISMATCH' ||
-        errorMessage.includes('appears to be in') ||
-        errorMessage.includes('ඔබගේ ප්‍රශ්නය') ||
-        errorMessage.includes('உங்கள் வினா')
-      ) {
+      if (this.isLanguageMismatchError(error, errorMessage)) {
         throw new Error(errorMessage);
       }
 
@@ -624,12 +626,7 @@ class AIService {
           error?.message ||
           error?.userInfo?.message ||
           (error instanceof Error ? error.message : '');
-        if (
-          error?.code === 'LANGUAGE_MISMATCH' ||
-          msg.includes('appears to be in') ||
-          msg.includes('ඔබගේ ප්‍‍රශ්නය') ||
-          msg.includes('உங்கள் வினா')
-        ) {
+        if (this.isLanguageMismatchError(error, msg)) {
           throw new Error(msg);
         }
         // Any other error from the native module is non-fatal — continue.
@@ -704,12 +701,7 @@ class AIService {
         (error instanceof Error ? error.message : 'Unknown error');
 
       // Preserve language-mismatch errors so ChatScreen shows the right warning
-      if (
-        error?.code === 'LANGUAGE_MISMATCH' ||
-        errorMessage.includes('appears to be in') ||
-        errorMessage.includes('ඔබගේ ප්‍‍රශ්නය') ||
-        errorMessage.includes('உங்கள் வினா')
-      ) {
+      if (this.isLanguageMismatchError(error, errorMessage)) {
         throw new Error(errorMessage);
       }
 
