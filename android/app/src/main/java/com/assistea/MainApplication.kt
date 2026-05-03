@@ -1,6 +1,8 @@
 package com.assistea
 
 import android.app.Application
+import android.os.Build
+import android.webkit.WebView
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
@@ -36,6 +38,14 @@ class MainApplication : Application(), ReactApplication {
 
   override fun onCreate() {
     super.onCreate()
+    // WebView (used by react-native-html-to-pdf) must use an isolated data dir in
+    // secondary processes on Android 9+, or initialization can fail silently / crash.
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+      val processName = Application.getProcessName()
+      if (packageName != processName) {
+        WebView.setDataDirectorySuffix(processName)
+      }
+    }
     loadReactNative(this)
   }
 }
