@@ -187,30 +187,6 @@
     ]
   },
   {
-    "question": "What causes yellowing of tea leaves?",
-    "answer": "Yellowing of tea leaves can indicate several issues: nutrient deficiency (especially nitrogen or iron), waterlogging, root diseases, or pest damage. Nitrogen deficiency is the most common cause. Apply appropriate fertilizers and ensure proper drainage. If yellowing persists, test soil pH and check for root diseases.",
-    "keywords": [
-      "yellow leaves",
-      "chlorosis",
-      "nutrient deficiency",
-      "nitrogen",
-      "leaf discoloration",
-      "yellow",
-      "pale leaves",
-      "leaf yellowing",
-      "why leaves yellow",
-      "turning yellow",
-      "leaf color change",
-      "chlorotic",
-      "iron deficiency",
-      "waterlogging",
-      "root disease",
-      "yellowing cause",
-      "leaves turning yellow",
-      "discoloration"
-    ]
-  },
-  {
     "question": "How do I prepare the soil before planting tea?",
     "answer": "Before planting tea, clear the land, remove weeds and debris, and perform deep plowing (30-45 cm). Test soil pH and adjust to 4.5-5.5 if needed. Add organic matter (compost or well-rotted manure) and ensure proper drainage. Plant tea cuttings or seedlings during the rainy season for better establishment.",
     "keywords": [
@@ -2315,6 +2291,1539 @@
       "bush health",
       "trace elements",
       "rejuvenation"
+    ]
+  },
+  {
+    "question": "What causes Red Rust in tea plants and how can it be controlled?",
+    "answer": "Red Rust is an algal disease primarily caused by Cephaleuros parasiticus or Cephaleuros mycoidea, usually affecting weak, debilitated, or nutrient-deficient bushes. It manifests as distinctive orange-red hairy patches on stems and sometimes leaves. Control involves improving overall bush vigor through adequate potassium (potash) fertilization, ensuring good drainage, and applying copper-based fungicides.",
+    "keywords": [
+      "Red Rust",
+      "algal disease",
+      "Cephaleuros parasiticus",
+      "Cephaleuros mycoidea",
+      "stem disease",
+      "orange color",
+      "red color",
+      "orange-red patches",
+      "potash fertilization",
+      "potassium deficiency",
+      "copper fungicides",
+      "drainage",
+      "bush vigor",
+      "algaecides"
+    ]
+  },
+  {
+    "question": "What are the primary causes of yellowing in tea leaves and how is it addressed?",
+    "answer": "Yellowing (chlorosis) in tea leaves is typically caused by nutrient deficiencies—most commonly nitrogen or sulfur—as well as poor soil aeration or waterlogging. Nitrogen deficiency causes an overall yellowing of older leaves, while sulfur deficiency usually shows up in younger leaves (known as 'tea yellows'). Treatment includes correcting the nutrient imbalance with appropriate fertilizers like Ammonium Sulphate and improving soil drainage.",
+    "keywords": [
+      "yellowing",
+      "chlorosis",
+      "nitrogen deficiency",
+      "sulfur deficiency",
+      "tea yellows",
+      "nutrient imbalance",
+      "waterlogging",
+      "soil aeration",
+      "Ammonium Sulphate",
+      "fertilizers",
+      "soil drainage",
+      "macronutrients"
+    ]
+  },
+  {
+    "question": "Why do tea leaves turn brown and what are the recommended management practices?",
+    "answer": "Browning in tea leaves, often appearing as marginal necrosis or leaf scorch, is usually a symptom of severe environmental stress such as drought, extreme sun exposure, or potassium deficiency. It can also result from chemical phytotoxicity due to incorrect pesticide application. Management requires maintaining adequate shade trees, conserving soil moisture through mulching, correcting potassium levels, and adhering strictly to recommended chemical dosages.",
+    "keywords": [
+      "browning",
+      "leaf scorch",
+      "marginal necrosis",
+      "drought stress",
+      "potassium deficiency",
+      "chemical toxicity",
+      "phytotoxicity",
+      "sun scorch",
+      "shade management",
+      "mulching",
+      "soil moisture",
+      "environmental stress"
+    ]
+  },
+  {
+    "question": "What is the purpose of foliar analysis in tea cultivation?",
+    "answer": "Foliar analysis serves to confirm visual observations of nutrient deficiencies or excesses. It provides a reasonably good index of the plants' nutrient status. Although routine analysis is unnecessary if TRI fertilizer recommendations are strictly followed, foliar analysis is recommended when growth abnormalities are suspected to be due to nutritional problems.",
+    "keywords": [
+      "foliar analysis",
+      "nutrient status",
+      "growth abnormalities",
+      "nutritional problems",
+      "visual observations",
+      "chemical analysis",
+      "deficiencies",
+      "excesses"
+    ]
+  },
+  {
+    "question": "Which specific leaf should be collected for most foliar analysis?",
+    "answer": "For most leaf analysis, the first mature leaf should be collected. This is the leaf from whose axil the pluckable shoot emerges. It is usually found on the plucking table. Leaves below this level, which are consequently shaded, should be avoided.",
+    "keywords": [
+      "leaf sampling",
+      "first mature leaf",
+      "plucking table",
+      "axil",
+      "pluckable shoot",
+      "shaded leaves"
+    ]
+  },
+  {
+    "question": "What are the key guidelines for selecting bushes during field-scale leaf sampling?",
+    "answer": "When sampling on a field scale, a large number of widely distributed bushes should be sampled, taking only one leaf from each bush. To ensure a representative sample, bushes should be randomly selected from different rows. Bushes growing in abnormal areas, such as those close to roads, drains, or bare patches, must be avoided.",
+    "keywords": [
+      "field scale",
+      "sampling guidelines",
+      "widely distributed",
+      "random selection",
+      "abnormal areas",
+      "representative sample",
+      "one leaf per bush"
+    ]
+  },
+  {
+    "question": "When should leaf sampling be avoided in relation to the pruning cycle and weather?",
+    "answer": "Leaf sampling should be avoided during the early part of the first year and the latter part of the final year of the pruning cycle. For low country fields on a 2-year cycle, sampling should occur in the second half of the first year or the first half of the second year. Additionally, sampling should not be done following a period of prolonged heavy rainfall or during extreme droughts.",
+    "keywords": [
+      "pruning cycle",
+      "timing",
+      "weather conditions",
+      "low country",
+      "heavy rainfall",
+      "extreme droughts",
+      "avoid sampling"
+    ]
+  },
+  {
+    "question": "What is the mandatory waiting period after applying ground fertilizer before leaf sampling can occur?",
+    "answer": "It is absolutely essential that leaf sampling is done only after a minimum period of 6 weeks has passed since the last ground application of fertilizer.",
+    "keywords": [
+      "waiting period",
+      "ground fertilizer",
+      "6 weeks",
+      "minimum period",
+      "timing",
+      "essential condition"
+    ]
+  },
+  {
+    "question": "How should collected leaf samples be packed and labeled?",
+    "answer": "From each block of 2 hectares, about 100 leaves should be collected and packed in polythene bags. Each sample must be labeled clearly, ensuring the label does not come into contact with the sample to prevent it from becoming illegible during transport. The label must include the field and block number, whether it is seedling or VP tea, the year of the last prune, the length of the pruning cycle, and the date of the last fertilizer application.",
+    "keywords": [
+      "packing",
+      "labeling",
+      "polythene bags",
+      "sample details",
+      "block number",
+      "pruning cycle",
+      "fertilizer application date",
+      "illegible labels"
+    ]
+  },
+  {
+    "question": "What is the primary reason for the poor use efficiency of soil-applied fertilizers in the low country, mid-country, and Uva tea growing regions?",
+    "answer": "The poor use efficiency of soil-applied fertilizers in these regions is primarily due to the generally low soil organic matter content. This low organic matter content results in a relatively low potential for retaining plant nutrients within the soil.",
+    "keywords": [
+      "poor use efficiency",
+      "soil-applied fertilizers",
+      "low country",
+      "mid-country",
+      "Uva",
+      "soil organic matter",
+      "nutrient retention"
+    ]
+  },
+  {
+    "question": "Which two new fertilizer mixtures were formulated as strategic interventions to improve soil fertility in tea small holdings?",
+    "answer": "The two new fertilizer mixtures formulated for tea small holdings are U834 and UT752.",
+    "keywords": [
+      "new fertilizer mixtures",
+      "strategic interventions",
+      "soil fertility",
+      "tea small holdings",
+      "U834",
+      "UT752"
+    ]
+  },
+  {
+    "question": "Under what specific soil nutrient conditions is it advisable to use the U834 or UT752 fertilizer mixtures?",
+    "answer": "It is advisable to use either the U834 mixture or the UT752 mixture (along with 100 kg of dolomite per acre per annum) if the soil magnesium (Mg) levels are below 60 ppm and/or the sulphur (S) levels are below 40 ppm.",
+    "keywords": [
+      "soil nutrient conditions",
+      "U834",
+      "UT752",
+      "dolomite",
+      "magnesium",
+      "Mg",
+      "sulphur",
+      "S",
+      "ppm",
+      "deficiency"
+    ]
+  },
+  {
+    "question": "What is the composition and nutrient percentage of the UT752 fertilizer mixture?",
+    "answer": "The UT752 mixture is composed of 396 parts Urea (182 N), 85 parts Sulphate of Ammonia (SA) (18 N & 20 S), 103 parts Eppawela Rock Phosphate (ERP) (30 P2O5), and 168 parts Muriate of Potash (MOP) (100 K2O), totaling 752 parts. This mixture contains approximately 26.6% N, 4.0% P2O5, 13.3% K2O, and 2.7% S.",
+    "keywords": [
+      "composition",
+      "nutrient percentage",
+      "UT752",
+      "Urea",
+      "Sulphate of Ammonia",
+      "SA",
+      "Eppawela Rock Phosphate",
+      "ERP",
+      "Muriate of Potash",
+      "MOP",
+      "nitrogen",
+      "N",
+      "phosphorus",
+      "P2O5",
+      "potassium",
+      "K2O",
+      "sulphur",
+      "S"
+    ]
+  },
+  {
+    "question": "For a VP tea field with an average yield of 250-374 kg green leaf/ac/month, what is the recommended dosage and frequency for the U834 fertilizer mixture?",
+    "answer": "For a VP tea field yielding an average of 250-374 kg green leaf/ac/month, the recommended dosage for the U834 fertilizer mixture is 100 kg, applied 4 times a year (4 x 100 kg).",
+    "keywords": [
+      "VP tea field",
+      "average yield",
+      "250-374 kg",
+      "green leaf",
+      "dosage",
+      "frequency",
+      "U834"
+    ]
+  },
+  {
+    "question": "What agricultural practice is strongly recommended for tea fields yielding less than 130 kg green leaf/ac/month?",
+    "answer": "For fields yielding less than 130 kg green leaf/ac/month, which generally have a lower plant density, individual bush manuring is strongly recommended.",
+    "keywords": [
+      "agricultural practice",
+      "low yield",
+      "less than 130 kg",
+      "green leaf",
+      "plant density",
+      "individual bush manuring"
+    ]
+  },
+  {
+    "question": "When applying the UT752 mixture, what are the guidelines for applying dolomite as a source of magnesium?",
+    "answer": "When the UT752 mixture is applied regularly, dolomite is recommended as a magnesium source at the rate of 100 kg/ac/yr in one or two applications. It is crucial that the dolomite is broadcast at least four weeks prior to any ground fertilizer applications.",
+    "keywords": [
+      "UT752",
+      "dolomite",
+      "magnesium source",
+      "guidelines",
+      "application rate",
+      "broadcast",
+      "timing",
+      "four weeks"
+    ]
+  },
+  {
+    "question": "What are the main objectives of bringing young tea into bearing?",
+    "answer": "The main objective is to modify a single-stemmed plant into a multi-stemmed bush with sturdy branches, resulting in a low spreading bush with a dense canopy. This structure maximizes the number of plucking points and enables convenient harvesting. Additionally, forming an early ground cover helps to retard weed growth and facilitates soil conservation.",
+    "keywords": [
+      "bringing young tea into bearing",
+      "bush formation",
+      "low spreading bush",
+      "dense canopy",
+      "plucking points",
+      "harvesting",
+      "early ground cover",
+      "retard weed growth",
+      "soil conservation",
+      "multi-stemmed bush",
+      "sturdy branches",
+      "objectives",
+      "goals",
+      "benefits"
+    ]
+  },
+  {
+    "question": "What is a potential negative consequence of bringing young tea plants into bearing too early?",
+    "answer": "If young plants are brought into bearing very early, their root growth can be adversely affected, making them more susceptible to succumbing to drought.",
+    "keywords": [
+      "early bearing",
+      "adverse effects",
+      "root growth",
+      "drought susceptibility",
+      "negative consequences",
+      "succumb to drought",
+      "risks"
+    ]
+  },
+  {
+    "question": "What are the two methods of bringing young tea into bearing, and which one is discouraged?",
+    "answer": "The two methods are cut-across (centering) and bending and pegging. The practice of bending and pegging is discouraged because it can lead to frame debilitation caused by sun scorch, canker, and wood rot. The more suitable method is the cut-across method.",
+    "keywords": [
+      "methods",
+      "cut-across",
+      "centering",
+      "bending and pegging",
+      "discouraged method",
+      "frame debilitation",
+      "sun scorch",
+      "canker",
+      "wood rot",
+      "suitable method"
+    ]
+  },
+  {
+    "question": "Describe the steps involved in the cut-across (centering) method for young tea plants.",
+    "answer": "The cut-across method involves the following steps:\n1. Allow plants to establish in the field and grow for 9-12 months with a strong leader and lateral branches.\n2. Cut the main stem at 20-25 cm from ground level, depending on the clone's branching habit, leaving as many side branches as possible.\n3. After 4-6 months, make a second cut across all branches at a height of 35-40 cm.\n4. Once adequately regenerated, tip the shoots at 45-50 cm and bring the mini bush into light plucking.",
+    "keywords": [
+      "cut-across method",
+      "centering process",
+      "steps",
+      "plant establishment",
+      "9-12 months",
+      "first cut",
+      "main stem",
+      "20-25 cm",
+      "side branches",
+      "second cut",
+      "4-6 months",
+      "35-40 cm",
+      "tipping",
+      "45-50 cm",
+      "light plucking"
+    ]
+  },
+  {
+    "question": "What precautions should be taken during the centering (cut-across) operation to minimize stress and promote growth?",
+    "answer": "During centering, a sharp knife or secateur should be used. Peripheral branches or horizontally growing side shoots should not be removed, as they help establish early ground cover. Furthermore, the operation should not be performed during dry periods to minimize environmental stress on bud break and subsequent shoot growth.",
+    "keywords": [
+      "precautions",
+      "centering operation",
+      "cut-across",
+      "sharp knife",
+      "secateur",
+      "peripheral branches",
+      "horizontal side shoots",
+      "early ground cover",
+      "avoid dry periods",
+      "minimize stress",
+      "environmental stress",
+      "bud break",
+      "shoot growth"
+    ]
+  },
+  {
+    "question": "What mulching practices are recommended for new tea clearings before and during a drought?",
+    "answer": "The inter-rows of new clearings should be thatched with Guatemala or Mana grass well before the monsoon tails off, requiring about 37.5 metric tons per hectare of fresh material. Partially decomposed waste materials like sawdust, paddy husk, and refuse tea can also be used at a rate of 15-20 tons/ha. This mulch should be applied as a 1 to 2-inch thick layer, leaving 6 to 8 inches of space from the base of the tea plants. If paddy husk or sawdust is used, it should be mixed or sprayed with urea at a rate of 2-3 kg per 100 kg of material.",
+    "keywords": [
+      "mulching",
+      "Guatemala grass",
+      "Mana grass",
+      "sawdust",
+      "paddy husk",
+      "refuse tea",
+      "urea",
+      "new clearings",
+      "drought mitigation",
+      "thatching",
+      "moisture stress",
+      "waste materials"
+    ]
+  },
+  {
+    "question": "How should weed control be managed in new clearings during a drought?",
+    "answer": "New clearings should be kept free of weeds, and the weeding program should be completed before the onset of the drought. If weeds are present during the drought, they should be slashed down to minimize competition for soil moisture. Spraying any herbicides during a drought is strictly not recommended because the plants are under moisture stress.",
+    "keywords": [
+      "weed control",
+      "slashing",
+      "herbicides",
+      "moisture stress",
+      "drought",
+      "new clearings",
+      "competition",
+      "weeding program"
+    ]
+  },
+  {
+    "question": "What chemical sprays are recommended to reduce transpiration in young tea plants during a drought?",
+    "answer": "To reduce transpiration, a 2% solution of Sulphate of Potash (SOP) or a 2% solution of Muriate of Potash (MOP) can be sprayed using a knapsack sprayer. Spraying should commence at least a month prior to the drought and continue at 2-4 week intervals. Urea can also be mixed with SOP or MOP to enhance potassium absorption. Additionally, spraying Kaolin (5-10 kg in 100 L of water) onto the leaves reduces heat and water loss.",
+    "keywords": [
+      "transpiration",
+      "Sulphate of Potash",
+      "SOP",
+      "Muriate of Potash",
+      "MOP",
+      "Kaolin",
+      "Urea",
+      "knapsack sprayer",
+      "young tea",
+      "drought mitigation",
+      "water loss"
+    ]
+  },
+  {
+    "question": "When and how should young tea plants be irrigated during a drought?",
+    "answer": "If water is available, first-year plants should be irrigated at 4-7 day intervals with 400-500 ml of water per plant per application. For second-year plants, the volume should be doubled, and they should be irrigated at 7-10 day intervals.",
+    "keywords": [
+      "irrigation",
+      "water application",
+      "first-year plants",
+      "second-year plants",
+      "intervals",
+      "drought",
+      "young tea"
+    ]
+  },
+  {
+    "question": "What is 'skiffing' and when should it be used during a drought?",
+    "answer": "Skiffing is the process of partially defoliating the bush by giving it a light cut to remove the topmost 2 to 3 inches of foliage. It should be used if the drought is prolonged and the plants (either young tea in their second to fourth year or mature bushes) remain wilted during the morning hours.",
+    "keywords": [
+      "skiffing",
+      "defoliation",
+      "wilting",
+      "foliage removal",
+      "prolonged drought",
+      "young tea",
+      "mature tea",
+      "morning hours"
+    ]
+  },
+  {
+    "question": "What are the rules regarding fertilizer application before, during, and after a drought for mature tea?",
+    "answer": "Fertilizer applications must be avoided entirely during dry weather. Following a drought, mature tea bushes should only be fertilized after they have fully recovered from moisture stress and commenced flushing. For defoliated bushes, fertilizer application must be delayed until they have fully refoliated and the first set of new leaves has fully expanded.",
+    "keywords": [
+      "fertilizer application",
+      "dry weather",
+      "recovery",
+      "moisture stress",
+      "flushing",
+      "refoliation",
+      "mature tea",
+      "post-drought"
+    ]
+  },
+  {
+    "question": "How should plucking be managed in mature tea fields during and after a drought?",
+    "answer": "During a drought, it is recommended to practice light plucking, also known as Mother-leaf plucking. Following a drought, light plucking should continue to be adopted until flushing resumes its normal periodicity.",
+    "keywords": [
+      "plucking",
+      "light plucking",
+      "Mother-leaf plucking",
+      "flushing",
+      "mature tea",
+      "drought management",
+      "post-drought"
+    ]
+  },
+  {
+    "question": "What agricultural operations should be strictly avoided in mature tea fields during or just prior to a drought?",
+    "answer": "Pruning and forking should be strictly avoided just prior to or during a drought. Dry weather pruning can cause extensive bush debilitation, while forking accelerates the loss of soil moisture. Furthermore, shade trees should not be lopped during dry weather.",
+    "keywords": [
+      "avoided operations",
+      "pruning",
+      "forking",
+      "bush debilitation",
+      "soil moisture loss",
+      "shade trees",
+      "lopping",
+      "mature tea",
+      "dry weather"
+    ]
+  },
+  {
+    "question": "What is the primary objective of the 'infilling' operation in tea lands?",
+    "answer": "The primary objective of infilling is to replace dead or weak tea bushes with new, healthy, and robust plants. This process gives a uniform cover across the field and thereby maximizes productivity. If these vacant patches are not filled, the productivity of the field will decline, leading to uneconomic yields and deterioration of the soil due to erosion and structural collapse.",
+    "keywords": [
+      "infilling",
+      "uniform cover",
+      "maximize productivity",
+      "replace dead bushes",
+      "healthy plants",
+      "robust plants",
+      "prevent soil deterioration",
+      "prevent erosion",
+      "prevent structural collapse",
+      "vacant patches",
+      "uneconomic yields",
+      "cultural operation",
+      "tea lands"
+    ]
+  },
+  {
+    "question": "Which groups of tea fields should be selected for infilling and which should be avoided?",
+    "answer": "For infilling, fields are classified into three groups. Group 2 fields, which are not earmarked for replanting in the near future (longer than 2-3 cycles), should be the primary focus for infilling. No useful purpose is served by infilling Group 1 fields (which will be replanted within the next 2-3 cycles) or Group 3 fields (which have poor, steep, or rocky areas earmarked for diversification away from tea).",
+    "keywords": [
+      "group 2 fields",
+      "not earmarked for replanting",
+      "group 1 fields",
+      "group 3 fields",
+      "diversification",
+      "poor areas",
+      "steep areas",
+      "rocky areas",
+      "near future replanting",
+      "selection of areas",
+      "field classification"
+    ]
+  },
+  {
+    "question": "What is the correct timing and season for carrying out infilling operations?",
+    "answer": "Infilling should be carried out in pruned fields, with pruning advanced to the early part of the season. Supplies must be put out as early as possible. In the Western sector, infilling should occur with the onset of the South-West Monsoon, and in the Eastern sector, with the onset of the North-East Monsoon. It is not advisable to delay infilling until after all new clearing work is completed.",
+    "keywords": [
+      "timing",
+      "season",
+      "pruned fields",
+      "advanced pruning",
+      "Western sector",
+      "Eastern sector",
+      "South-West Monsoon",
+      "North-East Monsoon",
+      "early supplies",
+      "delay",
+      "new clearing work"
+    ]
+  },
+  {
+    "question": "In what specific areas within a tea field should infilling NOT be carried out?",
+    "answer": "Infilling should not be carried out in areas with underlying slab rock or hard pan, in ravines, or in water-logged areas. However, infilling can be carried out in China jat fields with compatible cultivars.",
+    "keywords": [
+      "where not to infill",
+      "slab rock",
+      "hard pan",
+      "ravines",
+      "water logged areas",
+      "China jat fields",
+      "compatible cultivars",
+      "unsuitable areas"
+    ]
+  },
+  {
+    "question": "What size of polythene bags and age of plants should be used for infilling in different regions?",
+    "answer": "Plants for infilling should be raised in large polythene bags measuring 15 cm (lay flat) x 30 cm. Well-grown, healthy plants should be used, requiring around 15-month-old plants in the Up-country, 12-month-old plants in the Mid-country, and 9-month-old plants at low elevations.",
+    "keywords": [
+      "size of plants",
+      "polythene bags",
+      "15 cm x 30 cm",
+      "healthy plants",
+      "Up-country",
+      "15-month-old plants",
+      "Mid-country",
+      "12-month-old plants",
+      "low elevations",
+      "9-month-old plants",
+      "plant age"
+    ]
+  },
+  {
+    "question": "How should a vacant patch be prepared and managed before and during the actual planting of the infill?",
+    "answer": "Two years prior to pruning, the weak bushes in the periphery of the vacant patch must be uprooted, and the patch should be planted with Mana, Guatemala, or Vetiver grass. All areas to be infilled should be forked to enhance root growth and remove old tea roots. Large holes, 30cm in diameter and 60cm in depth, should be dug for the infills. It may also be advisable to prune adjoining bushes slightly lower (18 inches) to ensure the early establishment of the infills.",
+    "keywords": [
+      "preparation",
+      "vacant patch",
+      "weak bushes",
+      "uproot",
+      "Mana grass",
+      "Guatemala grass",
+      "Vetiver grass",
+      "forking",
+      "root growth",
+      "old tea roots",
+      "large holes",
+      "30cm diameter",
+      "60cm depth",
+      "prune adjoining bushes",
+      "18 inches",
+      "early establishment"
+    ]
+  },
+  {
+    "question": "What aftercare measures are necessary to ensure the survival of young infill plants?",
+    "answer": "The infills should be protected by pegging or with a small basket to prevent workers from trampling them. The side branches of adjacent bushes should be cut to allow sufficient light to reach the young supplies. Fertilizer should be applied as for young VP tea plants, the area must be kept weed-free, thatched with an organic mulch, and the use of herbicides must be avoided until the first prune.",
+    "keywords": [
+      "aftercare",
+      "protection",
+      "pegging",
+      "small basket",
+      "trampling",
+      "side branches",
+      "sufficient light",
+      "fertilizer",
+      "young VP tea plants",
+      "weed-free",
+      "organic mulch",
+      "avoid herbicides",
+      "first prune",
+      "survival"
+    ]
+  },
+  {
+    "question": "What are the main objectives and benefits of using green manure crops and loppings from shade trees in tea plantations?",
+    "answer": "Loppings from well-managed medium shade trees and green manure crops provide large quantities of organic matter. This organic matter improves the soil's physical properties while supplying nitrogen and other essential mineral nutrients.",
+    "keywords": [
+      "objective",
+      "benefits",
+      "green manure crops",
+      "loppings",
+      "shade trees",
+      "tea plantations",
+      "organic matter",
+      "soil physical properties",
+      "nitrogen supply",
+      "mineral nutrients",
+      "soil improvement",
+      "fertilizer alternative",
+      "crop nutrition",
+      "soil health"
+    ]
+  },
+  {
+    "question": "How should medium shade trees like Dadaps and Gliricidia be managed to provide green manure in tea fields?",
+    "answer": "Erythrina lithosperma (dadaps) and Gliricidia sepium serve a dual purpose by providing physical shade and acting as green manure crops. They should be lopped with the onset of rain. Gliricidia can be lopped 2-3 times a year, depending on growth and weather conditions, while dadap is typically lopped 1-2 times a year. The loppings should be chopped and spread evenly between the tea rows rather than being heaped in several places.",
+    "keywords": [
+      "medium shade trees",
+      "Erythrina lithosperma",
+      "dadaps",
+      "Gliricidia sepium",
+      "dual purpose",
+      "physical shade",
+      "green manure",
+      "lopping frequency",
+      "onset of rain",
+      "chopping loppings",
+      "spreading loppings",
+      "tea rows",
+      "biomass distribution",
+      "tree management"
+    ]
+  },
+  {
+    "question": "What are the specific lopping recommendations for Acacia and Calliandra shade trees in tea estates?",
+    "answer": "Acacia species, which thrive at elevations above 1370 m (4500 ft), do not stand up to hard lopping and should only be lopped lightly with the commencement of rain. Calliandra grows well up to an elevation of 1500 m (5000 ft) and should be lopped 1-2 times a year, ensuring it is done well before pod set.",
+    "keywords": [
+      "Acacia species",
+      "Calliandra",
+      "lopping recommendations",
+      "hard lopping",
+      "light lopping",
+      "high elevation",
+      "1370 m",
+      "4500 ft",
+      "1500 m",
+      "5000 ft",
+      "pod set",
+      "commencement of rain",
+      "shade trees",
+      "green manure management",
+      "high altitude tea"
+    ]
+  },
+  {
+    "question": "Which bush varieties of green manure crops are recommended for new tea clearings, and how should they be cultivated and lopped?",
+    "answer": "Bush varieties such as Crotolaria anagyroides or Crotolaria usaromoensis can be grown as green manure crops between every four rows of tea in new clearings. They grow fast, attaining a height of 1.5 m (5 ft) in 3-4 months. They should be lopped 2-3 times a year at the time of flowering and before pod formation, and the loppings must be spread evenly between the tea rows. Because Crotolaria competes with tea for moisture during dry periods, it should be lopped immediately before the onset of drought.",
+    "keywords": [
+      "bush varieties",
+      "Crotolaria anagyroides",
+      "Crotolaria usaromoensis",
+      "green manure crops",
+      "new clearings",
+      "fast growing",
+      "lopping time",
+      "flowering",
+      "pod formation",
+      "moisture competition",
+      "drought management",
+      "dry periods",
+      "1.5 m height",
+      "interplanting"
+    ]
+  },
+  {
+    "question": "What makes Sesbania sesban a highly recommended green manure crop for tea cultivation?",
+    "answer": "Sesbania sesban is recommended as a green manure crop for all elevations. A significant advantage of this species is that it is not a threat to tea concerning tea nematodes. Additionally, like other green manure species, it protects young tea plants from wind damage, conserves soil, and provides valuable nutrients through its loppings.",
+    "keywords": [
+      "Sesbania sesban",
+      "green manure crop",
+      "all elevations",
+      "tea nematodes",
+      "safe species",
+      "wind damage protection",
+      "young tea protection",
+      "soil conservation",
+      "nutrient provision",
+      "nematode resistance",
+      "windbreak",
+      "sustainable farming"
+    ]
+  },
+  {
+    "question": "What are the main objectives of planting shade trees in tea cultivation?",
+    "answer": "Planting shade trees simulates forest conditions, which are the natural habitat of tea. Shade protects the exposed bark of pruned tea frames from sun scorch, preventing a reduction in bud break, bush weakening, wood rot, crop decline, and death during droughts. Additionally, specific shade trees like Gliricidia sepium serve as diversionary hosts for pests like the low-country live wood termite.",
+    "keywords": [
+      "shade trees",
+      "objectives",
+      "forest conditions",
+      "sun scorch",
+      "bark scorching",
+      "pruned tea",
+      "bud break",
+      "wood rot",
+      "drought",
+      "Gliricidia sepium",
+      "diversionary host",
+      "live wood termite",
+      "tea cultivation",
+      "protection"
+    ]
+  },
+  {
+    "question": "When is the best time to establish shade trees in both new clearings and mature tea fields?",
+    "answer": "In new clearings, shade should be established early, during the planting of the rehabilitation grass, ensuring adequate shade when young tea is put out. In mature tea lacking shade, the best time to plant shade trees is after pruning the tea to facilitate easy establishment.",
+    "keywords": [
+      "establishment",
+      "timing",
+      "new clearings",
+      "rehabilitation grass",
+      "mature tea",
+      "after pruning",
+      "young tea",
+      "shade planting"
+    ]
+  },
+  {
+    "question": "What are the recommended propagation and planting methods for establishing Dadap and Gliricidia as medium shade trees?",
+    "answer": "Because seed propagation is impractical, Dadap and Gliricidia are established by planting poles. The poles should be 6-8 months old with a girth of 5.0-7.5 cm (2-3 inches). Branches must be ring-barked 6-8 weeks prior to cutting. Poles should be 1.8-2.0 m (6-7 ft) long and buried 30-40 cm (12-15 inches) deep within 48 hours of lopping. The planting hole should be filled with soil mixed with 225 g of dolomite and ideally 1 kg of compost.",
+    "keywords": [
+      "Dadap",
+      "Erythrina lithosperma",
+      "Gliricidia",
+      "Gliricidia sepium",
+      "propagation",
+      "planting poles",
+      "pole size",
+      "ring-barking",
+      "planting depth",
+      "dolomite",
+      "compost",
+      "medium shade"
+    ]
+  },
+  {
+    "question": "What are the lopping height and frequency recommendations for managing Dadap and Gliricidia?",
+    "answer": "To prevent the trees from becoming top-heavy, the first lopping should be done at a height of 1.8 m (6 ft) to encourage a crown of branches. Subsequent loppings should be done 45-60 cm (18-24 inches) above the previous cut. Depending on growth, Gliricidia can be lopped 2-3 times a year in the mid- and low-country, while dadap can be lopped 1-2 times a year, preferably at the onset of the monsoon.",
+    "keywords": [
+      "lopping",
+      "height",
+      "frequency",
+      "Dadap",
+      "Gliricidia",
+      "crown formation",
+      "top-heavy",
+      "monsoon",
+      "management",
+      "medium shade"
+    ]
+  },
+  {
+    "question": "Which tree species are recommended for high shade in different elevations, and how should they be initially spaced?",
+    "answer": "Grevillea robusta is recommended for mid and high elevations, while Albizzia moluccana (or Albizzia chinensis) is recommended for mid and low elevations. When interplanted with medium shade, they should be established with an initial spacing of 6.0 m x 6.0 m (20 ft x 20 ft).",
+    "keywords": [
+      "high shade",
+      "Grevillea robusta",
+      "Albizzia moluccana",
+      "Paraserianthes falcataria",
+      "Albizzia chinensis",
+      "elevations",
+      "spacing",
+      "initial stand",
+      "mid elevation",
+      "high elevation",
+      "low elevation"
+    ]
+  },
+  {
+    "question": "What is the recommended procedure for removing old shade trees prior to replanting tea?",
+    "answer": "To prevent dead trees from facilitating root diseases, old shade trees must be ring-barked before uprooting. Ring-barking, especially for Grevillea, should commence at least 2 years before felling. Felling should only occur after all leaves have turned yellow and fallen. New shoots emerging below the ring-barking point must be removed.",
+    "keywords": [
+      "removal",
+      "old shade trees",
+      "ring-barking",
+      "root diseases",
+      "felling",
+      "Grevillea",
+      "uprooting",
+      "replanting",
+      "replacement"
+    ]
+  },
+  {
+    "question": "Why is a denser stand of shade recommended for the southern and western slopes of a tea field, and what is the final spacing?",
+    "answer": "Teas planted on the southern and western slopes experience greater warmth than those on eastern and northern slopes, requiring denser shade. For these warmer slopes, the final spacing of high shade should be 12.0 m x 6.0 m (40 ft x 20 ft), and medium shade should be 6.0 m x 7.2 m (20 ft x 24 ft).",
+    "keywords": [
+      "denser shade",
+      "southern slopes",
+      "western slopes",
+      "warmth",
+      "sunlight",
+      "final spacing",
+      "high shade",
+      "medium shade",
+      "field orientation",
+      "microclimate"
+    ]
+  },
+  {
+    "question": "What are the main objectives of establishing shelter belts in wind-swept tea areas?",
+    "answer": "In wind-swept areas, establishing shelter belts well before planting young tea is advisable to protect the plants from the full blast of the wind during heavy blowing months. This prevents the loss of crop in mature tea, damage to leaves, and poor establishment of new clearings caused by the loosening of young plants and subsequent bark damage at the soil level.",
+    "keywords": [
+      "wind belts",
+      "shelter belts",
+      "objectives",
+      "wind-swept areas",
+      "heavy blowing",
+      "loss of crop",
+      "mature tea",
+      "leaf damage",
+      "poor establishment",
+      "new clearings",
+      "loosening young plants",
+      "bark damage",
+      "soil level",
+      "wind protection",
+      "tea cultivation",
+      "agricultural practices",
+      "crop protection",
+      "wind hazard",
+      "prevent damage",
+      "plant establishment"
+    ]
+  },
+  {
+    "question": "Which tree species are recommended for wind belts in the up-country tea region, and how should they be planted?",
+    "answer": "For the up-country region, a mixed stand of Grevillea robusta and either Hakea saligna or Acacia spp. is recommended. These should be planted at right angles towards the direction of the wind. Grevillea robusta could be spaced 3.6 m (12 ft) apart in the row, with Hakea saligna or Acacia spp. planted on either side at a spacing of 1.2 - 1.8 m (4-6 ft). Alternatively, rows of Hakea or Acacia alone can be grown as wind belts at a 1.2-1.8 m (4-6 ft) spacing.",
+    "keywords": [
+      "up-country",
+      "shelter belt species",
+      "wind belt species",
+      "Grevillea robusta",
+      "Hakea saligna",
+      "Acacia spp",
+      "mixed stand",
+      "right angles",
+      "wind direction",
+      "plant spacing",
+      "3.6 m",
+      "12 ft",
+      "1.2 m",
+      "1.8 m",
+      "4 ft",
+      "6 ft",
+      "high elevation tea",
+      "tree spacing",
+      "shelter rows",
+      "planting layout"
+    ]
+  },
+  {
+    "question": "What are the recommended shelter belt species and their required spacings for the low-country tea region?",
+    "answer": "In the low-country, a mixed stand of Fragrea fragrans and Gliricidia sepium is recommended for wind belts. Fragrea fragrans should be spaced 3.6 - 4.5 m (12-15 ft) apart along the row, while Gliricidia sepium should be planted on either side of it at a spacing of 1.2 - 1.5 m (4-6 ft).",
+    "keywords": [
+      "low-country",
+      "shelter belt species",
+      "wind belt species",
+      "Fragrea fragrans",
+      "Gliricidia sepium",
+      "mixed stand",
+      "plant spacing",
+      "3.6 m",
+      "4.5 m",
+      "12 ft",
+      "15 ft",
+      "1.2 m",
+      "1.5 m",
+      "4 ft",
+      "6 ft",
+      "low elevation tea",
+      "tree planting",
+      "windbreaks",
+      "coastal weather protection",
+      "agriculture forestry"
+    ]
+  },
+  {
+    "question": "How should the spacing between rows of wind belts be determined in a tea plantation?",
+    "answer": "The spacing between rows of wind belts should be 45 - 60 m (150-200 ft), depending on the intensity of the blowing wind. Ideally, the spacing should be ten times the height of the wind belt. On hillcrests, wind belts consisting of double rows planted in a triangular arrangement are recommended.",
+    "keywords": [
+      "row spacing",
+      "wind belts",
+      "shelter belts",
+      "45 m",
+      "60 m",
+      "150 ft",
+      "200 ft",
+      "wind intensity",
+      "ten times height",
+      "hillcrest",
+      "double rows",
+      "triangular arrangement",
+      "plantation layout",
+      "agricultural layout",
+      "wind protection distance",
+      "field design",
+      "topography adaptation",
+      "tree row distance"
+    ]
+  },
+  {
+    "question": "Can tea bushes themselves be used to form a wind belt if other tree species are not established?",
+    "answer": "Yes, in cases where dedicated wind belts using trees are not established, the tea itself could be established as a wind belt by allowing it to grow freely. However, when using free-growing tea as a shelter belt, the distance between these rows should be closer than 45 m (150 ft).",
+    "keywords": [
+      "tea as wind belt",
+      "free growing tea",
+      "shelter belts",
+      "unpruned tea",
+      "alternative wind protection",
+      "closer distance",
+      "45 m",
+      "150 ft",
+      "crop as shelter",
+      "plantation management",
+      "windbreaks",
+      "natural crop barriers",
+      "bush barrier",
+      "no shade trees scenario"
+    ]
+  },
+  {
+    "question": "What are the main objectives of pruning tea bushes?",
+    "answer": "The primary objectives of pruning tea include maintaining a convenient height of the plucking table for easy harvesting, stimulating vegetative shoot growth to sustain productivity, and removing old, decayed, pest-infested, or diseased branches to maintain a healthy frame. Pruning also helps to effectively utilize the land area and ensure the economic viability of the plantations.",
+    "keywords": [
+      "pruning tea",
+      "objectives of pruning",
+      "convenient height",
+      "plucking table",
+      "harvesting",
+      "stimulate vegetative shoot growth",
+      "sustain productivity",
+      "remove old branches",
+      "remove decayed branches",
+      "remove pest-infested branches",
+      "remove diseased branches",
+      "healthy frame",
+      "effectively utilize land area",
+      "economic viability",
+      "plantations"
+    ]
+  },
+  {
+    "question": "Why is it necessary to categorize tea fields before embarking on a pruning programme?",
+    "answer": "It is necessary to categorize tea fields according to their potential yield to plan a balanced and successful pruning programme. This categorization reduces the risk of crop losses and minimizes annual crop fluctuations.",
+    "keywords": [
+      "categorize tea fields",
+      "potential yield",
+      "balanced pruning programme",
+      "successful pruning programme",
+      "reduce risk",
+      "crop losses",
+      "minimize annual crop fluctuations"
+    ]
+  },
+  {
+    "question": "Describe the 'Clean Pruning' method and state when it might be adopted.",
+    "answer": "Clean pruning is a hard pruning system where all branches are cut low, at a height of 25-40 cm (10-16\"). This method usually results in late or poor recovery because it removes all foliage, leaving inadequate starch reserves to support bud break and subsequent shoot growth. However, it may be adopted at high elevations, provided that soil and weather conditions are conducive to growth and the tea bush has adequate starch reserves for better recovery.",
+    "keywords": [
+      "clean pruning",
+      "hard pruning system",
+      "cut low",
+      "25-40 cm",
+      "10-16\"",
+      "late recovery",
+      "poor recovery",
+      "absence of foliage",
+      "inadequate starch reserves",
+      "bud break",
+      "shoot growth",
+      "high elevations",
+      "soil conditions",
+      "weather conditions",
+      "adequate starch reserves",
+      "better recovery"
+    ]
+  },
+  {
+    "question": "What is 'Rim lung pruning' and why is it considered a suitable method?",
+    "answer": "In rim lung pruning, about 3 to 4 healthy branches are left at the periphery of the bush during pruning. These 'lung' branches should collectively retain about 200 to 300 leaves per bush. The recommended pruning height for this method is 40-55 cm (16-22\"). Retaining these leaves enables the bush to recover early after pruning.",
+    "keywords": [
+      "rim lung pruning",
+      "healthy branches",
+      "periphery of the bush",
+      "lung branches",
+      "200 to 300 leaves",
+      "early recovery",
+      "recommended height",
+      "40-55 cm",
+      "16-22\""
+    ]
+  },
+  {
+    "question": "What is 'Cut-across pruning' and for which types of tea fields is it recommended?",
+    "answer": "In cut-across pruning, the top of the bush is cut level at a height of about 55-70 cm (22-28\"). While it allows for an early crop, it does not permit the cleaning up of old, debilitated branches, which can lead to poor frame development, and the bushes will subsequently remain dormant for prolonged periods. Therefore, cut-across pruning is generally recommended only for old, debilitated, or marginal tea fields that are earmarked for uprooting or diversification.",
+    "keywords": [
+      "cut-across pruning",
+      "cut level",
+      "55-70 cm",
+      "22-28\"",
+      "early crop",
+      "no cleaning up",
+      "old branches",
+      "debilitated branches",
+      "poor frame development",
+      "dormant",
+      "prolonged period",
+      "marginal tea fields",
+      "uprooting",
+      "diversification"
+    ]
+  },
+  {
+    "question": "What is 'Skiffing' in the context of tea pruning?",
+    "answer": "Skiffing is a slashing or leveling operation that smooths the plucking surface and reduces its height by a few centimetres. It is typically used to delay a rush crop or to extend the pruning cycle if needed.",
+    "keywords": [
+      "skiffing",
+      "slashing",
+      "leveling operation",
+      "smooths plucking surface",
+      "reduces height",
+      "delay rush crop",
+      "extend pruning cycle"
+    ]
+  },
+  {
+    "question": "Why is dry weather pruning not recommended?",
+    "answer": "Pruning into dry weather is not recommended because it can cause sun scorch on the branches. Sun scorch leads to wood rot, frame debilitation, and also reduces the number of new shoots that emerge.",
+    "keywords": [
+      "dry weather pruning",
+      "not recommended",
+      "sun scorch",
+      "wood rot",
+      "frame debilitation",
+      "reduces new shoots",
+      "blister blight control"
+    ]
+  },
+  {
+    "question": "When should 'lung branches' be removed after rim lung pruning?",
+    "answer": "Lung branches should be removed selectively based on the recovery stage of individual bushes. This removal process should begin when the majority of the new shoots have produced 3 to 4 fully opened leaves. Removing lungs too early or too late should be avoided.",
+    "keywords": [
+      "removal of lung branches",
+      "lungs",
+      "selectively",
+      "recovery stage",
+      "new shoots",
+      "3-4 fully opened leaves",
+      "too early",
+      "too late",
+      "avoided"
+    ]
+  },
+  {
+    "question": "What are the guidelines regarding fertilizer and dolomitic limestone application around the time of pruning?",
+    "answer": "Fertilizer applications should be suspended 2-3 months prior to pruning and resumed 2-3 months after pruning, typically at the time of tipping. Applying fertilizer too early before tipping can cause leaf-scorch. Dolomitic limestone should be applied based on the soil pH, preferably a few weeks before the pruning takes place.",
+    "keywords": [
+      "fertilizer application",
+      "dolomitic limestone application",
+      "suspend fertilizer",
+      "2-3 months prior",
+      "resume application",
+      "2-3 months after",
+      "time of tipping",
+      "early application",
+      "leaf-scorch",
+      "soil pH",
+      "few weeks before pruning"
+    ]
+  },
+  {
+    "question": "What is the definition of plucking in tea cultivation, and why is it important?",
+    "answer": "Plucking is the picking of young tea shoots that have two to three leaves, as well as soft dormant shoots (banjhi). It is the most labor-intensive field operation in tea plantations. The profitability of tea plantations largely depends on harvesting policies, and a well-balanced plucking policy enhances yield and optimizes labor use without affecting the quality of the made tea.",
+    "keywords": [
+      "plucking",
+      "tea shoots",
+      "banjhi",
+      "dormant shoots",
+      "labor intensive",
+      "harvesting policies",
+      "profitability",
+      "yield enhancement",
+      "made tea quality"
+    ]
+  },
+  {
+    "question": "Describe the stages of growth for a new tea shoot after plucking occurs.",
+    "answer": "After plucking, growth starts from the axillary buds below the plucking point. First, two small appendages called scale leaves open out and generally fall off after a few days. Next, one or two medium-sized, unserrated, blunt leaves unfold; the smaller one is the janam leaf, and the one above it is the fish leaf. The bud then produces normal leaves which are harvested. After unfurling 4-5 leaves, the terminal bud becomes inactive, entering a dormant period known as banjhi or wangi. This pattern of active and dormant phases is called the periodicity of growth. ",
+    "keywords": [
+      "shoot growth",
+      "axillary buds",
+      "scale leaves",
+      "janam leaf",
+      "fish leaf",
+      "normal leaves",
+      "banjhi",
+      "wangi",
+      "dormant period",
+      "periodicity of growth"
+    ]
+  },
+  {
+    "question": "What is meant by 'shoot generations' in a tea bush, and why are they significant?",
+    "answer": "A 'generation' refers to a group of shoots on a tea bush that are at the same growth stage or age (e.g., growing buds, bud and fish leaf, etc.). Continuous plucking is possible because there is a large number of shoots belonging to different generations. Shortening the plucking round increases the number of generations, which in turn helps to increase the shoot population density—the major yield component.",
+    "keywords": [
+      "shoot generations",
+      "growth stages",
+      "continuous plucking",
+      "plucking round",
+      "shoot population density",
+      "yield component"
+    ]
+  },
+  {
+    "question": "What constitutes the 'Leaf standard' or acceptable flush for plucking?",
+    "answer": "The standard (acceptable) flush consists of shoots with two tender leaves and a bud, shoots with three tender leaves and a bud, and immature dormant shoots. Immature growing shoots (arimbus) and coarse leaves are unacceptable. Plucking coarse leaves will lead to a drop in the quality of made tea.",
+    "keywords": [
+      "leaf standard",
+      "plucking standard",
+      "standard flush",
+      "two leaves and bud",
+      "three leaves and bud",
+      "immature dormant shoots",
+      "unacceptable flush",
+      "coarse leaf",
+      "made tea quality"
+    ]
+  },
+  {
+    "question": "What is the difference between Light Plucking and Hard Plucking styles?",
+    "answer": "Light plucking (also known as Single leaf or Mother leaf plucking) involves plucking just above the first mature leaf, leaving one mature leaf, the fish leaf, and scale leaves on the bush. Hard plucking (or Fish leaf plucking) involves plucking just above the fish leaf, leaving only the fish leaf and scale leaves on the bush.",
+    "keywords": [
+      "plucking style",
+      "severity of plucking",
+      "light plucking",
+      "single leaf plucking",
+      "mother leaf plucking",
+      "hard plucking",
+      "fish leaf plucking",
+      "point of plucking",
+      "leaves left on bush"
+    ]
+  },
+  {
+    "question": "How is the ideal 'plucking round' or frequency determined, and why is it important?",
+    "answer": "The plucking round is the number of days between successive pluckings. The ideal round corresponds to the 'leaf period' or 'phyllochron', which is the time taken between the successive openings of leaves on a shoot. The rate of shoot growth depends on weather and clone type; rounds become shorter in wet weather and longer in dry weather. Maintaining a proper plucking round that matches shoot growth increases yield and minimizes a drop in made tea quality.",
+    "keywords": [
+      "plucking round",
+      "frequency of plucking",
+      "leaf period",
+      "phyllochron",
+      "shoot growth rate",
+      "wet weather",
+      "dry weather",
+      "yield increase",
+      "made tea quality"
+    ]
+  },
+  {
+    "question": "How do plucking practices affect the overall vigor and productivity of the tea bush?",
+    "answer": "Tea leaves reach maximum photosynthetic activity at half their final size and maintain it for about 6 months, after which production decreases as the leaf ages (life span is ~18 months). Therefore, new foliage must be added by mother leaf plucking for about 6 months per year. However, continuous mother leaf plucking causes an unnecessary rise in the plucking table, and maintaining a canopy thicker than 25 cm is inefficient because bottom leaves lack sunlight. Conversely, continuous hard plucking debilitates the bush and increases mudichchies (crow's feet). A combination of light and hard plucking must be adopted based on weather, age from pruning, and bearing practices.",
+    "keywords": [
+      "bush vigor",
+      "photosynthetic activity",
+      "leaf ageing",
+      "mother leaf plucking",
+      "plucking table",
+      "canopy depth",
+      "hard plucking",
+      "mudichchies",
+      "crow's feet",
+      "mixed plucking system",
+      "productivity"
+    ]
+  },
+  {
+    "question": "What are some general best practices and rules for pluckers in the field?",
+    "answer": "Best practices include: maintaining an even plucking table that follows the slope of the land; routinely removing banji and crow's-feet; leaving immature shoots (arimbus) to grow for the next round; and removing coarse leaves and stalks in the field. Pluckers should not ram flush into baskets, retain too many shoots in their hands, or pluck rested bushes and the 'lungs' of pruned bushes. Finally, damage during weighing, bulking, and transport must be minimized.",
+    "keywords": [
+      "plucking best practices",
+      "even plucking table",
+      "slope of land",
+      "remove banji",
+      "remove crow's-feet",
+      "leave arimbus",
+      "immature shoots",
+      "remove coarse leaves",
+      "do not ram flush",
+      "rested bushes",
+      "pruned bush lungs",
+      "minimize damage",
+      "plucker education"
+    ]
+  },
+  {
+    "question": "What is 'plucking' in the context of tea cultivation, and why is it considered a critical operation?",
+    "answer": "Plucking is the picking of young tea shoots consisting of two to three leaves, along with soft dormant shoots (banjhi). It is critical because it is the most labor-intensive field operation in tea plantations, and the profitability of these plantations depends largely on the harvesting policies employed. A well-balanced plucking policy enhances yield and optimizes labor use without negatively affecting the quality of the made tea.",
+    "keywords": [
+      "plucking",
+      "tea cultivation",
+      "young tea shoots",
+      "banjhi",
+      "dormant shoots",
+      "labor-intensive operation",
+      "harvesting policies",
+      "profitability",
+      "yield enhancement",
+      "labor optimization",
+      "made tea quality"
+    ]
+  },
+  {
+    "question": "Explain the growth stages of a tea shoot after it has been plucked.",
+    "answer": "After plucking, new growth initiates from the axillary buds located just below the plucking point. Initially, two small appendages called scale leaves open out to cover the bud, generally falling off a few days later. Following this, one or two medium-sized, unserrated, blunt leaves unfold; the smaller one immediately above the scale leaves is the janam leaf, and the subsequent one is the fish leaf. The bud then produces normal leaves, which are typically harvested. After unfurling 4-5 leaves, the terminal bud becomes inactive, entering a dormant period known as banjhi or wangi.",
+    "keywords": [
+      "shoot growth",
+      "axillary buds",
+      "plucking point",
+      "scale leaves",
+      "janam leaf",
+      "fish leaf",
+      "normal leaves",
+      "terminal bud",
+      "dormant period",
+      "banjhi",
+      "wangi"
+    ]
+  },
+  {
+    "question": "What does 'Leaf standard' or 'Plucking standard' refer to, and what constitutes acceptable flush?",
+    "answer": "Leaf standard refers to the composition of the flush or leaf in the harvested crop. Standard, acceptable flush includes shoots with two tender leaves and a bud, shoots with three tender leaves and a bud, and immature dormant shoots. Conversely, immature shoots (arimbus) and coarse leaves are considered unacceptable, as plucking coarse leaves leads to a drop in the quality of the made tea.",
+    "keywords": [
+      "leaf standard",
+      "plucking standard",
+      "acceptable flush",
+      "tender leaves",
+      "bud",
+      "immature dormant shoots",
+      "unacceptable flush",
+      "arimbus",
+      "coarse leaf",
+      "made tea quality"
+    ]
+  },
+  {
+    "question": "Differentiate between 'Light Plucking' and 'Hard Plucking' styles.",
+    "answer": "Light Plucking, also known as single leaf or mother leaf plucking, involves plucking the shoot just above the first mature leaf. This style leaves one mature leaf, the fish leaf, and scale leaves remaining on the bush. In contrast, Hard Plucking, or fish leaf plucking, involves plucking just above the fish leaf, leaving only the fish leaf and scale leaves on the bush.",
+    "keywords": [
+      "light plucking",
+      "single leaf plucking",
+      "mother leaf plucking",
+      "first mature leaf",
+      "hard plucking",
+      "fish leaf plucking",
+      "fish leaf",
+      "scale leaves",
+      "plucking styles",
+      "severity of plucking"
+    ]
+  },
+  {
+    "question": "What is 'forking' in tea soil cultivation, and what are its primary objectives?",
+    "answer": "Forking is a method of soil cultivation recommended to break up soil compaction and aerate the soil. Compaction occurs due to the continuous treading of workers between tea rows, which impedes rainwater entry and air circulation, causing oxygen deficits for root growth and fertilizer wastage through run-off. The objective of forking is to ensure deep cultivation of the soil to a mild degree, opening it up without turning over the clods or overly disturbing the feeder roots.",
+    "keywords": [
+      "forking",
+      "soil cultivation",
+      "soil compaction",
+      "soil aeration",
+      "worker treading",
+      "rainwater entry",
+      "oxygen deficit",
+      "root growth",
+      "fertilizer wastage",
+      "run-off",
+      "deep cultivation",
+      "feeder roots"
+    ]
+  },
+  {
+    "question": "Describe the difference between 'plain forking' and 'envelope forking'.",
+    "answer": "Both operations use a garden fork to penetrate the ground and open up a pocket of soil. In 'plain forking', the fork is simply withdrawn after opening the pocket. In 'envelope forking', ground litter, green manure loppings, compost, or well-decomposed tea waste are pushed into the pocket created before the fork is withdrawn.",
+    "keywords": [
+      "plain forking",
+      "envelope forking",
+      "garden fork",
+      "soil pocket",
+      "ground litter",
+      "green manure loppings",
+      "compost",
+      "tea waste",
+      "soil cultivation methods"
+    ]
+  },
+  {
+    "question": "When is the best time and frequency to carry out forking in tea fields?",
+    "answer": "Forking should generally be avoided during prolonged dry weather to prevent increased evaporation of soil water, and during heavy rains to prevent soil puddling. The best time to undertake forking is around tipping time, when there is sufficient new foliage on the bush and adequate soil moisture. Regarding frequency, it is recommended to fork once per pruning cycle in the up and mid-country, and once in two cycles in the low-country (though low-country soils that are clayey and compacted may be forked once a cycle).",
+    "keywords": [
+      "forking time",
+      "forking frequency",
+      "dry weather",
+      "heavy rains",
+      "tipping time",
+      "new foliage",
+      "soil moisture",
+      "up-country",
+      "mid-country",
+      "low-country",
+      "clayey soils",
+      "compacted soils",
+      "pruning cycle"
+    ]
+  },
+  {
+    "question": "What is the definition and purpose of rejuvenation pruning in tea cultivation?",
+    "answer": "Rejuvenation pruning is the removal of the inhibitory effects of old age and the restoration of the vigor of the young in tea bushes. The overall rejuvenation programme aims to arrest the decline in aging tea fields, which often suffer from poor recovery, an increase in non-viable \"passenger\" bushes, and increased susceptibility to pests and diseases. The goal is to restore the vigor of afflicted sections and, alongside infilling, bring the field back to an economically viable state.",
+    "keywords": [
+      "rejuvenation pruning",
+      "inhibitory effects of old age",
+      "restoration of vigor",
+      "arresting decline",
+      "aging tea fields",
+      "poor recovery from prune",
+      "passenger bushes",
+      "economically non-viable",
+      "susceptibility to pests",
+      "susceptibility to diseases",
+      "economically viable state",
+      "infilling",
+      "tea cultivation",
+      "bush renovation"
+    ]
+  },
+  {
+    "question": "What are the criteria for selecting a tea field for a rejuvenation programme?",
+    "answer": "Fields that are marginal, non-retrievable, or earmarked for replanting within the next ten years should be excluded. For the remaining fields, the selection criteria are: 1) There must not be widespread incidence of root diseases (like Poria) or root pests (like plant parasitic nematodes or up-country live-wood tea termites). 2) The collar/base of the bushes must not be debilitated. 3) At least 50% of the stand must be capable of undergoing rejuvenation pruning. 4) There must be a good depth of soil, absent of surface gravel, rocks, and boulders.",
+    "keywords": [
+      "selection criteria",
+      "rejuvenation programme",
+      "marginal fields",
+      "non-retrievable fields",
+      "replanting",
+      "root diseases",
+      "Poria",
+      "root pests",
+      "plant parasitic nematodes",
+      "live-wood tea termites",
+      "collar of bush",
+      "base of bush",
+      "debilitated bushes",
+      "50% of stand",
+      "good depth of soil",
+      "surface gravel",
+      "rocks",
+      "boulders",
+      "field assessment"
+    ]
+  },
+  {
+    "question": "What preparations must be undertaken in a selected tea field before carrying out rejuvenation pruning?",
+    "answer": "Before rejuvenation pruning, the selected field must be fully rested for a period of not less than six months. During this rest phase, a minimum of two fertilizer applications should be given, bush by bush, providing the equivalent of 60 kg N per ha per application from the recommended mixture. It is also preferable to apply about 6 to 8 metric tons of well-decomposed compost per hectare. Dolomitic limestone should be applied at a rate of 1 to 2.5 metric tons/ha prior to pruning, depending on soil acidity.",
+    "keywords": [
+      "preparation for pruning",
+      "selected field",
+      "resting period",
+      "six months rest",
+      "fertilizer applications",
+      "bush by bush application",
+      "60 kg N per ha",
+      "nitrogen fertilizer",
+      "decomposed compost",
+      "6 to 8 metric tons",
+      "dolomitic limestone",
+      "1 to 2.5 metric tons",
+      "soil acidity",
+      "pre-pruning care"
+    ]
+  },
+  {
+    "question": "When should rejuvenation pruning be carried out, and what should be done with the resulting pruned litter?",
+    "answer": "Rejuvenation pruning should be carried out with the onset of wet weather—during the South-West monsoon for the Western Sector, and the North-East monsoon for the Eastern Sector. The pruned litter (brushwood) should be immediately buried in shallow trenches (20 to 30 cm depth) that are cut in alternate contour rows.",
+    "keywords": [
+      "timing of pruning",
+      "rejuvenation pruning",
+      "wet weather",
+      "South-West monsoon",
+      "Western Sector",
+      "North-East monsoon",
+      "Eastern Sector",
+      "pruned litter",
+      "brushwood",
+      "buried in trenches",
+      "shallow trenches",
+      "20 to 30 cm depth",
+      "alternate contour rows",
+      "soil conservation",
+      "organic matter incorporation"
+    ]
+  },
+  {
+    "question": "What post-pruning practices are essential following a rejuvenation prune to ensure bush recovery and field consolidation?",
+    "answer": "Following the prune, cut surfaces and shaved off wounds must be painted with a recommended wound-dressing. In areas prone to Blister Blight, special care must be taken to protect recovering shoots. A concerted infilling programme must commence soon after pruning (within the following monsoon), using specifically grown 18-month-old nursery plants raised in jumbo polythene sleeves, aiming for a target population of at least 8000 bushes per ha. Finally, tipping should be done at a height of about 60 cm (24 inches) from ground level to develop thick and healthy pruning frames].",
+    "keywords": [
+      "post-pruning practices",
+      "rejuvenation prune",
+      "bush recovery",
+      "field consolidation",
+      "cut surfaces",
+      "shaved off wounds",
+      "wound-dressing",
+      "Blister Blight",
+      "recovering shoots",
+      "infilling programme",
+      "18-month-old nursery plants",
+      "jumbo polythene sleeves",
+      "target bush population",
+      "8000 bushes per ha",
+      "tipping height",
+      "60 cm",
+      "24 inches",
+      "healthy pruning frames",
+      "frame development"
+    ]
+  },
+  {
+    "question": "What defines a weed in the context of tea cultivation, and how do they interfere with the crop?",
+    "answer": "Weeds are any plants that grow where they are unwanted or out of place, interfering with the objectives of the tea grower. In tea lands, weeds interfere with tea growth by competing for light, space, nutrients, and water, thereby reducing productivity. A dense weed cover can also obstruct routine field practices like fertilizer application, plucking, pruning, and forking, and can serve as alternate hosts for tea pests and disease organisms.",
+    "keywords": [
+      "weeds",
+      "tea cultivation",
+      "crop interference",
+      "competition",
+      "light",
+      "space",
+      "nutrients",
+      "water",
+      "productivity",
+      "field practices",
+      "alternate hosts",
+      "pests",
+      "diseases"
+    ]
+  },
+  {
+    "question": "What factors contribute to the abundant build-up of weeds in tea fields?",
+    "answer": "The abundant occurrence of weeds is attributed to several factors: extensive areas of exposed soil resulting from a poor bush stand, high rainfall, delayed weed control rounds, and surrounding neglected areas that serve as weed seed-banks. Additionally, the introduction of weed seeds and vegetative parts through applied compost and mulch, as well as the continuous use of a single herbicide (leading to resistance), contribute to this build-up.",
+    "keywords": [
+      "weed build-up",
+      "exposed soil",
+      "poor bush stand",
+      "high rainfall",
+      "delayed weed control",
+      "weed seed-banks",
+      "compost",
+      "mulch",
+      "herbicide resistance",
+      "single herbicide"
+    ]
+  },
+  {
+    "question": "What is Integrated Weed Management (IWM) in tea?",
+    "answer": "Integrated Weed Management (IWM) is a strategy that refers to the combination of manual, mechanical, chemical, cultural/ecological, and biological methods in a rotational manner throughout the year. It utilizes available knowledge to achieve cost-effective and eco-friendly weed control.",
+    "keywords": [
+      "Integrated Weed Management",
+      "IWM",
+      "manual methods",
+      "mechanical methods",
+      "chemical methods",
+      "cultural methods",
+      "ecological methods",
+      "biological methods",
+      "rotational manner",
+      "cost-effective",
+      "eco-friendly"
+    ]
+  },
+  {
+    "question": "What preventive measures are recommended to minimize the accumulation of a weed seed bank in tea lands?",
+    "answer": "Preventive measures include: undertaking weeding when weeds are tender and before the flowering stage; keeping boundaries, roadsides, and adjacent areas free of weeds (or slashing overgrown weeds) to prevent seed dispersal; planting cover crops in exposed areas; utilizing a year-round weed management calendar; and taking care not to introduce weed seeds or regenerative vegetative parts (rhizomes, yams, propagules) when using compost and mulching materials.",
+    "keywords": [
+      "preventive measures",
+      "weed seed bank",
+      "tender stage",
+      "before flowering",
+      "boundaries",
+      "roadsides",
+      "seed dispersal",
+      "cover crops",
+      "weed management calendar",
+      "compost",
+      "mulch",
+      "vegetative parts"
+    ]
+  },
+  {
+    "question": "How can cultural/ecological weed control methods be utilized to suppress weed growth?",
+    "answer": "These methods aim to establish quick ground cover to suppress weeds. Practices include: infilling vacant patches with quick-growing cultivars or planting grasses like Mana, Guatemala, or Vetiver if immediate infilling isn't possible, as these grasses suppress weeds via smothering and allelopathy. Other practices include planting green manure crops (e.g., wild sunflower) in vacant patches, planting cover crops (e.g., Arachis pintoi) in inter-rows, using mulching materials, and encouraging early frame development in tea bushes through proper agricultural practices.",
+    "keywords": [
+      "cultural weed control",
+      "ecological weed control",
+      "ground cover",
+      "infilling",
+      "Mana",
+      "Guatemala",
+      "Vetiver",
+      "allelopathy",
+      "green manure crops",
+      "cover crops",
+      "Arachis pintoi",
+      "mulching",
+      "frame development"
+    ]
+  },
+  {
+    "question": "What are the recommended practices and precautions regarding manual weeding in tea fields?",
+    "answer": "Manual weeding involves \"hand-pulling\" or \"slash weeding.\" Clean weeding using a scraper is strongly discouraged. Instead, selective weeding should be advocated, where shallow-rooted beneficial soft herbs (like Gotukola) are retained as a live ground cover. Digging to remove tuberous or rhizomatous weeds is not advocated as it can fragment roots and aggravate infestation. Herbicide-resistant weeds and creeping weeds should be hand-pulled. Removed weeds must be piled in a wooden cage to check for regrowth, and vegetative parts capable of regeneration must be picked out and destroyed before composting.",
+    "keywords": [
+      "manual weeding",
+      "hand-pulling",
+      "slash weeding",
+      "scraper",
+      "selective weeding",
+      "soft herbs",
+      "live ground cover",
+      "Gotukola",
+      "tuberous weeds",
+      "rhizomatous weeds",
+      "herbicide-resistant weeds",
+      "creeping weeds",
+      "wooden cage",
+      "composting"
+    ]
+  },
+  {
+    "question": "What is Biological (or Ecological) weed control in tea, and can you provide an example?",
+    "answer": "Biological weed control is the activity aimed at decreasing a weed species population to an acceptable level using a living organism. In tea, this often means using a competitive plant species to control another weed by competing for water, nutrients, and light (hence often termed ecological control). An example in tea lands is the control of African couch grass (Digitaria abyssinica) by planting Brachiaria brizantha.",
+    "keywords": [
+      "biological weed control",
+      "ecological weed control",
+      "living organism",
+      "competitive plant species",
+      "growth factors",
+      "African couch grass",
+      "Digitaria abyssinica",
+      "Brachiaria brizantha"
     ]
   }
 ]
