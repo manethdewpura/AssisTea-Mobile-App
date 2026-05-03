@@ -25,8 +25,5 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
-      
-      <!-- Background Fetch Headless Service -->
-      <service android:name="com.transistorsoft.rnbackgroundfetch.HeadlessTask" />
     </application>
 </manifest>

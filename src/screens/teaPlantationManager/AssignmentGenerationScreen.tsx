@@ -7,6 +7,7 @@ import {
     ScrollView,
     ActivityIndicator,
     Switch,
+    Platform,
 } from 'react-native';
 import { Lucide } from '@react-native-vector-icons/lucide';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,6 +27,15 @@ import { generatePDF } from 'react-native-html-to-pdf';
 import { saveDocuments } from '@react-native-documents/picker';
 
 import { buildScheduleHTML } from '../../utils/schedulePdfTemplate.util';
+
+/** Stable file:// URI for Android ContentResolver (avoids double scheme, normalizes path). */
+function pdfFilePathToSourceUri(filePath: string): string {
+    const trimmed = filePath.trim();
+    if (trimmed.startsWith('file://')) {
+        return trimmed;
+    }
+    return `file://${trimmed.startsWith('/') ? trimmed : `/${trimmed}`}`;
+}
 
 type Props = NativeStackScreenProps<TeaPlantationStackParamList, 'AssignmentGeneration'>;
 
@@ -180,25 +190,40 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
 
     const handleDownloadSchedule = async () => {
         if (!schedule) return;
+        const baseName = `AssisTea_Schedule_${schedule.date.replace(/-/g, '')}`;
         try {
             setDownloadingPDF(true);
             const html = buildScheduleHTML(schedule, fieldGroups);
-            const result = await generatePDF({
-                html,
-                fileName: `AssisTea_Schedule_${schedule.date.replace(/-/g, '')}`,
-                directory: 'Downloads',
-                width: 595,
-                height: 842,
-            });
-            if (result.filePath) {
-                // Use Android's native "Save As" dialog (SAF ACTION_CREATE_DOCUMENT)
-                // This lets the user pick exactly where to save — including public Downloads
-                // No extra permissions or rebuild needed — saveDocuments is already compiled in
-                const sourceUri = `file://${result.filePath}`;
+            let result: Awaited<ReturnType<typeof generatePDF>>;
+            try {
+                result = await generatePDF({
+                    html,
+                    fileName: baseName,
+                    directory: 'Downloads',
+                    width: 595,
+                    height: 842,
+                });
+            } catch (pdfErr: unknown) {
+                const msg = pdfErr instanceof Error ? pdfErr.message : String(pdfErr);
+                console.error('[PDF] react-native-html-to-pdf failed:', pdfErr);
+                throw new Error(
+                    `Could not build PDF (WebView / print step). ${msg}\n\n` +
+                        'If this only happens on release builds, check logcat tag HtmlToPdf.',
+                );
+            }
+
+            if (!result.filePath) {
+                throw new Error('PDF file path was not returned.');
+            }
+
+            const sourceUri =
+                Platform.OS === 'android' ? pdfFilePathToSourceUri(result.filePath) : result.filePath;
+
+            try {
                 const [saved] = await saveDocuments({
                     sourceUris: [sourceUri],
                     mimeType: 'application/pdf',
-                    fileName: `AssisTea_Schedule_${schedule.date.replace(/-/g, '')}.pdf`,
+                    fileName: `${baseName}.pdf`,
                 });
                 if (saved.error) {
                     throw new Error(saved.error);
@@ -208,13 +233,24 @@ const AssignmentGenerationScreen: React.FC<Props> = ({ navigation }) => {
                     '📄 Schedule Saved!',
                     `Your schedule has been saved as:\n\n${savedName}`,
                     [{ text: 'OK', style: 'default' }],
-                    'low'
+                    'low',
                 );
-            } else {
-                throw new Error('PDF file path was not returned.');
+            } catch (saveErr: unknown) {
+                const msg = saveErr instanceof Error ? saveErr.message : String(saveErr);
+                console.error('[PDF] saveDocuments failed:', saveErr);
+                throw new Error(
+                    `PDF was created but could not run Save As / copy to your chosen location. ${msg}`,
+                );
             }
-        } catch {
-            showAlert('PDF Error', 'Could not generate the PDF. Please try again.', undefined, 'high');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : String(err);
+            console.error('[PDF] Schedule download failed:', err);
+            showAlert(
+                'PDF Error',
+                message || 'Could not generate the PDF. Please try again.',
+                undefined,
+                'high',
+            );
         } finally {
             setDownloadingPDF(false);
         }
