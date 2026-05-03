@@ -38,6 +38,8 @@ const NEED_MORE_DETAIL_REPLY: Record<Language, string> = {
     'தயவுசெய்து மேலும் குறிப்பான தேயிலை சாகுபடி கேள்வியை கேளுங்கள். வளர்ச்சி நிலை, அறிகுறி, எப்போது/எங்கே ஏற்படுகிறது என்பதையும் சேர்க்கவும்.',
 };
 
+const OFFLINE_MIN_CONFIDENCE = 0.5;
+
 const DEPLOYED_EMBEDDING_FALLBACK_URL =
   'https://embedquery-qnzic723va-uc.a.run.app';
 
@@ -48,6 +50,15 @@ const ONLINE_TEMP_UNAVAILABLE_REPLY: Record<Language, string> = {
     'කෝටා සීමා නිසා Online AI තාවකාලිකව ලබාගත නොහැක. දැනුම් ගබඩාවේ අදාළ මාර්ගෝපදේශ සොයාගත්තා. කරුණාකර ලබාදුන් මූලාශ්‍ර බලන්න සහ පසුව නැවත උත්සාහ කරන්න.',
   ta:
     'கோட்டா வரம்புகள் காரணமாக Online AI தற்போது கிடைக்கவில்லை. அறிவகத்தில் தொடர்புடைய வழிகாட்டுதல்கள் கண்டறியப்பட்டன. காட்டப்பட்ட மூலங்களைப் பார்த்து பின்னர் மீண்டும் முயற்சிக்கவும்.',
+};
+
+const ONLINE_CONNECTIVITY_REPLY: Record<Language, string> = {
+  en:
+    'Online AI is currently unreachable. Please check your internet connection and try again. You can also switch to Offline mode for tea-cultivation guidance.',
+  si:
+    'Online AI වෙත දැන් ළඟා විය නොහැක. කරුණාකර ඔබගේ අන්තර්ජාල සම්බන්ධතාවය පරීක්ෂා කර නැවත උත්සාහ කරන්න. තේ වගා මාර්ගෝපදේශ සඳහා Offline mode භාවිතා කළ හැක.',
+  ta:
+    'Online AI-ஐ தற்போது அணுக முடியவில்லை. உங்கள் இணைய இணைப்பை சரிபார்த்து மீண்டும் முயற்சிக்கவும். தேயிலை சாகுபடி வழிகாட்டலுக்கு Offline mode-ஐ பயன்படுத்தலாம்.',
 };
 
 export interface AIResponse {
@@ -82,6 +93,21 @@ class AIService {
   private cloudEmbeddingSupported: boolean | null = null;
   /** Prevent repeating cloud embedding warning on every query. */
   private hasLoggedCloudEmbeddingUnavailable = false;
+
+  /**
+   * Normalise confidence to a 0..1 ratio.
+   * Some native paths may return values in 0..100.
+   */
+  private normalizeConfidence(confidence: number | undefined): number {
+    const value = Number(confidence ?? 0);
+    if (!Number.isFinite(value) || value <= 0) {
+      return 0;
+    }
+    if (value > 1) {
+      return Math.min(value / 100, 1);
+    }
+    return value;
+  }
 
   private getSanitizedProjectId(): string {
     const raw = (FIREBASE_PROJECT_ID || 'assistea').trim();
@@ -179,10 +205,40 @@ class AIService {
     }
 
     try {
+      // Guardrail: if retrieval cannot find relevant tea entries, refuse in offline mode.
+      const entries = await this.retrieveRelevantEntries(query, language);
+      if (entries.length === 0) {
+        return {
+          answer: OUT_OF_SCOPE_REPLY[language],
+          source: 'offline',
+          confidence: 0.1,
+          language,
+        };
+      }
+
       const result: AIResponse = await AgronomistAI.queryOffline(
         query,
         language,
       );
+      const normalizedConfidence = this.normalizeConfidence(result.confidence);
+
+      // Guardrail: block low-confidence nearest-neighbor mismatches.
+      if (normalizedConfidence < OFFLINE_MIN_CONFIDENCE) {
+        return {
+          answer: OUT_OF_SCOPE_REPLY[language],
+          source: 'offline',
+          confidence: normalizedConfidence,
+          language,
+        };
+      }
+
+      if (normalizedConfidence !== result.confidence) {
+        return {
+          ...result,
+          confidence: normalizedConfidence,
+        };
+      }
+
       return result;
     } catch (error: any) {
       // React Native native module errors can come in different formats
@@ -725,6 +781,30 @@ class AIService {
           answer: this.buildOnlineUnavailableReply(language, chunks),
           source: 'online',
           confidence: 0.2,
+          language,
+          retrievedChunks: chunks,
+        };
+      }
+
+      // Graceful fallback for DNS/network/transport failures in online generation.
+      const isConnectivityIssue =
+        errorMessage.includes('Network request failed') ||
+        errorMessage.includes('Unable to resolve host') ||
+        errorMessage.includes('No address associated with hostname') ||
+        errorMessage.includes('ENOTFOUND') ||
+        errorMessage.includes('Failed to fetch') ||
+        errorMessage.includes('network');
+
+      if (isConnectivityIssue) {
+        console.error('[AIService] Online RAG connectivity failure:', {
+          message: errorMessage,
+          code: error?.code,
+          userInfo: error?.userInfo,
+        });
+        return {
+          answer: ONLINE_CONNECTIVITY_REPLY[language],
+          source: 'online',
+          confidence: 0.1,
           language,
           retrievedChunks: chunks,
         };
