@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import {
   setMessages,
 } from '../store/slices/ai.slice';
 import { aiService } from '../services';
+import type { RagChatTurn } from '../services/ai.service';
 import { chatHistorySQLiteService } from '../services/sqlite/chatHistorySQLite.service';
 import MessageBubble from '../components/molecule/MessageBubble';
 import LanguageSelector from '../components/molecule/LanguageSelector';
@@ -64,6 +65,23 @@ const ChatScreen: React.FC = () => {
   const [initializing, setInitializing] = useState(false);
   const pendingQuestionRef = useRef<string | null>(null);
   const historyRequestIdRef = useRef(0);
+
+  const scrollChatToBottom = useCallback((animated: boolean) => {
+    scrollViewRef.current?.scrollToEnd({ animated });
+  }, []);
+
+  /**
+   * Build the last N conversation turns as RagChatTurn[] for Gemini's startChat().
+   * Includes both question (user) and answer (model) for each completed exchange.
+   */
+  const buildConversationHistory = (): RagChatTurn[] => {
+    return messages.slice(-12).flatMap(msg => {
+      const turns: RagChatTurn[] = [];
+      if (msg.question) turns.push({ role: 'user', text: msg.question });
+      if (msg.answer)   turns.push({ role: 'model', text: msg.answer });
+      return turns;
+    });
+  };
  
   // Initialize model on mount
   useEffect(() => {
@@ -122,10 +140,36 @@ const ChatScreen: React.FC = () => {
     };
   }, [dispatch, language]);
  
-  // Auto-scroll to bottom when new messages arrive
+  /**
+   * Keep the latest messages in view. `scrollToEnd` in a bare useEffect often runs
+   * before ScrollView has measured the new content height (e.g. after opening the
+   * screen or switching language), so the scroll offset stays at 0 — the "top".
+   * `onContentSizeChange` runs after layout, so pairing it with a deferred
+   * scroll fixes that race.
+   */
   useEffect(() => {
-    scrollViewRef.current?.scrollToEnd({ animated: true });
-  }, [messages]);
+    if (messages.length === 0 && !loading) {
+      return;
+    }
+    let cancelled = false;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!cancelled) {
+          scrollChatToBottom(false);
+        }
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [messages, loading, scrollChatToBottom]);
+
+  const handleMessagesContentSizeChange = useCallback(() => {
+    if (messages.length === 0 && !loading) {
+      return;
+    }
+    scrollChatToBottom(false);
+  }, [messages.length, loading, scrollChatToBottom]);
  
   // Log messages state changes
   useEffect(() => {
@@ -164,7 +208,7 @@ const ChatScreen: React.FC = () => {
       dispatch(setAIError(null));
  
       const response = isOnline
-        ? await aiService.queryOnline(question, language)
+        ? await aiService.queryOnlineRAG(question, language, buildConversationHistory())
         : await aiService.queryOffline(question, language);
       console.log('[ChatScreen] Received response from aiService:', {
         hasAnswer: !!response.answer,
@@ -193,6 +237,11 @@ const ChatScreen: React.FC = () => {
         answer: response.answer,
         source: response.source,
         confidence: response.confidence,
+        // Map retrieved RAG chunks to source attribution entries
+        sources: response.retrievedChunks?.map(c => ({
+          title: c.title,
+          docSource: c.source,
+        })),
       };
       console.log('[ChatScreen] Dispatching receiveMessage with:', {
         questionId: actualQuestionId,
@@ -315,6 +364,7 @@ const ChatScreen: React.FC = () => {
           style={styles.messagesScrollView}
           contentContainerStyle={styles.messagesContent}
           showsVerticalScrollIndicator={false}
+          onContentSizeChange={handleMessagesContentSizeChange}
         >
           {messages.length === 0 ? (
             <View style={styles.emptyContainer}>

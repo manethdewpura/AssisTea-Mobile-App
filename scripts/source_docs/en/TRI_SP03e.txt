@@ -1,0 +1,404 @@
+                    T.R.l.          ADVISORY                          CIRCULAR                              No.sP [l
+
+
+
+Issued in: July 2000                                                                          Serial No:        00/3
+
+                     FERTILISER RECOMMENDATIONS FOR MATURE TEA
+
+This   Advisory       Circular      replaces     the      following    Circulars     issued    on     the   use    of
+fertiliser and dolomite for mature tea.
+
+Circular    Serial          Month of               Subject
+No          No              Issue
+
+F4         04/71            June 1971              Economising on Fertilisers
+FS§        10/72            May 1972               Urea as a fertiliser for tea
+£ 10       04/94            June 1994              Fertiliser recommendations for mature tea
+11         08/85            June 1985              Fertiliser applications based on potential yield
+£ 12       03/89            January 1989           Dolomite application for tea soils
+F13        03/93            October 1993           Kieserite-fortified mature tea mixture
+F14        14/94            December 1994          Pre- and post-prune fertiliser mixtures
+£ 15       05/94            June 1994              Foliar application of zinc sulphate for mature tea
+M4         02/93            April 1993             Spraying of potassium sulphate for drought
+
+1       Introduction
+
+        Balanced nutrition plays a key role in the maintenance of tea plantations. The
+        cost of fertiliser application varies from 6 to 12% of the total cost of production.
+        Hence, cost-effective investment in fertiliser is necessary to manage a plantation
+        as a commercially viable enterprise.
+
+        The response of the tea plant to NPK fertilisers is influenced by several factors
+        such as climate, soil, plant and cultural practices. These factors vary widely
+        between tea growing regions and therefore the plant response to fertiliser is
+        different      in     different    tea     growing        regions.    In     the      present       fertiliser
+        recommendations             for mature     tea,     regional   differences    have     been     taken     into
+        consideration in order to optimise productivity and profitability of the land.
+
+2.0        Amelioration of soil pH in mature tea fields
+
+        The maintenance of suitable soil pH levels is an important practice in soil fertility
+        management.
+
+21      Correction of soil pH with dolomitic limestone
+
+        Application of dolomitic limestone is recommended to maintain soil pH between 4.5
+        and 5.5.
+
+        The soil pH should be checked prior to every prune, and the rates of dolomite
+        indicated below should be applied depending on pH level, preferably a few weeks
+        before pruning.
+      Soil pH                           Dolomite (kg/ha)
+      Below 3.9                         2500
+      From 3.9 (10 19 4.2               2000
+      From4.2 upto 4.5                  1500
+      Above 4.5                         1000
+
+      Specifications
+
+      The dolomitic limestone must have a minimum of 18% MgO, and approximately
+      100% of particles passing through 30 mesh, and 40 to 60% of particles passing
+      through 100 mesh.
+
+
+      Plant Response to ground applied nutrients
+
+      The optimum range of N, P and K nutrients (kg/halyr) required by seedling and
+      VP teas for maximum yield response in different tea growing regions are given in
+      Table 1.
+
+      Table1- N, P and          K requirements for seedling       and VP tea in different tea
+                  growing regions
+
+                       Up country       Mid-country     Low country       Uva
+
+      Seedling tea
+      N                    90 - 220       90 - 180         90 - 140      90 - 220
+      P20s                   25              25               25            25
+      100                     70             70               50         70 - 100
+
+      VP tea
+      N                270 - 400        270 - 400      270 - 400        270 - 400
+      P20s                35               35             35                35
+      K0               100 - 140        100 - 140        100               140
+
+
+3.1   Basal mixtures
+
+      To supply the required nutrients, three basal mixtures have been formulated
+      separately for seedling and VP tea. The designation of each mixture identifies the
+      type of tea and the region.
+
+
+      Designation
+
+      ST/UM            -         Seedling tea mixture for up and mid-country
+      ST/LC            -         Seedling tea mixture for low country
+      ST/UVA           -         Seedling tea mixture for Uva
+
+      VP/UM            -         Mature VP tea mixture for up and mid-country
+      VP/LC            -         Mature VP tea mixture for low country
+      VP/UVA           -         Mature VP tea mixture for Uva
+3.1.2   Composition
+
+        Seedling tea mixtures:
+
+                        STIUM                     STILC                    STIUVA
+        Urea    parts   196 (90 N)                196 (90 N)               196 (90 N)
+        ERP     parts    87 (25P,05)               86 (25 P,05)             89 (25 £209
+        MOP     parts   117 (70 K;0)              _83 (50 100)             150 (90 K;0)
+                        400                    365                         435
+
+        The seedling tea mixtures contain approximately:
+        ST/UM 400             22.5% N, 6.2% P,0s and 17.6% KO
+        ST/LC 365             24.7% N, 6.7% P,0s and 13.6% KO
+        ST/UVA 435            20.7% N, 5.8% P,0s and 20.7% KO
+
+        VP tea mixtures:
+                        VP/UM                     VPILC                    VP/UVA
+
+        Urea    parts   587   (270 N)             587   (270 N)            587   (270 N)
+        ERP     parts   123 (35 P,Os)             126 (35 P,05)            125 (35 P,0s)
+        MOP     parts   200 (120 K;0)             167 (100 109)            233 (140 K,0)
+                        910                    880                         945
+        The VP mixtures contain approximately:
+        VP/UM 910               29.7% N, 3.9% P,0s and 13.2% KO
+        VP/LC 880               30.7% N, 4.1% P,0s and 11.4% KO
+        VP/UVA 945              28.6% N, 3.8% P20s and 14.8% KO
+
+
+3.2     Fertiliser applications based on "potential yield”
+
+        Calculation of annual    N-fertiliser requirement for a given tea field is based on
+        "potential yield”. The annual potential     yield may     be defined as the highest yield
+        achieved   in the particular year of the pruning cycle,     based on the immediate   past
+        three cycles.
+
+        The application of fertiliser to mature seedling or VP fields should be based on such
+        calculated potential yields. The method of calculation of potential yield for every 12-
+        month period from prune is given below:
+
+        Tabulate the annual yield data of each field (kg made tea per ha per year) over the
+        previous 3 cycles (15 years, if the cycle has 5 years).       However, if data is not
+        available for three cycles, the data of the past two cycles may be used.
+ An example is given in Table 2.
+
+ Table 2 - Yield record of 12-month periods from pruning (kg made tea/halyr)
+
+                                                     Year after prune
+
+ Cycle              st                 2nd                   3rd             4th              5th
+ 1st               1037                 2053                 1941            1708             926
+ 2nd                 884                1893                 1826            1573             866
+
+ 3rd                 990               2140                  2090            1650             895
+
+The      highest   achieved    yield    (potential   yield)    for a given    year   in the   cycle   15
+ underlined. These are 1037, 2140, 2090, 1708 and 926 for the 1%, 2™, 39, 4", 5"
+year, respectively.
+
+Select the N-level corresponding to each of the potential yields from Table 3.
+
+Table 3 - Annual requirementof nitrogen for the potential yield
+
+       Potential yield                                       Requirement of nitrogen
+(kg made tea per ha per year)                                 (kg N per ha per year)
+
+           Less than 900                                             90
+           900-1300                                                 140
+          1300-1500                                                 160
+          1500-1700                                                 180
+          1700-1900                                                 200
+          1900-2000                                                 220
+          2000-2500                                                 270
+          2500-3000                                                 320
+          3000-3500                                                 360
+          Above 3500                                                400
+
+The quantity of nitrogen to be applied in the respective years is therefore:
+
+                   1st             2nd               3rd            4th              50%
+                   12 months       12 months         12 months 12 months             712 months
+
+Potential yield     1037           2140              2090            1708             926
+
+
+Nto be
+applied
+(kg per                  140           270             270            200             140
+ha per year)
+
+Once the quantity 01 nitrogen per ha per year is determined for each field, the
+quantity per application is calculated according to the number of applications that is
+practically possible. The number of applications should be determined on the basis
+of the agro-climatic conditions, as well as on the cropping pattern of the relevant
+region.
+                                               4
+3.3     Quantity of nutrients, basal mixture and urea, application frequencies and
+        dosages
+
+        The quantities of nutrients required, inclusive of the basal mixture and urea, and
+        the applicable frequencies and dosages corresponding to the potential yield
+        category for seedling and VP teas, are given in Tables 4 and 5.
+
+34      Foliar and other ground fertiliser applications
+
+        Foliar     applications   of fertiliser for mature   tea   should   be   made    with   knapsack
+        sprayers.
+
+3.4.1   Zinc sulphate
+
+        Zinc sulphate is recommended at the rate of 6 and 11 kg per ha per year, for fields
+        yielding less than, and above, 2000 made tea kg per ha per year, respectively.
+        This should be done in four applications, i.e. 1.5 and 2.75 kg in 400 | of water per
+        ha per application. Zinc sulphate should be applied within 7 ~~ 14 days after ground
+        fertiliser application.
+
+3.4.2   Other nutrients
+
+        If deficiency symptoms of nitrogen (general yellowing) are observed, apply 2 to 4%
+        of urea.    Apply 8 to 16 kg of urea per ha in 400 | of water, as and when necessary.
+
+        If deficiency symptoms of manganese (interveinal chlorosis and reddish brown
+        necrotic spots on leaf blade) are observed, test the soil pH. If it is above 5.5,
+        apply 2% manganese sulphate until symptoms disappear, preferably at 3 to 4
+        week intervals. In addition, withhold the scheduled application of dolomite.
+
+3.4.3   Epsom salt and kieserite for correcting magnesium                   deficiency
+
+        When magnesium deficiency symptoms are observed, spray commercial Epsom
+        salt initially, at the rate of 48 kg per ha per year in four applications, at intervals
+        of three months.
+
+        Commercial Epsom salt, zinc sulphate and urea can be mixed together and
+        applied as a single foliar spray, when required. The quantity of urea and Epsom
+        salt could be adjusted depending on the severity of deficiency symptoms.
+        However, do not exceed 5% total salt concentration in the final spray solution.
+
+        (N.B.    Zinc sulphate and Epsom salt are both salts.)
+
+        After application of the above, test the soil for Mg content. If it is below the critical
+        level (60 ppm), apply kieserite at the rate of 125 kg per ha per year by mixing
+        with basal NPK mixture or with urea in situ.
+Table 4 - Rates of application (kg/ha) of basal mixture/urea for seedling tea.
+
+
+  Region         Potential yield   Recommended     Quantity and source         No. of applications
+                   (kg/halyr)       quantity of                of   N           and quantity per
+                                   N:P,0s: K0                                  application (kg/ha)
+
+Up          1.       <900           90:25:70      90 kg N as ST/UM            2 x 200 kg ST/UM
+Country
+           2.       900 - 1300      140
+                                      : 25 : 70   90 kg N as ST/UM&           2x200 kg ST/AUM
+                                                  50 kg N as urea             1x 110 kg urea
+
+           3. 1300 - 1500           160:25:70     90 kg N as ST/UM&           2 x 200 kg ST/AUM
+                                                  70 kg N as urea             1 x 150 kg urea
+
+           4.     1500
+                    - 1700          180:25:70     90 kg N as ST/UM &          2 x 200 kg ST/UM
+                                                   90 kg N as urea            1 x 200 kg urea
+                                                   (2 applications possible
+                                                  with care)
+
+           5. 1700 - 1900           200:25:70     90 kg N as ST/UM &          2 x 200 kg ST/UM
+                                                  110 kg N as urea            1x110&     1x 130 kg
+                                                                              urea
+                                                                              (50 and 60 kg N
+           6. Above 1900            220:25:70     90 kg N as ST/UM &          respectively)
+                                                  130 kg N as urea
+                                                                              2 x 200 kg ST/UM
+                                                                              2x 140 kg urea
+ Mid-      Sameas        1104
+country    above
+(Wet
+Zone)
+Low        1.        <900           90:25:50      90 kg N as ST/LC            2x180
+                                                                                 kg ST/LC
+Country
+           2.      Above 900        140:25:50     90 kg N 55 ST/LC&           2x 180 kg ST/LC
+                                                  50 kg N as urea             1x 110 kg urea
+Uva        1.        <900           90:25:90      90 kg N as ST/UVA           2x220 kg ST/UVA
+
+           2.      900 - 1300       140:25:90     90 kg N as ST/UVA&          2x220 kg ST/UVA
+                                                  50 kg N as urea             1x 110 kg urea
+
+           3. 1300 - 1500           160:25:90     90 kg N as ST/UVA &         2 x 220 kg ST/UVA
+                                                  70 kg N as urea             1x 150 kg urea
+
+           4. 1500 - 1700           180:25:90     90 kg N as ST/UVA&          2 x 220 kg ST/UVA
+                                                  90 kg N as urea             1 x 200 kg urea
+                                                  (2 applications possible
+                                                  with care)
+
+           5.     1700 - 1900      200:25:90      90 kg N as ST/UVA &         2 x 220 kg ST/UVA
+                                                  110 kg N 85 urea            1x110&
+                                                                                 1x 130 kg
+                                                                              urea (50 and 60 kg N
+                                                                              respectively)
+
+           6. Above 1900           220:25:90      90 kg N as ST/UVA &         2 x 220 kg ST/UVA
+                                                  130 kg N as urea            2 x 140kg urea
+Table 5 - Rates of application (kg/ha) of basal mixture/urea for mature VP.
+
+
+   Region        Potential yield   | Recommended       | Quantity and source         No. of applications
+                    (kg/halyr)          quantity of              of N                 and quantity per
+                                    N : P,Os : 1909                                  application (kﬂra!
+Up country | 1. 2000 - 2500           270:35:120         270 kg N as VP/UM        4 x 230 kg VP/UM
+
+                 2. 2500 - 3000       320:35:120        270 kg N as VP/UM & | 4 x 230 kg VP/UM
+                                                        50 kg N as urea       1 x 110 kg urea
+
+                      - 3500
+                 3. 3000              360:35:120         270 kg N as VP/UM& | 4 x 230 kg VP/UM
+                                                         90 kg N as urea           1x 200 kg urea
+                                                         (2 applications
+                                                         possible with care)
+
+                 4. Above 3500        400:35:120         270 kg N as VP/UM & | 4 x 230 kg VP/UM
+                                                         130 kg N as urea      2 x 140 kg urea
+Mid-country | Same as 1to 4
+(Wet Zone) | above
+Low              1. 2000 - 2500 | 270:35:100             |270kgNasVPAC         | 3x290 kg VPILC
+Country
+                      - 3000
+                 2. 2500              320 : 35 : 100     270 kgN                  kg VPALC
+                                                                   85 VP/LC& | 3x290
+                                                         50 kg N as urea           1x 110 kg urea
+
+                      - 3500
+                 3. 3000              360:35:100         270kgNas VP/LC & | 3x290  kg VP/LC
+                                                         90 kg N as urea    1x 200 kg urea
+                                                         (2 applications
+                                                         possible with care)
+
+                 4. Above 3500        400 : 35 : 100     270 (9 N බ5 VP/LC & | 3x290 kg VP/LC
+                                                         130 kg N as urea      2 x 140 kg urea
+Uva                   - 2500
+                 1. 2000              270 : 35 : 140     270 kg 4 85 VP/UVA | 3 0: 315 kg VP/UVA
+
+                 2. 2500 - 3000       320:35:140         270 kg N as VP/UVA     | 3 x 315 kg VP/UVA
+                                                         &                        1x 110 kg urea
+                                                         50 kg N as urea
+                      - 3500
+                 3. 3000              360 : 35 : 140                               3 x 315 kg VP/UVA
+                                                         270 kg N as VP/UVA | 1x 200 kg urea
+                                                         &
+                                                         90 kg N as urea
+                                                         (2 applications
+                 4. Above 3500        400 : 35 : 140     possible with care)       3x 315 kg VP/UVA
+                                                                                   2 x 140 kg urea
+                                                         270 kg N as VP/UVA
+                                                         &
+                                                         130 kg N as urea
+
+
+14016:    1.   For fields yielding below 2000 kg per ha per year, the nitrogen level may 06 reduced
+               proportionately.
+               The quantity per application may be adjusted to suit the seasonal variation in yield as
+          N
+
+
+
+
+               well as age from pruning.
+               Where the bulk is large, the number of applications may be increased.
+               Urea could be bulked with the basal mixture.
+          o
+3.4.4   Soil application of boron
+
+        When symptoms of boron deficiency are observed in shade trees, borate (borax)
+        is recommended at the rate of 4.5 kg per ha per year.                  Borate should be mixed
+        with basal NPK mixture or urea in situ.
+
+3.4.5   Sulphate of potash to mitigate drought effects
+
+        Sulphate   of potash     is recommended         for mature tea, to be applied prior to an
+        anticipated drought and in areas that are prone to frequent drought damage.
+
+        A 2% solution of sulphate of potash (i.e. 8 kg in 400 | of water) is recommended
+        at fortnightly intervals, commencing at least a month prior to the onset of the dry
+        period. Spray immediately after harvesting to ensure proper deposition on the
+        mature foliage. Urea (2%) may be included in the spray solution to increase the
+        efficiency of potassium absorption.
+
+        Zinc sulphate should not be mixed with sulphate of potash in the spray solution.
+
+
+
+
+The Tea Research Institute of Sri Lanka
+Talawakelle
+
+Copyright — The Tea Research Institute of Sri Lanka © 2000
+
+                                             COPYRIGHT
+
+71] rights reserved. No part 01 this publication may be reproduced or transmitted in any
+form or by any means, electronic or mechanical, including photocopying, recording or
+information   storage   and   retrieval,   without   permission   in writing    from   the   Director,   The
+Tea Research Institute of Sri Lanka.
+
